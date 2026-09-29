@@ -1,12 +1,12 @@
 /* =========================================================
    GoldManiaSavings
-   Live Gold Rate + Product Comparison
-   ========================================================= */
+   Complete Frontend Application
+========================================================= */
 
 
 /* =========================================================
    CONFIGURATION
-   ========================================================= */
+========================================================= */
 
 const LIVE_API_URL =
     "https://goldmaniasavings-api.onlinetechmine.workers.dev";
@@ -14,71 +14,452 @@ const LIVE_API_URL =
 
 /* =========================================================
    GLOBAL DATA
-   ========================================================= */
+========================================================= */
 
 let productDatabase = [];
 
-let currentSelection = null;
+let currentProducts = [];
+
+let currentGoldRates = {
+
+    "24K": 0,
+
+    "22K": 0,
+
+    "18K": 0
+
+};
 
 
 /* =========================================================
-   MONEY FORMAT
-   ========================================================= */
+   PAGE INITIALIZATION
+========================================================= */
 
-function money(value) {
+document.addEventListener(
+    "DOMContentLoaded",
+    async function () {
 
-    return "₹" + Number(value || 0).toLocaleString(
-        "en-IN",
-        {
-            maximumFractionDigits: 0
-        }
-    );
+        console.log(
+            "GoldManiaSavings starting..."
+        );
+
+
+        setupWeightOptions();
+
+        await loadGoldRates();
+
+        await loadProducts();
+
+        setupSellerFilter();
+
+        updateCalculatorRates();
+
+    }
+);
+
+
+/* =========================================================
+   WEIGHT OPTIONS
+========================================================= */
+
+function setupWeightOptions() {
+
+    const weightSelect =
+        document.getElementById(
+            "weight"
+        );
+
+
+    if (!weightSelect) {
+        return;
+    }
+
+
+    /*
+     * Keep existing HTML options.
+     *
+     * If options already exist,
+     * don't recreate them.
+     */
+
+    if (
+        weightSelect.options.length === 0
+    ) {
+
+        const weights = [
+
+            0.05,
+            0.1,
+            0.25,
+            0.5,
+            1,
+            2,
+            5,
+            10,
+            20,
+            50,
+            100
+
+        ];
+
+
+        weights.forEach(
+            weight => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    weight;
+
+                option.textContent =
+                    `${weight} g`;
+
+                weightSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+    }
 
 }
 
 
 /* =========================================================
-   STATUS BADGE
-   ========================================================= */
+   GOLD RATE
+========================================================= */
 
-function getStatusBadge(status) {
+async function loadGoldRates() {
 
-    const labels = {
-
-        verified: "✓ Verified",
-
-        sample: "⚪ Sample",
-
-        expired: "⚠ Expired"
-
-    };
+    setLiveStatus(
+        "🟡 Loading..."
+    );
 
 
-    const colors = {
+    try {
 
-        verified: "badge-green",
+        const response =
+            await fetch(
+                `${LIVE_API_URL}/api/gold`,
+                {
+                    cache: "no-store"
+                }
+            );
 
-        sample: "badge-orange",
 
-        expired: "badge-blue"
+        if (!response.ok) {
 
-    };
+            throw new Error(
+                "Gold API request failed"
+            );
+
+        }
 
 
-    return `
-        <span class="badge ${colors[status] || "badge-orange"}">
-            ${labels[status] || status || "Unknown"}
-        </span>
-    `;
+        const data =
+            await response.json();
+
+
+        if (
+            !data.ok ||
+            !data.rates
+        ) {
+
+            throw new Error(
+                "Invalid gold API response"
+            );
+
+        }
+
+
+        currentGoldRates["24K"] =
+            Number(
+                data.rates["24K"]?.perGram || 0
+            );
+
+
+        currentGoldRates["22K"] =
+            Number(
+                data.rates["22K"]?.perGram || 0
+            );
+
+
+        currentGoldRates["18K"] =
+            Number(
+                data.rates["18K"]?.perGram || 0
+            );
+
+
+        updateGoldRateUI();
+
+        updateCalculatorRates();
+
+
+        setLiveStatus(
+            "🟢 LIVE"
+        );
+
+
+        updateLastUpdated(
+            data.timestamp
+        );
+
+
+        console.log(
+            "Live gold rates:",
+            currentGoldRates
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Gold rate error:",
+            error
+        );
+
+
+        setLiveStatus(
+            "🔴 Offline"
+        );
+
+
+        updateLastUpdated(
+            null
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   UPDATE GOLD RATE UI
+========================================================= */
+
+function updateGoldRateUI() {
+
+    const rate24 =
+        document.getElementById(
+            "live24Rate"
+        );
+
+
+    const rate22 =
+        document.getElementById(
+            "live22Rate"
+        );
+
+
+    const rate18 =
+        document.getElementById(
+            "live18Rate"
+        );
+
+
+    if (rate24) {
+
+        rate24.textContent =
+            formatCurrency(
+                currentGoldRates["24K"]
+            );
+
+    }
+
+
+    if (rate22) {
+
+        rate22.textContent =
+            formatCurrency(
+                currentGoldRates["22K"]
+            );
+
+    }
+
+
+    if (rate18) {
+
+        rate18.textContent =
+            formatCurrency(
+                currentGoldRates["18K"]
+            );
+
+    }
+
+}
+
+
+/* =========================================================
+   CALCULATOR RATE INPUTS
+========================================================= */
+
+function updateCalculatorRates() {
+
+    const rate24 =
+        document.getElementById(
+            "rate24"
+        );
+
+
+    const rate22 =
+        document.getElementById(
+            "rate22"
+        );
+
+
+    if (rate24) {
+
+        rate24.value =
+            currentGoldRates["24K"] || "";
+
+    }
+
+
+    if (rate22) {
+
+        rate22.value =
+            currentGoldRates["22K"] || "";
+
+    }
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function setLiveStatus(
+    text
+) {
+
+    const element =
+        document.getElementById(
+            "liveRateStatus"
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            text;
+
+    }
+
+}
+
+
+/* =========================================================
+   LAST UPDATED
+========================================================= */
+
+function updateLastUpdated(
+    timestamp
+) {
+
+    const element =
+        document.getElementById(
+            "liveRateUpdated"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    if (!timestamp) {
+
+        element.textContent =
+            "Live rate unavailable";
+
+        return;
+
+    }
+
+
+    const date =
+        new Date(timestamp);
+
+
+    element.textContent =
+        `Last updated: ${date.toLocaleString(
+            "en-IN"
+        )}`;
 
 }
 
 
 /* =========================================================
    LOAD PRODUCTS
-   ========================================================= */
+========================================================= */
 
 async function loadProducts() {
+
+    /*
+     * First attempt:
+     * Cloudflare Worker live seller API
+     */
+
+    try {
+
+        const response =
+            await fetch(
+                `${LIVE_API_URL}/api/products`,
+                {
+                    cache: "no-store"
+                }
+            );
+
+
+        if (response.ok) {
+
+            const data =
+                await response.json();
+
+
+            if (
+                data.ok &&
+                Array.isArray(
+                    data.products
+                ) &&
+                data.products.length > 0
+            ) {
+
+                productDatabase =
+                    data.products;
+
+
+                console.log(
+                    "Live seller products loaded:",
+                    productDatabase.length
+                );
+
+
+                return;
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Live seller API unavailable:",
+            error
+        );
+
+    }
+
+
+    /*
+     * Second attempt:
+     * Local products.json
+     */
 
     try {
 
@@ -94,78 +475,7 @@ async function loadProducts() {
         if (!response.ok) {
 
             throw new Error(
-                "Unable to load products.json"
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        productDatabase =
-            Array.isArray(data.products)
-                ? data.products
-                : [];
-
-
-        console.log(
-            "Products loaded:",
-            productDatabase.length
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Product loading error:",
-            error
-        );
-
-
-        productDatabase = [];
-
-    }
-
-}
-
-
-/* =========================================================
-   LIVE GOLD RATE
-   ========================================================= */
-
-async function loadLiveGoldRates() {
-
-    const status =
-        document.getElementById(
-            "liveRateStatus"
-        );
-
-
-    try {
-
-        if (status) {
-
-            status.textContent =
-                "🟡 Updating live rate...";
-
-        }
-
-
-        const response =
-            await fetch(
-                `${LIVE_API_URL}/api/gold`,
-                {
-                    cache: "no-store"
-                }
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Live API request failed"
+                "products.json not found"
             );
 
         }
@@ -176,486 +486,56 @@ async function loadLiveGoldRates() {
 
 
         if (
-            !data.ok ||
-            !data.live ||
-            !data.rates
+            Array.isArray(data)
         ) {
 
-            throw new Error(
-                "Live gold rate unavailable"
-            );
+            productDatabase =
+                data;
+
+        } else if (
+            Array.isArray(
+                data.products
+            )
+        ) {
+
+            productDatabase =
+                data.products;
+
+        } else {
+
+            productDatabase =
+                [];
 
         }
-
-
-        /* =========================
-           GET LIVE RATES
-        ========================= */
-
-        const rate24 =
-            Number(
-                data.rates["24K"].perGram
-            );
-
-
-        const rate22 =
-            Number(
-                data.rates["22K"].perGram
-            );
-
-
-        const rate18 =
-            Number(
-                data.rates["18K"].perGram
-            );
-
-
-        /* =========================
-           UPDATE CALCULATOR INPUTS
-        ========================= */
-
-        const rate24Input =
-            document.getElementById(
-                "rate24"
-            );
-
-
-        const rate22Input =
-            document.getElementById(
-                "rate22"
-            );
-
-
-        if (rate24Input) {
-
-            rate24Input.value =
-                rate24;
-
-        }
-
-
-        if (rate22Input) {
-
-            rate22Input.value =
-                rate22;
-
-        }
-
-
-        /* =========================
-           UPDATE LIVE DISPLAY
-        ========================= */
-
-        const rate24Display =
-            document.getElementById(
-                "live24Rate"
-            );
-
-
-        const rate22Display =
-            document.getElementById(
-                "live22Rate"
-            );
-
-
-        const rate18Display =
-            document.getElementById(
-                "live18Rate"
-            );
-
-
-        if (rate24Display) {
-
-            rate24Display.textContent =
-                money(rate24) + " / g";
-
-        }
-
-
-        if (rate22Display) {
-
-            rate22Display.textContent =
-                money(rate22) + " / g";
-
-        }
-
-
-        if (rate18Display) {
-
-            rate18Display.textContent =
-                money(rate18) + " / g";
-
-        }
-
-
-        /* =========================
-           UPDATE TIME
-        ========================= */
-
-        const updatedAt =
-            document.getElementById(
-                "liveRateUpdated"
-            );
-
-
-        if (updatedAt) {
-
-            const time =
-                new Date(
-                    data.timestamp
-                );
-
-
-            updatedAt.textContent =
-                "Updated " +
-                time.toLocaleTimeString(
-                    "en-IN",
-                    {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit"
-                    }
-                );
-
-        }
-
-
-        if (status) {
-
-            status.textContent =
-                "🟢 LIVE";
-
-        }
-
-
-        /* =========================
-           STORE LIVE RATES
-        ========================= */
-
-        window.liveGoldRates = {
-
-            "24K": rate24,
-
-            "22K": rate22,
-
-            "18K": rate18
-
-        };
 
 
         console.log(
-            "Live gold rates:",
-            window.liveGoldRates
+            "Fallback products loaded:",
+            productDatabase.length
         );
-
-
-        /*
-         * If a comparison is already visible,
-         * refresh it using the new live rate.
-         */
-
-        if (currentSelection) {
-
-            renderProducts();
-
-        }
 
 
     } catch (error) {
 
         console.error(
-            "Live gold rate error:",
+            "Product loading failed:",
             error
         );
 
 
-        if (status) {
-
-            status.textContent =
-                "🔴 LIVE RATE UNAVAILABLE";
-
-        }
+        productDatabase =
+            [];
 
     }
-
-}
-
-
-/* =========================================================
-   GET CURRENT GOLD RATE
-   ========================================================= */
-
-function getCurrentGoldRate(purity) {
-
-    if (
-        window.liveGoldRates &&
-        window.liveGoldRates[purity]
-    ) {
-
-        return Number(
-            window.liveGoldRates[purity]
-        );
-
-    }
-
-
-    /*
-     * Fallback to calculator input
-     * if live API is temporarily unavailable.
-     */
-
-    if (purity === "24K") {
-
-        return Number(
-            document.getElementById(
-                "rate24"
-            )?.value || 0
-        );
-
-    }
-
-
-    if (purity === "22K") {
-
-        return Number(
-            document.getElementById(
-                "rate22"
-            )?.value || 0
-        );
-
-    }
-
-
-    return 0;
-
-}
-
-
-/* =========================================================
-   GET USER SELECTION
-   ========================================================= */
-
-function getSelection() {
-
-    const purityElement =
-        document.getElementById(
-            "purity"
-        );
-
-
-    const weightElement =
-        document.getElementById(
-            "weight"
-        );
-
-
-    const purity =
-        purityElement
-            ? purityElement.value
-            : "24K";
-
-
-    const weight =
-        parseFloat(
-            weightElement
-                ? weightElement.value
-                : 1
-        );
-
-
-    const factor =
-        purity === "24K"
-            ? 0.9999
-            : 0.916;
-
-
-    const rate =
-        getCurrentGoldRate(
-            purity
-        );
-
-
-    const pureGold =
-        weight * factor;
-
-
-    const goldValue =
-        pureGold * rate;
-
-
-    return {
-
-        purity,
-
-        weight,
-
-        factor,
-
-        rate,
-
-        pureGold,
-
-        goldValue
-
-    };
-
-}
-
-
-/* =========================================================
-   PRODUCT CALCULATION
-   ========================================================= */
-
-function calculateProduct(product) {
-
-    const goldValue =
-        currentSelection.goldValue;
-
-
-    const listedPrice =
-        Number(
-            product.listedPrice || 0
-        );
-
-
-    const coupon =
-        Number(
-            product.coupon || 0
-        );
-
-
-    const cardOffer =
-        Number(
-            product.cardOffer || 0
-        );
-
-
-    const upiOffer =
-        Number(
-            product.upiOffer || 0
-        );
-
-
-    const shipping =
-        Number(
-            product.shipping || 0
-        );
-
-
-    const payment =
-        document.getElementById(
-            "paymentFilter"
-        )?.value || "all";
-
-
-    let paymentDiscount = 0;
-
-
-    if (payment === "card") {
-
-        paymentDiscount =
-            cardOffer;
-
-    }
-
-    else if (payment === "upi") {
-
-        paymentDiscount =
-            upiOffer;
-
-    }
-
-    else {
-
-        paymentDiscount =
-            Math.max(
-                cardOffer,
-                upiOffer
-            );
-
-    }
-
-
-    const payable =
-        Math.max(
-            0,
-
-            listedPrice +
-            shipping -
-            coupon -
-            paymentDiscount
-        );
-
-
-    const cashback =
-        Number(
-            product.cashback || 0
-        );
-
-
-    const effective =
-        Math.max(
-            0,
-
-            payable -
-            cashback
-        );
-
-
-    const premium =
-        goldValue > 0
-
-            ? (
-                (
-                    listedPrice -
-                    goldValue
-                ) /
-                goldValue
-            ) * 100
-
-            : 0;
-
-
-    const effectivePremium =
-        goldValue > 0
-
-            ? (
-                (
-                    effective -
-                    goldValue
-                ) /
-                goldValue
-            ) * 100
-
-            : 0;
-
-
-    return {
-
-        ...product,
-
-        goldValue,
-
-        payable,
-
-        effective,
-
-        premium,
-
-        effectivePremium,
-
-        paymentDiscount
-
-    };
 
 }
 
 
 /* =========================================================
    SELLER FILTER
-   ========================================================= */
+========================================================= */
 
-function populateSellerFilter() {
+function setupSellerFilter() {
 
     const select =
         document.getElementById(
@@ -664,33 +544,49 @@ function populateSellerFilter() {
 
 
     if (!select) {
-
         return;
-
     }
 
 
     const sellers =
-        [
-            ...new Set(
-                productDatabase.map(
-                    product =>
-                        product.seller
-                )
-            )
-        ];
+        new Map();
 
 
-    select.innerHTML =
-        `
+    productDatabase.forEach(
+        product => {
+
+            const id =
+                product.sellerId ||
+                product.seller ||
+                "unknown";
+
+
+            const name =
+                product.seller ||
+                product.sellerName ||
+                id;
+
+
+            sellers.set(
+                id,
+                name
+            );
+
+        }
+    );
+
+
+    select.innerHTML = `
+
         <option value="all">
             All Sellers
         </option>
-        `;
+
+    `;
 
 
     sellers.forEach(
-        seller => {
+        (name, id) => {
 
             const option =
                 document.createElement(
@@ -699,11 +595,11 @@ function populateSellerFilter() {
 
 
             option.value =
-                seller;
+                id;
 
 
             option.textContent =
-                seller;
+                name;
 
 
             select.appendChild(
@@ -717,303 +613,71 @@ function populateSellerFilter() {
 
 
 /* =========================================================
-   FILTER PRODUCTS
-   ========================================================= */
+   MAIN COMPARISON
+========================================================= */
 
-function getFilteredProducts() {
+function compareGold() {
 
-    if (!currentSelection) {
+    const purityElement =
+        document.getElementById(
+            "purity"
+        );
 
-        return [];
+
+    const weightElement =
+        document.getElementById(
+            "weight"
+        );
+
+
+    if (
+        !purityElement ||
+        !weightElement
+    ) {
+
+        return;
 
     }
 
 
     const purity =
-        currentSelection.purity;
+        purityElement.value;
 
 
     const weight =
-        currentSelection.weight;
-
-
-    const seller =
-        document.getElementById(
-            "sellerFilter"
-        )?.value || "all";
-
-
-    const payment =
-        document.getElementById(
-            "paymentFilter"
-        )?.value || "all";
-
-
-    const premium =
-        document.getElementById(
-            "premiumFilter"
-        )?.value || "all";
-
-
-    let products =
-        productDatabase.filter(
-            product => {
-
-                if (
-                    product.purity !==
-                    purity
-                ) {
-
-                    return false;
-
-                }
-
-
-                if (
-                    Number(product.weight) !==
-                    Number(weight)
-                ) {
-
-                    return false;
-
-                }
-
-
-                if (
-                    seller !== "all" &&
-                    product.seller !== seller
-                ) {
-
-                    return false;
-
-                }
-
-
-                if (
-                    payment !== "all" &&
-                    !product.paymentMethods?.includes(
-                        payment
-                    )
-                ) {
-
-                    return false;
-
-                }
-
-
-                return true;
-
-            }
+        Number(
+            weightElement.value
         );
 
 
-    products =
-        products.map(
-            calculateProduct
+    if (
+        !purity ||
+        !weight
+    ) {
+
+        alert(
+            "Please select purity and weight."
+        );
+
+        return;
+
+    }
+
+
+    updateSummary(
+        purity,
+        weight
+    );
+
+
+    currentProducts =
+        buildComparisonProducts(
+            purity,
+            weight
         );
 
 
-    if (premium !== "all") {
-
-        const max =
-            Number(premium);
-
-
-        products =
-            products.filter(
-                product =>
-                    product.effectivePremium <=
-                    max
-            );
-
-    }
-
-
-    const sort =
-        document.getElementById(
-            "sortFilter"
-        )?.value || "effective";
-
-
-    if (sort === "effective") {
-
-        products.sort(
-            (a, b) =>
-                a.effective -
-                b.effective
-        );
-
-    }
-
-
-    else if (sort === "listed") {
-
-        products.sort(
-            (a, b) =>
-                a.listedPrice -
-                b.listedPrice
-        );
-
-    }
-
-
-    else if (sort === "premium") {
-
-        products.sort(
-            (a, b) =>
-                a.effectivePremium -
-                b.effectivePremium
-        );
-
-    }
-
-
-    else if (sort === "offer") {
-
-        products.sort(
-            (a, b) => {
-
-                const offerA =
-                    Number(a.coupon || 0) +
-                    Number(a.cardOffer || 0) +
-                    Number(a.upiOffer || 0) +
-                    Number(a.cashback || 0);
-
-
-                const offerB =
-                    Number(b.coupon || 0) +
-                    Number(b.cardOffer || 0) +
-                    Number(b.upiOffer || 0) +
-                    Number(b.cashback || 0);
-
-
-                return offerB - offerA;
-
-            }
-        );
-
-    }
-
-
-    return products;
-
-}
-
-
-/* =========================================================
-   COMPARE GOLD
-   ========================================================= */
-
-async function compareGold() {
-
-    /*
-     * Make sure products are available.
-     */
-
-    if (!productDatabase.length) {
-
-        await loadProducts();
-
-    }
-
-
-    /*
-     * Make sure live rates are available.
-     */
-
-    if (!window.liveGoldRates) {
-
-        await loadLiveGoldRates();
-
-    }
-
-
-    currentSelection =
-        getSelection();
-
-
-    /* =========================
-       SUMMARY
-    ========================= */
-
-    const summaryPurity =
-        document.getElementById(
-            "summaryPurity"
-        );
-
-
-    const summaryWeight =
-        document.getElementById(
-            "summaryWeight"
-        );
-
-
-    const summaryPureGold =
-        document.getElementById(
-            "summaryPureGold"
-        );
-
-
-    const summaryGoldValue =
-        document.getElementById(
-            "summaryGoldValue"
-        );
-
-
-    if (summaryPurity) {
-
-        summaryPurity.textContent =
-            currentSelection.purity;
-
-    }
-
-
-    if (summaryWeight) {
-
-        summaryWeight.textContent =
-            currentSelection.weight +
-            "g";
-
-    }
-
-
-    if (summaryPureGold) {
-
-        summaryPureGold.textContent =
-            currentSelection.pureGold.toFixed(
-                4
-            ) + "g";
-
-    }
-
-
-    if (summaryGoldValue) {
-
-        summaryGoldValue.textContent =
-            money(
-                currentSelection.goldValue
-            );
-
-    }
-
-
-    const title =
-        document.getElementById(
-            "comparisonTitle"
-        );
-
-
-    if (title) {
-
-        title.textContent =
-            `${currentSelection.purity} • ${currentSelection.weight}g Gold Coin`;
-
-    }
-
-
-    populateSellerFilter();
-
-    renderProducts();
+    refreshComparison();
 
 
     const results =
@@ -1029,7 +693,8 @@ async function compareGold() {
 
 
         results.scrollIntoView({
-            behavior: "smooth"
+            behavior: "smooth",
+            block: "start"
         });
 
     }
@@ -1038,10 +703,471 @@ async function compareGold() {
 
 
 /* =========================================================
-   RENDER PRODUCTS
-   ========================================================= */
+   BUILD COMPARISON PRODUCTS
+========================================================= */
 
-function renderProducts() {
+function buildComparisonProducts(
+    purity,
+    weight
+) {
+
+    const matching =
+        productDatabase.filter(
+            product => {
+
+                const productPurity =
+                    normalizePurity(
+                        product.purity
+                    );
+
+
+                const productWeight =
+                    Number(
+                        product.weight ||
+                        product.weightGrams ||
+                        0
+                    );
+
+
+                return (
+
+                    productPurity ===
+                    purity
+
+                    &&
+
+                    Math.abs(
+                        productWeight -
+                        weight
+                    ) < 0.0001
+
+                );
+
+            }
+        );
+
+
+    return matching.map(
+        product => {
+
+            return calculateProduct(
+                product,
+                purity,
+                weight
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   CALCULATE PRODUCT
+========================================================= */
+
+function calculateProduct(
+    product,
+    purity,
+    weight
+) {
+
+    const goldRate =
+        Number(
+            currentGoldRates[purity] ||
+            0
+        );
+
+
+    const goldValue =
+        goldRate *
+        weight;
+
+
+    const listedPrice =
+        Number(
+            product.listedPrice ||
+            product.price ||
+            0
+        );
+
+
+    const shipping =
+        Number(
+            product.shipping ||
+            0
+        );
+
+
+    const coupon =
+        Number(
+            product.coupon ||
+            0
+        );
+
+
+    const cardOffer =
+        Number(
+            product.cardOffer ||
+            0
+        );
+
+
+    const upiOffer =
+        Number(
+            product.upiOffer ||
+            0
+        );
+
+
+    const cashback =
+        Number(
+            product.cashback ||
+            0
+        );
+
+
+    /*
+     * Total price before offers
+     */
+
+    const grossPrice =
+        listedPrice +
+        shipping;
+
+
+    /*
+     * Effective price:
+     *
+     * Listed price
+     * + shipping
+     * - coupon
+     * - payment offer
+     * - cashback
+     */
+
+    const maxPaymentDiscount =
+        Math.max(
+            cardOffer,
+            upiOffer
+        );
+
+
+    const effectivePrice =
+        Math.max(
+            0,
+            grossPrice -
+            coupon -
+            maxPaymentDiscount -
+            cashback
+        );
+
+
+    let premium = 0;
+
+
+    if (
+        goldValue > 0
+    ) {
+
+        premium =
+            (
+                (
+                    listedPrice -
+                    goldValue
+                ) /
+                goldValue
+            ) *
+            100;
+
+    }
+
+
+    return {
+
+        ...product,
+
+        purity,
+
+        weight,
+
+        goldValue,
+
+        listedPrice,
+
+        shipping,
+
+        coupon,
+
+        cardOffer,
+
+        upiOffer,
+
+        cashback,
+
+        premium,
+
+        effectivePrice
+
+    };
+
+}
+
+
+/* =========================================================
+   REFRESH COMPARISON
+========================================================= */
+
+function refreshComparison() {
+
+    if (
+        !currentProducts.length
+    ) {
+
+        renderEmptyComparison();
+
+        return;
+
+    }
+
+
+    const sellerFilter =
+        document.getElementById(
+            "sellerFilter"
+        )?.value ||
+        "all";
+
+
+    const paymentFilter =
+        document.getElementById(
+            "paymentFilter"
+        )?.value ||
+        "all";
+
+
+    const premiumFilter =
+        document.getElementById(
+            "premiumFilter"
+        )?.value ||
+        "all";
+
+
+    const sortFilter =
+        document.getElementById(
+            "sortFilter"
+        )?.value ||
+        "effective";
+
+
+    let filtered =
+        [...currentProducts];
+
+
+    /*
+     * Seller
+     */
+
+    if (
+        sellerFilter !== "all"
+    ) {
+
+        filtered =
+            filtered.filter(
+                product => {
+
+                    return (
+
+                        product.sellerId ===
+                        sellerFilter
+
+                        ||
+
+                        product.seller ===
+                        sellerFilter
+
+                    );
+
+                }
+            );
+
+    }
+
+
+    /*
+     * Payment
+     */
+
+    if (
+        paymentFilter === "card"
+    ) {
+
+        filtered =
+            filtered.filter(
+                product =>
+                    Number(
+                        product.cardOffer
+                    ) > 0
+            );
+
+    }
+
+
+    if (
+        paymentFilter === "upi"
+    ) {
+
+        filtered =
+            filtered.filter(
+                product =>
+                    Number(
+                        product.upiOffer
+                    ) > 0
+            );
+
+    }
+
+
+    /*
+     * Premium
+     */
+
+    if (
+        premiumFilter !== "all"
+    ) {
+
+        const maxPremium =
+            Number(
+                premiumFilter
+            );
+
+
+        filtered =
+            filtered.filter(
+                product =>
+                    Number(
+                        product.premium
+                    ) <=
+                    maxPremium
+            );
+
+    }
+
+
+    /*
+     * Sorting
+     */
+
+    if (
+        sortFilter === "effective"
+    ) {
+
+        filtered.sort(
+            (
+                a,
+                b
+            ) =>
+                a.effectivePrice -
+                b.effectivePrice
+        );
+
+    }
+
+
+    if (
+        sortFilter === "listed"
+    ) {
+
+        filtered.sort(
+            (
+                a,
+                b
+            ) =>
+                a.listedPrice -
+                b.listedPrice
+        );
+
+    }
+
+
+    if (
+        sortFilter === "premium"
+    ) {
+
+        filtered.sort(
+            (
+                a,
+                b
+            ) =>
+                a.premium -
+                b.premium
+        );
+
+    }
+
+
+    if (
+        sortFilter === "offer"
+    ) {
+
+        filtered.sort(
+            (
+                a,
+                b
+            ) =>
+                totalOffers(b) -
+                totalOffers(a)
+        );
+
+    }
+
+
+    renderComparison(
+        filtered
+    );
+
+}
+
+
+/* =========================================================
+   TOTAL OFFERS
+========================================================= */
+
+function totalOffers(
+    product
+) {
+
+    return (
+
+        Number(
+            product.coupon
+        ) +
+
+        Math.max(
+            Number(
+                product.cardOffer
+            ),
+
+            Number(
+                product.upiOffer
+            )
+        ) +
+
+        Number(
+            product.cashback
+        )
+
+    );
+
+}
+
+
+/* =========================================================
+   RENDER COMPARISON
+========================================================= */
+
+function renderComparison(
+    products
+) {
 
     const body =
         document.getElementById(
@@ -1050,54 +1176,26 @@ function renderProducts() {
 
 
     if (!body) {
+        return;
+    }
+
+
+    if (
+        products.length === 0
+    ) {
+
+        renderEmptyComparison();
 
         return;
 
     }
-
-
-    const products =
-        getFilteredProducts();
 
 
     body.innerHTML = "";
 
 
-    if (!products.length) {
-
-        body.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="7"
-                    style="
-                        text-align:center;
-                        padding:40px;
-                    "
-                >
-
-                    <strong>
-                        No matching products found.
-                    </strong>
-
-                    <br><br>
-
-                    Try another weight or purity.
-
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
-    }
-
-
     products.forEach(
-        (product, index) => {
+        product => {
 
             const row =
                 document.createElement(
@@ -1105,51 +1203,85 @@ function renderProducts() {
                 );
 
 
-            const totalOffer =
+            const status =
+                getStatus(
+                    product
+                );
 
-                Number(
-                    product.coupon || 0
-                ) +
 
-                Number(
-                    product.paymentDiscount || 0
-                ) +
+            const sellerName =
+                escapeHTML(
+                    product.seller ||
+                    product.sellerName ||
+                    "Seller"
+                );
 
+
+            const productName =
+                escapeHTML(
+                    product.productName ||
+                    product.name ||
+                    "Gold Coin"
+                );
+
+
+            const listedPrice =
+                formatCurrency(
+                    product.listedPrice
+                );
+
+
+            const goldValue =
+                formatCurrency(
+                    product.goldValue
+                );
+
+
+            const effectivePrice =
+                formatCurrency(
+                    product.effectivePrice
+                );
+
+
+            const premium =
                 Number(
-                    product.cashback || 0
+                    product.premium || 0
+                ).toFixed(2);
+
+
+            const offers =
+                buildOfferHTML(
+                    product
                 );
 
 
             const action =
-                product.productUrl;
-
-
-            const actionHTML =
-                action
-
+                product.productUrl
                     ? `
 
                         <a
-                            href="${action}"
+                            class="deal-btn"
+                            href="${escapeAttribute(
+                                product.productUrl
+                            )}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="deal-btn"
                         >
-                            View Product
+                            View
                         </a>
 
-                      `
-
+                    `
                     : `
 
                         <button
                             class="deal-btn"
-                            onclick="showDataNotice('${product.seller}')"
+                            type="button"
+                            onclick="showNoLinkMessage()"
                         >
-                            Data Pending
+                            Details
                         </button>
 
-                      `;
+                    `;
 
 
             row.innerHTML = `
@@ -1157,213 +1289,55 @@ function renderProducts() {
                 <td>
 
                     <div class="seller">
-
-                        ${
-                            index === 0
-                                ? "🏆 "
-                                : ""
-                        }
-
-                        ${product.seller}
-
+                        ${sellerName}
                     </div>
-
 
                     <div class="brand">
-
-                        ${product.productName}
-
+                        ${productName}
                     </div>
 
-
-                    <div style="margin-top:5px;">
-
-                        ${getStatusBadge(
-                            product.status
-                        )}
-
+                    <div>
+                        ${status}
                     </div>
 
                 </td>
 
 
                 <td>
-
-                    <strong>
-
-                        ${money(
-                            product.listedPrice
-                        )}
-
-                    </strong>
-
-
-                    ${
-                        product.shipping
-
-                        ? `
-
-                            <br>
-
-                            <small>
-
-                                +
-                                ${money(
-                                    product.shipping
-                                )}
-                                shipping
-
-                            </small>
-
-                          `
-
-                        : ""
-
-                    }
-
+                    ${listedPrice}
                 </td>
 
 
                 <td>
-
-                    ${money(
-                        product.goldValue
-                    )}
-
+                    ${goldValue}
                 </td>
 
 
                 <td>
 
                     <span class="premium">
-
-                        ${
-                            product.premium
-                                .toFixed(2)
-                        }%
-
+                        ${premium}%
                     </span>
 
                 </td>
 
 
                 <td>
-
-                    ${
-                        product.coupon
-
-                        ? `
-
-                            <span
-                                class="badge badge-orange"
-                            >
-                                Coupon
-                                -${money(
-                                    product.coupon
-                                )}
-                            </span>
-
-                          `
-
-                        : ""
-
-                    }
-
-
-                    ${
-                        product.cardOffer
-
-                        ? `
-
-                            <span
-                                class="badge badge-blue"
-                            >
-                                Card
-                                -${money(
-                                    product.cardOffer
-                                )}
-                            </span>
-
-                          `
-
-                        : ""
-
-                    }
-
-
-                    ${
-                        product.upiOffer
-
-                        ? `
-
-                            <span
-                                class="badge badge-green"
-                            >
-                                UPI
-                                -${money(
-                                    product.upiOffer
-                                )}
-                            </span>
-
-                          `
-
-                        : ""
-
-                    }
-
-
-                    ${
-                        product.cashback
-
-                        ? `
-
-                            <br>
-
-                            <small>
-
-                                Cashback:
-                                ${money(
-                                    product.cashback
-                                )}
-
-                            </small>
-
-                          `
-
-                        : ""
-
-                    }
-
+                    ${offers}
                 </td>
 
 
                 <td>
 
-                    <div class="effective">
-
-                        ${money(
-                            product.effective
-                        )}
-
-                    </div>
-
-
-                    <small>
-
-                        Total benefits:
-                        ${money(
-                            totalOffer
-                        )}
-
-                    </small>
+                    <span class="effective">
+                        ${effectivePrice}
+                    </span>
 
                 </td>
 
 
                 <td>
-
-                    ${actionHTML}
-
+                    ${action}
                 </td>
 
             `;
@@ -1380,90 +1354,618 @@ function renderProducts() {
 
 
 /* =========================================================
-   DATA NOTICE
-   ========================================================= */
+   OFFER HTML
+========================================================= */
 
-function showDataNotice(
-    seller
+function buildOfferHTML(
+    product
 ) {
 
-    alert(
+    const offers = [];
 
-        `${seller} product URL is not connected yet.\n\n` +
 
-        `This product is currently sample data.`
+    if (
+        Number(
+            product.coupon
+        ) > 0
+    ) {
 
+        offers.push(
+
+            `<span class="badge badge-green">
+                Coupon ₹${formatNumber(
+                    product.coupon
+                )}
+            </span>`
+
+        );
+
+    }
+
+
+    if (
+        Number(
+            product.cardOffer
+        ) > 0
+    ) {
+
+        offers.push(
+
+            `<span class="badge badge-blue">
+                Card ₹${formatNumber(
+                    product.cardOffer
+                )}
+            </span>`
+
+        );
+
+    }
+
+
+    if (
+        Number(
+            product.upiOffer
+        ) > 0
+    ) {
+
+        offers.push(
+
+            `<span class="badge badge-orange">
+                UPI ₹${formatNumber(
+                    product.upiOffer
+                )}
+            </span>`
+
+        );
+
+    }
+
+
+    if (
+        Number(
+            product.cashback
+        ) > 0
+    ) {
+
+        offers.push(
+
+            `<span class="badge badge-green">
+                Cashback ₹${formatNumber(
+                    product.cashback
+                )}
+            </span>`
+
+        );
+
+    }
+
+
+    if (
+        offers.length === 0
+    ) {
+
+        return `
+            <span
+                style="color:#999;font-size:12px;"
+            >
+                No offer
+            </span>
+        `;
+
+    }
+
+
+    return offers.join(" ");
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function getStatus(
+    product
+) {
+
+    const status =
+        String(
+            product.status ||
+            "sample"
+        ).toLowerCase();
+
+
+    if (
+        status === "verified"
+    ) {
+
+        return `
+            <span class="badge badge-green">
+                ✓ Verified
+            </span>
+        `;
+
+    }
+
+
+    if (
+        status === "expired"
+    ) {
+
+        return `
+            <span class="badge badge-blue">
+                Expired
+            </span>
+        `;
+
+    }
+
+
+    return `
+        <span class="badge badge-orange">
+            Sample
+        </span>
+    `;
+
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+function updateSummary(
+    purity,
+    weight
+) {
+
+    const goldRate =
+        Number(
+            currentGoldRates[purity] ||
+            0
+        );
+
+
+    const goldValue =
+        goldRate *
+        weight;
+
+
+    const purityElement =
+        document.getElementById(
+            "summaryPurity"
+        );
+
+
+    const weightElement =
+        document.getElementById(
+            "summaryWeight"
+        );
+
+
+    const pureGoldElement =
+        document.getElementById(
+            "summaryPureGold"
+        );
+
+
+    const goldValueElement =
+        document.getElementById(
+            "summaryGoldValue"
+        );
+
+
+    if (purityElement) {
+
+        purityElement.textContent =
+            purity;
+
+    }
+
+
+    if (weightElement) {
+
+        weightElement.textContent =
+            `${weight} g`;
+
+    }
+
+
+    if (pureGoldElement) {
+
+        const pureGold =
+            calculatePureGoldWeight(
+                purity,
+                weight
+            );
+
+
+        pureGoldElement.textContent =
+            `${pureGold.toFixed(4)} g`;
+
+    }
+
+
+    if (goldValueElement) {
+
+        goldValueElement.textContent =
+            formatCurrency(
+                goldValue
+            );
+
+    }
+
+
+    const title =
+        document.getElementById(
+            "comparisonTitle"
+        );
+
+
+    if (title) {
+
+        title.textContent =
+            `${purity} Gold Coin Comparison — ${weight}g`;
+
+    }
+
+}
+
+
+/* =========================================================
+   PURE GOLD WEIGHT
+========================================================= */
+
+function calculatePureGoldWeight(
+    purity,
+    weight
+) {
+
+    const factors = {
+
+        "24K": 0.9999,
+
+        "22K": 0.916,
+
+        "18K": 0.750
+
+    };
+
+
+    return (
+        weight *
+        (
+            factors[purity] ||
+            0
+        )
     );
 
 }
 
 
 /* =========================================================
-   FILTER REFRESH
-   ========================================================= */
+   EMPTY RESULT
+========================================================= */
 
-function refreshComparison() {
+function renderEmptyComparison() {
 
-    if (currentSelection) {
+    const body =
+        document.getElementById(
+            "comparisonBody"
+        );
 
-        renderProducts();
 
+    if (!body) {
+        return;
     }
+
+
+    body.innerHTML = `
+
+        <tr>
+
+            <td
+                colspan="7"
+                class="empty-state"
+            >
+
+                No matching products
+                are currently available.
+
+                <br><br>
+
+                Try another weight,
+                purity or seller.
+
+            </td>
+
+        </tr>
+
+    `;
 
 }
 
 
 /* =========================================================
-   AUTO REFRESH LIVE RATE
-   ========================================================= */
+   NO LINK MESSAGE
+========================================================= */
+
+function showNoLinkMessage() {
+
+    alert(
+        "Seller product link is not available yet."
+    );
+
+}
+
+
+/* =========================================================
+   NORMALIZE PURITY
+========================================================= */
+
+function normalizePurity(
+    purity
+) {
+
+    if (!purity) {
+        return "";
+    }
+
+
+    const value =
+        String(
+            purity
+        )
+        .toUpperCase()
+        .replace(
+            /\s/g,
+            ""
+        );
+
+
+    if (
+        value.includes("24")
+    ) {
+
+        return "24K";
+
+    }
+
+
+    if (
+        value.includes("22")
+    ) {
+
+        return "22K";
+
+    }
+
+
+    if (
+        value.includes("18")
+    ) {
+
+        return "18K";
+
+    }
+
+
+    return value;
+
+}
+
+
+/* =========================================================
+   CURRENCY
+========================================================= */
+
+function formatCurrency(
+    value
+) {
+
+    const number =
+        Number(
+            value || 0
+        );
+
+
+    if (!number) {
+
+        return "₹0";
+
+    }
+
+
+    return new Intl.NumberFormat(
+        "en-IN",
+        {
+
+            style: "currency",
+
+            currency: "INR",
+
+            maximumFractionDigits: 2
+
+        }
+    ).format(
+        number
+    );
+
+}
+
+
+/* =========================================================
+   NUMBER
+========================================================= */
+
+function formatNumber(
+    value
+) {
+
+    const number =
+        Number(
+            value || 0
+        );
+
+
+    return new Intl.NumberFormat(
+        "en-IN",
+        {
+
+            maximumFractionDigits: 2
+
+        }
+    ).format(
+        number
+    );
+
+}
+
+
+/* =========================================================
+   HTML ESCAPING
+========================================================= */
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =========================================================
+   ATTRIBUTE ESCAPING
+========================================================= */
+
+function escapeAttribute(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =========================================================
+   AUTO REFRESH GOLD RATE
+========================================================= */
 
 /*
  * Refresh every 5 minutes.
  */
 
 setInterval(
-    loadLiveGoldRates,
+    async function () {
+
+        await loadGoldRates();
+
+        /*
+         * If comparison is already displayed,
+         * recalculate prices using new gold rate.
+         */
+
+        const results =
+            document.getElementById(
+                "results"
+            );
+
+
+        if (
+            results &&
+            results.style.display !==
+            "none"
+        ) {
+
+            const purity =
+                document.getElementById(
+                    "purity"
+                )?.value;
+
+
+            const weight =
+                Number(
+                    document.getElementById(
+                        "weight"
+                    )?.value
+                );
+
+
+            if (
+                purity &&
+                weight
+            ) {
+
+                currentProducts =
+                    buildComparisonProducts(
+                        purity,
+                        weight
+                    );
+
+
+                refreshComparison();
+
+            }
+
+        }
+
+    },
+
     5 * 60 * 1000
+
 );
 
 
 /* =========================================================
-   PAGE INITIALIZATION
-   ========================================================= */
+   GLOBAL FUNCTIONS
+========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+/*
+ * These are intentionally exposed globally
+ * because index.html uses onclick/onchange.
+ */
 
-        console.log(
-            "GoldManiaSavings starting..."
-        );
+window.compareGold =
+    compareGold;
 
+window.refreshComparison =
+    refreshComparison;
 
-        /*
-         * Load products
-         */
+window.loadGoldRates =
+    loadGoldRates;
 
-        await loadProducts();
-
-
-        /*
-         * Load LIVE gold rates
-         */
-
-        await loadLiveGoldRates();
-
-
-        /*
-         * Setup seller filters
-         */
-
-        populateSellerFilter();
-
-
-        console.log(
-            "GoldManiaSavings ready."
-        );
-
-    }
-);
+window.loadProducts =
+    loadProducts;
