@@ -850,23 +850,48 @@ function compareGold() {
     const purity =
         document.getElementById("purity").value;
 
-    const weight =
+    const weightText =
         document.getElementById("weight").value;
 
-    document.getElementById("comparisonTitle").innerText =
-        purity + " • " + weight + " Gold Coin";
+    // Convert "1g" → 1
+    const weight =
+        parseFloat(weightText.replace("g", ""));
 
+    // Gold purity
+    let purityPercentage;
+
+    if (purity === "24K") {
+        purityPercentage = 0.9999;
+    } else {
+        purityPercentage = 0.916;
+    }
+
+    // Pure gold weight
+    const pureGoldWeight =
+        weight * purityPercentage;
+
+    // Display title
+    document.getElementById("comparisonTitle").innerText =
+        purity + " • " + weightText + " Gold Coin";
+
+    // Show results
     document.getElementById("results").style.display =
         "block";
 
+    // Scroll to results
     document.getElementById("results").scrollIntoView({
         behavior: "smooth"
     });
 
+    // Temporary demonstration
+    console.log("Purity:", purity);
+    console.log("Weight:", weight + "g");
+    console.log("Pure gold:", pureGoldWeight.toFixed(4) + "g");
+
 }
 
 </script>
-
+    
 
 </body>
 </html>
