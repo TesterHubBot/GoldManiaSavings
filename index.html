@@ -1,886 +1,476 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
 
-<title>GoldManiaSavings - Gold Price Comparison India</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<meta name="description"
-content="Compare 24K and 22K gold coin prices, premiums, coupons, card offers, UPI offers and effective prices across India.">
+    <title>
+        GoldManiaSavings | Gold Coin Price Comparison
+    </title>
 
-<style>
+    <meta
+        name="description"
+        content="Compare 24K and 22K gold coin prices, offers and effective prices."
+    >
 
-:root {
-    --gold: #d4a72c;
-    --gold-light: #f5c542;
-    --dark: #111827;
-    --dark-2: #1f2937;
-    --text: #1f2937;
-    --muted: #6b7280;
-    --bg: #faf8f2;
-    --white: #ffffff;
-    --green: #15803d;
-    --red: #dc2626;
-    --border: #e5e7eb;
-    --orange: #b45309;
-}
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-html {
-    scroll-behavior: smooth;
-}
-
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
-}
-
-/* HEADER */
-
-header {
-    background: var(--dark);
-    color: white;
-    padding: 16px 5%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.logo {
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--gold-light);
-}
-
-.tagline {
-    font-size: 12px;
-    color: #d1d5db;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.language-btn {
-    border: 1px solid #4b5563;
-    background: transparent;
-    color: white;
-    padding: 8px 13px;
-    border-radius: 20px;
-    cursor: pointer;
-}
-
-/* HERO */
-
-.hero {
-    background:
-        radial-gradient(circle at top right, rgba(245,197,66,0.16), transparent 30%),
-        linear-gradient(135deg, #111827, #292524);
-
-    color: white;
-    padding: 65px 20px 80px;
-    text-align: center;
-}
-
-.hero h1 {
-    font-size: 44px;
-    line-height: 1.15;
-    margin-bottom: 14px;
-}
-
-.hero h1 span {
-    color: var(--gold-light);
-}
-
-.hero-subtitle {
-    color: #d1d5db;
-    max-width: 700px;
-    margin: 0 auto 35px;
-    font-size: 17px;
-}
-
-/* SEARCH */
-
-.search-card {
-    background: white;
-    color: var(--text);
-    max-width: 1000px;
-    margin: auto;
-    padding: 28px;
-    border-radius: 20px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.28);
-    text-align: left;
-}
-
-.search-title {
-    font-size: 20px;
-    font-weight: 800;
-    margin-bottom: 20px;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-}
-
-.field label {
-    display: block;
-    font-size: 13px;
-    font-weight: bold;
-    margin-bottom: 7px;
-    color: #4b5563;
-}
-
-select,
-input {
-    width: 100%;
-    padding: 13px;
-    border: 1px solid #d1d5db;
-    border-radius: 9px;
-    background: white;
-    font-size: 15px;
-    outline: none;
-}
-
-select:focus,
-input:focus {
-    border-color: var(--gold);
-}
-
-.compare-btn {
-    margin-top: 22px;
-    width: 100%;
-    padding: 15px;
-    border: none;
-    border-radius: 10px;
-    background: var(--gold);
-    color: #111827;
-    font-size: 16px;
-    font-weight: 800;
-    cursor: pointer;
-}
-
-.compare-btn:hover {
-    background: var(--gold-light);
-}
-
-/* CONTAINER */
-
-.container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 45px 20px;
-}
-
-.section-title {
-    text-align: center;
-    margin-bottom: 25px;
-}
-
-.section-title h2 {
-    font-size: 28px;
-}
-
-.section-title p {
-    color: var(--muted);
-    margin-top: 5px;
-}
-
-/* RATE CARDS */
-
-.rate-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-}
-
-.rate-card {
-    background: white;
-    border-radius: 16px;
-    padding: 25px;
-    border: 1px solid var(--border);
-    box-shadow: 0 5px 18px rgba(0,0,0,0.06);
-}
-
-.rate-card .purity {
-    color: var(--muted);
-    font-size: 14px;
-}
-
-.rate-card .price {
-    font-size: 30px;
-    font-weight: 800;
-    margin: 7px 0;
-}
-
-.rate-card .unit {
-    color: var(--muted);
-    font-size: 13px;
-}
-
-/* RESULT */
-
-#results {
-    display: none;
-}
-
-.result-summary {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.summary-card {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px;
-}
-
-.summary-card small {
-    color: var(--muted);
-}
-
-.summary-card strong {
-    display: block;
-    margin-top: 5px;
-    font-size: 20px;
-}
-
-.green {
-    color: var(--green);
-}
-
-.gold-text {
-    color: #a16207;
-}
-
-/* CONTROLS */
-
-.controls {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px;
-    margin-bottom: 18px;
-
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-}
-
-.controls label {
-    font-size: 12px;
-    color: var(--muted);
-    display: block;
-    margin-bottom: 5px;
-}
-
-/* TABLE */
-
-.comparison-box {
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.06);
-}
-
-.comparison-header {
-    padding: 22px;
-    background: var(--dark);
-    color: white;
-}
-
-.comparison-header h3 {
-    color: var(--gold-light);
-    margin-bottom: 5px;
-}
-
-.comparison-header p {
-    color: #d1d5db;
-    font-size: 13px;
-}
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 1050px;
-}
-
-th {
-    background: #f9fafb;
-    color: #4b5563;
-    font-size: 12px;
-    text-align: left;
-    padding: 14px;
-    white-space: nowrap;
-}
-
-td {
-    padding: 16px 14px;
-    border-top: 1px solid #eee;
-    font-size: 13px;
-    vertical-align: top;
-}
-
-.seller {
-    font-weight: 800;
-}
-
-.brand {
-    color: var(--muted);
-    font-size: 11px;
-    margin-top: 2px;
-}
-
-.effective {
-    font-weight: 800;
-    color: var(--green);
-    font-size: 16px;
-}
-
-.offer {
-    color: var(--orange);
-}
-
-.premium {
-    color: #92400e;
-    font-weight: 700;
-}
-
-.badge {
-    display: inline-block;
-    padding: 4px 7px;
-    border-radius: 5px;
-    font-size: 10px;
-    font-weight: 700;
-    margin: 2px;
-}
-
-.badge-green {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.badge-blue {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.badge-orange {
-    background: #ffedd5;
-    color: #9a3412;
-}
-
-.deal-btn {
-    background: var(--dark);
-    color: white;
-    border: none;
-    padding: 9px 13px;
-    border-radius: 7px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.deal-btn:hover {
-    background: #374151;
-}
-
-/* NOTICE */
-
-.notice {
-    margin-top: 15px;
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    color: #9a3412;
-    padding: 13px;
-    border-radius: 10px;
-    font-size: 12px;
-}
-
-/* FEATURES */
-
-.features {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-}
-
-.feature {
-    background: white;
-    padding: 22px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    text-align: center;
-}
-
-.feature-icon {
-    font-size: 30px;
-    margin-bottom: 8px;
-}
-
-.feature h3 {
-    font-size: 16px;
-    margin-bottom: 5px;
-}
-
-.feature p {
-    color: var(--muted);
-    font-size: 13px;
-}
-
-/* TOOLS */
-
-.tool-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-}
-
-.tool-card {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 25px;
-}
-
-.tool-card h3 {
-    margin-bottom: 6px;
-}
-
-.tool-card p {
-    color: var(--muted);
-    font-size: 13px;
-    margin-bottom: 18px;
-}
-
-.tool-result {
-    margin-top: 18px;
-    padding: 15px;
-    background: #f9fafb;
-    border-radius: 10px;
-    display: none;
-}
-
-.tool-btn {
-    margin-top: 15px;
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: var(--dark);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* FOOTER */
-
-footer {
-    background: var(--dark);
-    color: #d1d5db;
-    text-align: center;
-    padding: 35px 20px;
-    margin-top: 30px;
-}
-
-footer strong {
-    color: var(--gold-light);
-}
-
-/* MOBILE */
-
-@media (max-width: 900px) {
-
-    .form-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .result-summary {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .controls {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .features {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .tool-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 600px) {
-
-    header {
-        padding: 14px 18px;
-    }
-
-    .logo {
-        font-size: 19px;
-    }
-
-    .hero {
-        padding: 45px 15px 55px;
-    }
-
-    .hero h1 {
-        font-size: 31px;
-    }
-
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .rate-grid,
-    .result-summary,
-    .controls,
-    .features {
-        grid-template-columns: 1fr;
-    }
-
-    .search-card {
-        padding: 20px;
-    }
-
-    .language-btn {
-        font-size: 11px;
-    }
-}
-
-</style>
 </head>
+
 
 <body>
 
-<!-- HEADER -->
 
-<header>
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
-    <div>
-        <div class="logo">🪙 GoldManiaSavings</div>
+<header class="site-header">
 
-        <div class="tagline">
-            Compare Gold. Discover Offers. Save More.
+    <div class="container header-inner">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                🪙
+            </div>
+
+            <div>
+
+                <h1>
+                    GoldManiaSavings
+                </h1>
+
+                <p>
+                    Gold Coin Price Comparison
+                </p>
+
+            </div>
+
         </div>
-    </div>
 
-    <div class="header-right">
 
-        <button class="language-btn" onclick="toggleLanguage()">
-            English | தமிழ்
-        </button>
+        <div class="header-status">
+
+            <span>
+                🇮🇳 India
+            </span>
+
+        </div>
 
     </div>
 
 </header>
 
 
-<!-- HERO -->
 
-<section class="hero">
+<!-- =====================================================
+     MAIN
+===================================================== -->
 
-    <h1>
-        Compare Gold Prices & <span>Save More</span>
-    </h1>
+<main class="container">
 
-    <p class="hero-subtitle">
-        Compare 24K and 22K gold coins, premiums, offers,
-        coupons, card discounts, UPI cashback and effective prices.
-    </p>
 
+<!-- =====================================================
+     LIVE GOLD RATE
+===================================================== -->
 
-    <div class="search-card">
+<section class="live-rate-box">
 
-        <div class="search-title">
-            🔍 Find Your Gold Coin
-        </div>
-
-
-        <div class="form-grid">
-
-            <div class="field">
-
-                <label>Product</label>
-
-                <select id="product">
-
-                    <option value="coin">
-                        Gold Coin
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="field">
-
-                <label>Purity</label>
-
-                <select id="purity">
-
-                    <option value="24K">
-                        24K (999 / 999.9)
-                    </option>
-
-                    <option value="22K">
-                        22K (916)
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="field">
-
-                <label>Weight</label>
-
-                <select id="weight">
-
-                    <option value="0.05">0.05g</option>
-                    <option value="0.1">0.1g</option>
-                    <option value="0.25">0.25g</option>
-                    <option value="0.5">0.5g</option>
-                    <option value="1">1g</option>
-                    <option value="2">2g</option>
-                    <option value="5">5g</option>
-                    <option value="8">8g</option>
-                    <option value="10">10g</option>
-                    <option value="20">20g</option>
-                    <option value="50">50g</option>
-                    <option value="100">100g</option>
-
-                </select>
-
-            </div>
-
-
-            <div class="field">
-
-                <label>Payment Method</label>
-
-                <select id="payment">
-
-                    <option value="all">
-                        Any Payment
-                    </option>
-
-                    <option value="card">
-                        Credit / Debit Card
-                    </option>
-
-                    <option value="upi">
-                        UPI
-                    </option>
-
-                    <option value="cash">
-                        Cash / Other
-                    </option>
-
-                </select>
-
-            </div>
-
-        </div>
-
-
-        <button class="compare-btn" onclick="compareGold()">
-
-            Compare Prices →
-
-        </button>
-
-    </div>
-
-</section>
-
-
-
-<!-- GOLD RATE -->
-
-<section class="container">
-
-    <div class="section-title">
-
-        <h2>Gold Rate Calculator</h2>
-
-        <p>
-            Enter a reference market rate. Live-rate integration will be added later.
-        </p>
-
-    </div>
-
-
-    <div class="rate-grid">
-
-        <div class="rate-card">
-
-            <div class="purity">
-                24K Gold Rate / gram
-            </div>
-
-            <div class="price">
-
-                ₹<input
-                    id="rate24"
-                    type="number"
-                    value="10000"
-                    style="
-                        width:150px;
-                        border:none;
-                        border-bottom:2px solid #d4a72c;
-                        border-radius:0;
-                        font-size:28px;
-                        font-weight:bold;
-                    "
-                >
-
-            </div>
-
-            <div class="unit">
-                Editable reference rate
-            </div>
-
-        </div>
-
-
-        <div class="rate-card">
-
-            <div class="purity">
-                22K Gold Rate / gram
-            </div>
-
-            <div class="price">
-
-                ₹<input
-                    id="rate22"
-                    type="number"
-                    value="9160"
-                    style="
-                        width:150px;
-                        border:none;
-                        border-bottom:2px solid #d4a72c;
-                        border-radius:0;
-                        font-size:28px;
-                        font-weight:bold;
-                    "
-                >
-
-            </div>
-
-            <div class="unit">
-                Editable reference rate
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- RESULTS -->
-
-<section class="container" id="results">
-
-    <div class="section-title">
-
-        <h2>Gold Coin Comparison</h2>
-
-        <p id="resultSubtitle">
-            Compare actual gold value, premium and offers.
-        </p>
-
-    </div>
-
-
-    <!-- SUMMARY -->
-
-    <div class="result-summary">
-
-        <div class="summary-card">
-
-            <small>Selected Purity</small>
-
-            <strong id="summaryPurity">
-                24K
-            </strong>
-
-        </div>
-
-
-        <div class="summary-card">
-
-            <small>Weight</small>
-
-            <strong id="summaryWeight">
-                1g
-            </strong>
-
-        </div>
-
-
-        <div class="summary-card">
-
-            <small>Pure Gold Content</small>
-
-            <strong id="summaryPureGold">
-                0.9999g
-            </strong>
-
-        </div>
-
-
-        <div class="summary-card">
-
-            <small>Reference Gold Value</small>
-
-            <strong id="summaryGoldValue">
-                ₹10,000
-            </strong>
-
-        </div>
-
-    </div>
-
-
-    <!-- FILTERS -->
-
-    <div class="controls">
+    <div class="live-rate-header">
 
         <div>
 
-            <label>Seller</label>
+            <h2>
+                🪙 Live Gold Rate
+            </h2>
 
-            <select id="sellerFilter"
-                    onchange="renderResults()">
+            <p>
+                Current reference gold price
+            </p>
+
+        </div>
+
+
+        <span
+            id="liveRateStatus"
+            class="live-status"
+        >
+            🟡 Loading...
+        </span>
+
+    </div>
+
+
+    <div class="live-rate-grid">
+
+
+        <!-- 24K -->
+
+        <div class="live-rate-card">
+
+            <span>
+                24K Gold
+            </span>
+
+            <strong id="live24Rate">
+                Loading...
+            </strong>
+
+            <small>
+                per gram
+            </small>
+
+        </div>
+
+
+        <!-- 22K -->
+
+        <div class="live-rate-card">
+
+            <span>
+                22K Gold
+            </span>
+
+            <strong id="live22Rate">
+                Loading...
+            </strong>
+
+            <small>
+                per gram
+            </small>
+
+        </div>
+
+
+        <!-- 18K -->
+
+        <div class="live-rate-card">
+
+            <span>
+                18K Gold
+            </span>
+
+            <strong id="live18Rate">
+                Loading...
+            </strong>
+
+            <small>
+                per gram
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="liveRateUpdated"
+        class="live-updated"
+    >
+        Waiting for live rate...
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     CALCULATOR
+===================================================== -->
+
+<section class="calculator-card">
+
+
+    <div class="section-heading">
+
+        <h2>
+            Gold Coin Calculator
+        </h2>
+
+        <p>
+            Enter purity and weight to compare available gold coins.
+        </p>
+
+    </div>
+
+
+
+    <div class="calculator-grid">
+
+
+        <!-- PURITY -->
+
+        <div class="form-group">
+
+            <label for="purity">
+                Gold Purity
+            </label>
+
+            <select id="purity">
+
+                <option value="24K">
+                    24K Gold
+                </option>
+
+                <option value="22K">
+                    22K Gold
+                </option>
+
+            </select>
+
+        </div>
+
+
+
+        <!-- WEIGHT -->
+
+        <div class="form-group">
+
+            <label for="weight">
+                Gold Weight
+            </label>
+
+            <select id="weight">
+
+                <option value="0.05">
+                    0.05 g
+                </option>
+
+                <option value="0.1">
+                    0.1 g
+                </option>
+
+                <option value="0.25">
+                    0.25 g
+                </option>
+
+                <option value="0.5">
+                    0.5 g
+                </option>
+
+                <option value="1">
+                    1 g
+                </option>
+
+                <option value="2">
+                    2 g
+                </option>
+
+                <option value="5">
+                    5 g
+                </option>
+
+                <option value="10">
+                    10 g
+                </option>
+
+                <option value="20">
+                    20 g
+                </option>
+
+                <option value="50">
+                    50 g
+                </option>
+
+                <option value="100">
+                    100 g
+                </option>
+
+            </select>
+
+        </div>
+
+
+
+        <!-- 24K RATE -->
+
+        <div class="form-group">
+
+            <label for="rate24">
+                24K Reference Rate / g
+            </label>
+
+            <input
+                id="rate24"
+                type="number"
+                readonly
+                placeholder="Live rate"
+            >
+
+        </div>
+
+
+
+        <!-- 22K RATE -->
+
+        <div class="form-group">
+
+            <label for="rate22">
+                22K Reference Rate / g
+            </label>
+
+            <input
+                id="rate22"
+                type="number"
+                readonly
+                placeholder="Live rate"
+            >
+
+        </div>
+
+    </div>
+
+
+
+    <button
+        id="compareButton"
+        class="primary-button"
+        type="button"
+        onclick="compareGold()"
+    >
+
+        🔍 Compare Gold Prices
+
+    </button>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     SUMMARY
+===================================================== -->
+
+<section
+    id="results"
+    class="results-section"
+    style="display:none;"
+>
+
+
+    <div class="summary-card">
+
+
+        <div class="summary-heading">
+
+            <div>
+
+                <h2 id="comparisonTitle">
+                    Gold Coin Comparison
+                </h2>
+
+                <p>
+                    Based on current live gold rate
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="summary-grid">
+
+
+            <div class="summary-item">
+
+                <span>
+                    Purity
+                </span>
+
+                <strong id="summaryPurity">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span>
+                    Weight
+                </span>
+
+                <strong id="summaryWeight">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span>
+                    Pure Gold
+                </span>
+
+                <strong id="summaryPureGold">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span>
+                    Gold Value
+                </span>
+
+                <strong id="summaryGoldValue">
+                    -
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+<!-- =====================================================
+     FILTERS
+===================================================== -->
+
+<div class="filter-card">
+
+
+    <div class="filter-heading">
+
+        <h3>
+            Compare & Filter
+        </h3>
+
+    </div>
+
+
+    <div class="filter-grid">
+
+
+        <!-- SELLER -->
+
+        <div class="form-group">
+
+            <label for="sellerFilter">
+                Seller
+            </label>
+
+            <select
+                id="sellerFilter"
+                onchange="refreshComparison()"
+            >
 
                 <option value="all">
                     All Sellers
@@ -891,23 +481,30 @@ footer strong {
         </div>
 
 
-        <div>
 
-            <label>Payment</label>
+        <!-- PAYMENT -->
 
-            <select id="paymentFilter"
-                    onchange="renderResults()">
+        <div class="form-group">
+
+            <label for="paymentFilter">
+                Payment Offer
+            </label>
+
+            <select
+                id="paymentFilter"
+                onchange="refreshComparison()"
+            >
 
                 <option value="all">
-                    All Payment Methods
+                    All Payment Types
                 </option>
 
                 <option value="card">
-                    Card Offers
+                    Card Offer
                 </option>
 
                 <option value="upi">
-                    UPI Offers
+                    UPI Offer
                 </option>
 
             </select>
@@ -915,47 +512,22 @@ footer strong {
         </div>
 
 
-        <div>
 
-            <label>Sort By</label>
+        <!-- PREMIUM -->
 
-            <select id="sortFilter"
-                    onchange="renderResults()">
+        <div class="form-group">
 
-                <option value="effective">
-                    Lowest Effective Price
-                </option>
+            <label for="premiumFilter">
+                Max Premium
+            </label>
 
-                <option value="listed">
-                    Lowest Listed Price
-                </option>
-
-                <option value="premium">
-                    Lowest Premium
-                </option>
-
-                <option value="offer">
-                    Highest Offer
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <div>
-
-            <label>Maximum Premium</label>
-
-            <select id="premiumFilter"
-                    onchange="renderResults()">
+            <select
+                id="premiumFilter"
+                onchange="refreshComparison()"
+            >
 
                 <option value="all">
-                    Any
-                </option>
-
-                <option value="2">
-                    Up to 2%
+                    Any Premium
                 </option>
 
                 <option value="5">
@@ -966,471 +538,223 @@ footer strong {
                     Up to 10%
                 </option>
 
+                <option value="15">
+                    Up to 15%
+                </option>
+
+                <option value="20">
+                    Up to 20%
+                </option>
+
+            </select>
+
+        </div>
+
+
+
+        <!-- SORT -->
+
+        <div class="form-group">
+
+            <label for="sortFilter">
+                Sort By
+            </label>
+
+            <select
+                id="sortFilter"
+                onchange="refreshComparison()"
+            >
+
+                <option value="effective">
+                    Effective Price
+                </option>
+
+                <option value="listed">
+                    Listed Price
+                </option>
+
+                <option value="premium">
+                    Lowest Premium
+                </option>
+
+                <option value="offer">
+                    Highest Offers
+                </option>
+
             </select>
 
         </div>
 
     </div>
 
+</div>
 
-    <!-- TABLE -->
 
-    <div class="comparison-box">
 
-        <div class="comparison-header">
+<!-- =====================================================
+     COMPARISON TABLE
+===================================================== -->
 
-            <h3 id="comparisonTitle">
-                24K • 1g Gold Coin
-            </h3>
+<section class="comparison-card">
 
-            <p>
-                ⚠️ Demonstration data — seller prices and offers are not live yet.
-            </p>
 
-        </div>
+    <div class="comparison-header">
 
-
-        <div class="table-wrapper">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>Seller</th>
-
-                        <th>Listed Price</th>
-
-                        <th>Gold Value</th>
-
-                        <th>Premium</th>
-
-                        <th>Offers</th>
-
-                        <th>Effective Price</th>
-
-                        <th>Action</th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody id="comparisonBody">
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-
-    <div class="notice">
-
-        <strong>Important:</strong>
-        Effective price calculations are based on the currently configured
-        demonstration offers. Cashback is shown separately from instant discounts.
-        Before launch, every offer will be verified from its applicable source.
-    </div>
-
-</section>
-
-
-
-<!-- FEATURES -->
-
-<section class="container">
-
-    <div class="section-title">
-
-        <h2>What GoldManiaSavings Compares</h2>
-
-        <p>
-            We compare more than just the displayed product price.
-        </p>
-
-    </div>
-
-
-    <div class="features">
-
-        <div class="feature">
-
-            <div class="feature-icon">💰</div>
-
-            <h3>Gold Value</h3>
-
-            <p>
-                Calculate the intrinsic gold value based on purity and weight.
-            </p>
-
-        </div>
-
-
-        <div class="feature">
-
-            <div class="feature-icon">📈</div>
-
-            <h3>Premium</h3>
-
-            <p>
-                See how much extra you are paying over reference gold value.
-            </p>
-
-        </div>
-
-
-        <div class="feature">
-
-            <div class="feature-icon">🎟️</div>
-
-            <h3>Coupons & Offers</h3>
-
-            <p>
-                Compare coupons, bank offers, cashback and payment benefits.
-            </p>
-
-        </div>
-
-
-        <div class="feature">
-
-            <div class="feature-icon">💳</div>
-
-            <h3>Effective Price</h3>
-
-            <p>
-                Compare the final eligible cost instead of headline price alone.
-            </p>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- TOOLS -->
-
-<section class="container">
-
-    <div class="section-title">
-
-        <h2>Gold Tools</h2>
-
-        <p>
-            Useful calculators for gold buyers.
-        </p>
-
-    </div>
-
-
-    <div class="tool-grid">
-
-
-        <!-- PURE GOLD CALCULATOR -->
-
-        <div class="tool-card">
-
-            <h3>🧮 Pure Gold Calculator</h3>
-
-            <p>
-                Calculate pure gold content from weight and purity.
-            </p>
-
-
-            <div class="field">
-
-                <label>Weight (grams)</label>
-
-                <input
-                    id="pureWeight"
-                    type="number"
-                    value="10"
-                    min="0.01"
-                    step="0.01"
-                >
-
-            </div>
-
-
-            <div class="field"
-                 style="margin-top:12px;">
-
-                <label>Purity</label>
-
-                <select id="purePurity">
-
-                    <option value="0.9999">
-                        24K / 999.9
-                    </option>
-
-                    <option value="0.999">
-                        24K / 999
-                    </option>
-
-                    <option value="0.916">
-                        22K / 916
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <button class="tool-btn"
-                    onclick="calculatePureGold()">
-
-                Calculate
-
-            </button>
-
-
-            <div id="pureResult"
-                 class="tool-result">
-
-            </div>
-
-        </div>
-
-
-
-        <!-- BUYBACK -->
-
-        <div class="tool-card">
-
-            <h3>🔄 Buyback Calculator</h3>
-
-            <p>
-                Estimate resale value based on a reference buyback rate.
-            </p>
-
-
-            <div class="field">
-
-                <label>Gold Weight (g)</label>
-
-                <input
-                    id="buyWeight"
-                    type="number"
-                    value="10"
-                    min="0.01"
-                    step="0.01"
-                >
-
-            </div>
-
-
-            <div class="field"
-                 style="margin-top:12px;">
-
-                <label>Buyback Rate / gram</label>
-
-                <input
-                    id="buyRate"
-                    type="number"
-                    value="10000"
-                >
-
-            </div>
-
-
-            <div class="field"
-                 style="margin-top:12px;">
-
-                <label>Deduction %</label>
-
-                <input
-                    id="buyDeduction"
-                    type="number"
-                    value="2"
-                    min="0"
-                    step="0.1"
-                >
-
-            </div>
-
-
-            <button class="tool-btn"
-                    onclick="calculateBuyback()">
-
-                Calculate Resale Value
-
-            </button>
-
-
-            <div id="buyResult"
-                 class="tool-result">
-
-            </div>
-
-        </div>
-
-
-
-        <!-- COIN TO JEWELLERY -->
-
-        <div class="tool-card">
-
-            <h3>💍 Coin → Jewellery Calculator</h3>
-
-            <p>
-                Estimate gold content when converting a coin into 22K jewellery.
-            </p>
-
-
-            <div class="field">
-
-                <label>Coin Weight (g)</label>
-
-                <input
-                    id="coinWeight"
-                    type="number"
-                    value="10"
-                    min="0.01"
-                    step="0.01"
-                >
-
-            </div>
-
-
-            <div class="field"
-                 style="margin-top:12px;">
-
-                <label>Coin Purity</label>
-
-                <select id="coinPurity">
-
-                    <option value="0.9999">
-                        24K
-                    </option>
-
-                    <option value="0.916">
-                        22K
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <button class="tool-btn"
-                    onclick="calculateJewellery()">
-
-                Calculate 22K Equivalent
-
-            </button>
-
-
-            <div id="jewelleryResult"
-                 class="tool-result">
-
-            </div>
-
-        </div>
-
-
-
-        <!-- PREMIUM -->
-
-        <div class="tool-card">
-
-            <h3>📊 Gold Premium Calculator</h3>
-
-            <p>
-                Find how much premium a gold coin carries over its gold value.
-            </p>
-
-
-            <div class="field">
-
-                <label>Gold Value</label>
-
-                <input
-                    id="premiumGoldValue"
-                    type="number"
-                    value="10000"
-                >
-
-            </div>
-
-
-            <div class="field"
-                 style="margin-top:12px;">
-
-                <label>Final Product Price</label>
-
-                <input
-                    id="premiumProductPrice"
-                    type="number"
-                    value="10500"
-                >
-
-            </div>
-
-
-            <button class="tool-btn"
-                    onclick="calculatePremium()">
-
-                Calculate Premium
-
-            </button>
-
-
-            <div id="premiumResult"
-                 class="tool-result">
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- PRICE HISTORY -->
-
-<section class="container">
-
-    <div class="section-title">
-
-        <h2>📈 Price History</h2>
-
-        <p>
-            Historical price tracking will become available after live data collection begins.
-        </p>
-
-    </div>
-
-
-    <div class="rate-card">
-
-        <div style="text-align:center;">
-
-            <div style="
-                font-size:40px;
-                margin-bottom:10px;
-            ">
-                📊
-            </div>
+        <div>
 
             <h3>
-                Price History Coming Soon
+                Gold Coin Comparison
             </h3>
 
-            <p style="
-                color:#6b7280;
-                margin-top:8px;
-            ">
-                Once verified price data is collected,
-                GoldManiaSavings will track daily prices,
-                premiums and offer changes.
+            <p>
+                Prices and offers shown from available data sources.
+            </p>
+
+        </div>
+
+
+        <div class="comparison-note">
+
+            🟢 Verified &nbsp;
+            🟡 Sample &nbsp;
+            🔵 Expired
+
+        </div>
+
+    </div>
+
+
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Seller / Product
+                    </th>
+
+                    <th>
+                        Listed Price
+                    </th>
+
+                    <th>
+                        Gold Value
+                    </th>
+
+                    <th>
+                        Premium
+                    </th>
+
+                    <th>
+                        Offers
+                    </th>
+
+                    <th>
+                        Effective Price
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="comparisonBody">
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        class="empty-state"
+                    >
+
+                        Select weight and purity,
+                        then click
+                        <strong>
+                            Compare Gold Prices
+                        </strong>.
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+</section>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     IMPORTANT INFORMATION
+===================================================== -->
+
+<section class="info-card">
+
+    <h2>
+        About GoldManiaSavings
+    </h2>
+
+
+    <p>
+
+        GoldManiaSavings helps compare gold coin prices,
+        premiums and available offers across different sellers.
+
+    </p>
+
+
+    <div class="info-grid">
+
+
+        <div>
+
+            <strong>
+                🟢 Verified
+            </strong>
+
+            <p>
+                Data verified from an authorised or connected source.
+            </p>
+
+        </div>
+
+
+        <div>
+
+            <strong>
+                🟡 Sample
+            </strong>
+
+            <p>
+                Demonstration data that is not currently live.
+            </p>
+
+        </div>
+
+
+        <div>
+
+            <strong>
+                🔵 Expired
+            </strong>
+
+            <p>
+                Offer or information has passed its validity period.
             </p>
 
         </div>
@@ -1441,31 +765,57 @@ footer strong {
 
 
 
-<!-- FOOTER -->
+<!-- =====================================================
+     DISCLAIMER
+===================================================== -->
 
-<footer>
+<section class="disclaimer">
 
-    <p>
-        <strong>🪙 GoldManiaSavings</strong>
-    </p>
+    <strong>
+        Important:
+    </strong>
 
-    <p style="margin-top:6px;">
-        Compare gold prices, offers and savings across India.
-    </p>
+    Gold prices can change frequently.
+    Always verify the final price, taxes, shipping charges,
+    payment conditions and offer terms with the seller
+    before purchasing.
 
-    <p style="
-        margin-top:12px;
-        font-size:12px;
-        color:#9ca3af;
-    ">
-        Gold prices and offers shown in the current version are demonstration data.
-        Always verify the final price and offer terms with the seller before purchasing.
-    </p>
+</section>
+
+
+</main>
+
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer class="site-footer">
+
+    <div class="container">
+
+        <p>
+            © 2026 GoldManiaSavings
+        </p>
+
+        <p>
+            Gold price comparison and savings tool.
+        </p>
+
+    </div>
 
 </footer>
 
 
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
 <script src="./app.js"></script>
 
+
 </body>
+
 </html>
