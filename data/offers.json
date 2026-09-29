@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-09-29T00:00:00+05:30",
+  "offers": [
+    {
+      "id": "sample-card-001",
+      "seller": "Amazon",
+      "type": "card",
+      "title": "Sample Card Offer",
+      "discount": 300,
+      "minimumOrder": 5000,
+      "maximumDiscount": 300,
+      "status": "sample",
+      "validUntil": null
+    },
+    {
+      "id": "sample-upi-001",
+      "seller": "Flipkart",
+      "type": "upi",
+      "title": "Sample UPI Offer",
+      "discount": 200,
+      "minimumOrder": 5000,
+      "maximumDiscount": 200,
+      "status": "sample",
+      "validUntil": null
+    }
+  ]
+}
