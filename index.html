@@ -2,33 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
 <title>GoldManiaSavings — Gold Coin Price Comparison</title>
 
-<meta
-  name="description"
-  content="Compare gold coin prices, offers, vouchers, promo codes, card offers and UPI offers across leading Indian jewellery websites."
->
+<meta name="description"
+      content="Compare gold coins across major Indian jewellery sellers by purity, weight and price.">
 
 <style>
 :root{
-  --gold:#d4a72c;
-  --gold-dark:#a97900;
-  --gold-light:#fff7dc;
-  --green:#087f45;
-  --green-light:#e9fff3;
-  --red:#c62828;
-  --red-light:#fff0f0;
-  --blue:#2563eb;
-  --purple:#7c3aed;
-  --text:#171717;
-  --muted:#6b7280;
-  --border:#e5e7eb;
-  --bg:#f6f7f9;
-  --white:#fff;
-  --shadow:0 8px 30px rgba(0,0,0,.07);
-  --radius:18px;
+  --gold:#d4af37;
+  --gold2:#f4d76b;
+  --gold3:#fff4bf;
+  --bg:#07111f;
+  --panel:#0d1b2e;
+  --panel2:#12243b;
+  --text:#f7f8fa;
+  --muted:#9eacbf;
+  --green:#35d07f;
+  --red:#ff6b6b;
+  --blue:#55aaff;
+  --border:rgba(255,255,255,.09);
+  --shadow:0 18px 50px rgba(0,0,0,.28);
 }
 
 *{
@@ -41,46 +36,44 @@ html{
 
 body{
   margin:0;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background:var(--bg);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,
+              "Segoe UI",Roboto,Arial,sans-serif;
   color:var(--text);
-}
-
-button,
-input,
-select{
-  font:inherit;
+  background:
+    radial-gradient(circle at 15% 0%,rgba(212,175,55,.13),transparent 30%),
+    radial-gradient(circle at 85% 10%,rgba(85,170,255,.09),transparent 25%),
+    var(--bg);
 }
 
 a{
   color:inherit;
-  text-decoration:none;
 }
 
-/* =========================
-   HEADER
-========================= */
+button,
+select{
+  font:inherit;
+}
 
-.header{
+.container{
+  width:min(1400px,94%);
+  margin:auto;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+header{
   position:sticky;
   top:0;
-  z-index:100;
-  background:rgba(255,255,255,.96);
-  backdrop-filter:blur(12px);
+  z-index:50;
+  backdrop-filter:blur(18px);
+  background:rgba(7,17,31,.88);
   border-bottom:1px solid var(--border);
 }
 
-.header-inner{
-  max-width:1250px;
-  margin:auto;
-  padding:14px 20px;
+.nav{
+  min-height:72px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -93,586 +86,581 @@ a{
   gap:10px;
   font-size:22px;
   font-weight:900;
+  letter-spacing:-.5px;
 }
 
 .logo-icon{
-  width:38px;
-  height:38px;
+  width:40px;
+  height:40px;
   border-radius:12px;
   display:grid;
   place-items:center;
-  background:linear-gradient(135deg,#f8df77,#c99113);
-  color:#fff;
-  box-shadow:0 5px 15px rgba(201,145,19,.25);
+  color:#18120a;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  box-shadow:0 8px 25px rgba(212,175,55,.22);
 }
 
 .logo span{
-  color:var(--gold-dark);
+  color:var(--gold2);
 }
 
-.header-note{
+.nav-status{
+  display:flex;
+  align-items:center;
+  gap:8px;
   color:var(--muted);
   font-size:13px;
 }
 
-/* =========================
+.dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 12px var(--green);
+}
+
+.dot.offline{
+  background:var(--red);
+  box-shadow:0 0 12px var(--red);
+}
+
+/* =========================================================
    HERO
-========================= */
+========================================================= */
 
 .hero{
+  padding:48px 0 28px;
+}
+
+.hero-grid{
+  display:grid;
+  grid-template-columns:1.35fr .65fr;
+  gap:20px;
+}
+
+.hero-card,
+.gold-card,
+.panel{
   background:
-    radial-gradient(circle at 20% 10%,rgba(255,255,255,.9),transparent 30%),
-    linear-gradient(135deg,#fff8df,#fffdf4 45%,#f8efd1);
-  border-bottom:1px solid #eadcae;
-}
-
-.hero-inner{
-  max-width:1250px;
-  margin:auto;
-  padding:42px 20px 34px;
-}
-
-.hero h1{
-  margin:0 0 10px;
-  font-size:clamp(30px,5vw,52px);
-  line-height:1.05;
-  letter-spacing:-1.5px;
-}
-
-.hero h1 span{
-  color:var(--gold-dark);
-}
-
-.hero p{
-  max-width:760px;
-  margin:0;
-  color:#665b3e;
-  font-size:16px;
-  line-height:1.6;
-}
-
-/* =========================
-   GOLD PRICE
-========================= */
-
-.gold-section{
-  max-width:1250px;
-  margin:24px auto 0;
-  padding:0 20px;
-}
-
-.gold-panel{
-  background:#171717;
-  color:#fff;
-  border-radius:22px;
-  padding:22px;
+    linear-gradient(145deg,
+      rgba(255,255,255,.045),
+      rgba(255,255,255,.018));
+  border:1px solid var(--border);
+  border-radius:24px;
   box-shadow:var(--shadow);
 }
 
-.gold-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-  margin-bottom:18px;
+.hero-card{
+  padding:38px;
+  overflow:hidden;
+  position:relative;
 }
 
-.gold-head h2{
+.hero-card:after{
+  content:"";
+  position:absolute;
+  width:260px;
+  height:260px;
+  border-radius:50%;
+  right:-100px;
+  top:-120px;
+  background:rgba(212,175,55,.08);
+}
+
+.eyebrow{
+  color:var(--gold2);
+  text-transform:uppercase;
+  letter-spacing:1.8px;
+  font-size:12px;
+  font-weight:800;
+}
+
+h1{
+  margin:12px 0 14px;
+  font-size:clamp(32px,5vw,62px);
+  line-height:1.02;
+  letter-spacing:-2px;
+}
+
+.hero-text{
+  max-width:760px;
+  color:var(--muted);
+  line-height:1.7;
+  font-size:15px;
+}
+
+.gold-card{
+  padding:25px;
+}
+
+.gold-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.gold-title h2{
   margin:0;
   font-size:18px;
 }
 
 .gold-source{
-  color:#bdbdbd;
-  font-size:12px;
+  font-size:11px;
+  color:var(--muted);
 }
 
-.gold-grid{
+.gold-rates{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:12px;
+  gap:10px;
+  margin-top:20px;
 }
 
-.gold-card{
-  background:#252525;
-  border:1px solid #383838;
-  border-radius:16px;
-  padding:18px;
-}
-
-.gold-card .karat{
-  color:#d8d8d8;
-  font-size:13px;
-}
-
-.gold-card .price{
-  margin-top:5px;
-  font-size:26px;
-  font-weight:900;
-  color:#ffd85b;
-}
-
-.gold-card .unit{
-  color:#999;
-  font-size:12px;
-}
-
-/* =========================
-   CONTROLS
-========================= */
-
-.controls-wrap{
-  max-width:1250px;
-  margin:24px auto;
-  padding:0 20px;
-}
-
-.controls{
-  background:#fff;
+.rate{
+  padding:14px 10px;
+  background:rgba(255,255,255,.035);
   border:1px solid var(--border);
-  border-radius:20px;
+  border-radius:15px;
+}
+
+.rate-label{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.rate-value{
+  margin-top:5px;
+  font-size:18px;
+  font-weight:900;
+}
+
+.gold-updated{
+  margin-top:16px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.6;
+}
+
+/* =========================================================
+   FILTERS
+========================================================= */
+
+.filters{
+  margin:15px 0 25px;
   padding:18px;
-  box-shadow:var(--shadow);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
 }
 
-.controls-grid{
-  display:grid;
-  grid-template-columns:2fr 1fr 1fr 1fr auto;
-  gap:12px;
+.filter-group{
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 
-.control{
-  position:relative;
+.filter-label{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
 }
 
-.control input,
-.control select{
-  width:100%;
-  height:46px;
+select{
+  min-width:130px;
   border:1px solid var(--border);
   border-radius:12px;
-  background:#fff;
-  padding:0 13px;
+  padding:11px 13px;
+  background:var(--panel2);
+  color:var(--text);
   outline:none;
 }
 
-.control input:focus,
-.control select:focus{
-  border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(212,167,44,.12);
+select:focus{
+  border-color:rgba(212,175,55,.65);
 }
 
-.reset-btn{
-  height:46px;
-  border:0;
+.reset{
+  margin-left:auto;
+  border:1px solid rgba(212,175,55,.35);
+  background:rgba(212,175,55,.08);
+  color:var(--gold2);
+  padding:11px 15px;
   border-radius:12px;
-  padding:0 18px;
-  background:#222;
-  color:#fff;
   cursor:pointer;
-  font-weight:700;
+  font-weight:800;
 }
 
-.reset-btn:hover{
-  background:#000;
-}
-
-/* =========================
+/* =========================================================
    SUMMARY
-========================= */
+========================================================= */
 
 .summary{
-  max-width:1250px;
-  margin:0 auto 15px;
-  padding:0 20px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-bottom:18px;
 }
 
-.summary-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.result-count{
-  color:var(--muted);
-  font-size:14px;
-}
-
-.lowest-note{
-  font-size:13px;
-  color:var(--green);
-  font-weight:700;
-}
-
-/* =========================
-   PRODUCTS
-========================= */
-
-.products-wrap{
-  max-width:1250px;
-  margin:auto;
-  padding:0 20px 50px;
-}
-
-.group{
-  margin-bottom:30px;
-}
-
-.group-header{
-  background:#fff;
+.stat{
+  padding:18px;
+  border-radius:18px;
+  background:var(--panel);
   border:1px solid var(--border);
-  border-bottom:0;
-  border-radius:18px 18px 0 0;
-  padding:17px 18px;
+}
+
+.stat-label{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.stat-value{
+  margin-top:6px;
+  font-size:25px;
+  font-weight:900;
+}
+
+/* =========================================================
+   COMPARISON
+========================================================= */
+
+.section-head{
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  gap:15px;
+  align-items:flex-end;
+  gap:20px;
+  margin:30px 0 14px;
 }
 
-.group-title{
+.section-head h2{
   margin:0;
-  font-size:19px;
+  font-size:24px;
 }
 
-.group-meta{
+.section-head p{
+  margin:5px 0 0;
   color:var(--muted);
   font-size:13px;
+}
+
+.panel{
+  overflow:hidden;
 }
 
 .table-wrap{
   overflow-x:auto;
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:0 0 18px 18px;
 }
 
-.compare-table{
+table{
   width:100%;
   border-collapse:collapse;
-  min-width:940px;
+  min-width:1050px;
 }
 
-.compare-table th{
+th{
   text-align:left;
-  background:#fafafa;
-  color:#666;
-  font-size:12px;
+  padding:15px;
+  font-size:11px;
   text-transform:uppercase;
-  letter-spacing:.05em;
-  padding:13px 14px;
+  letter-spacing:.8px;
+  color:var(--muted);
+  background:#0a1728;
   border-bottom:1px solid var(--border);
 }
 
-.compare-table td{
-  padding:15px 14px;
-  border-bottom:1px solid #f0f0f0;
+td{
+  padding:16px 15px;
+  border-bottom:1px solid var(--border);
   vertical-align:top;
+  font-size:13px;
 }
 
-.compare-table tr:last-child td{
+tr:last-child td{
   border-bottom:0;
 }
 
-.seller{
+.product-name{
+  max-width:330px;
+  font-weight:800;
+  line-height:1.45;
+}
+
+.seller-name{
   font-weight:800;
 }
 
-.product-name{
-  font-weight:700;
-  max-width:300px;
-  line-height:1.4;
-}
-
-.product-sub{
-  margin-top:5px;
-  color:var(--muted);
-  font-size:12px;
-}
-
-.price{
-  font-size:20px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.mrp{
-  margin-top:3px;
-  color:#999;
-  font-size:12px;
-  text-decoration:line-through;
-}
-
-.lowest-row{
-  background:var(--green-light);
-}
-
-.lowest-badge{
+.purity{
   display:inline-flex;
   align-items:center;
   gap:5px;
-  padding:5px 8px;
   border-radius:999px;
-  background:#c8f7dc;
-  color:var(--green);
+  padding:5px 9px;
+  background:rgba(212,175,55,.10);
+  border:1px solid rgba(212,175,55,.20);
+  color:var(--gold2);
+  font-weight:800;
   font-size:11px;
-  font-weight:900;
-  margin-bottom:5px;
 }
 
-.buy-btn{
+.fineness{
+  display:block;
+  margin-top:5px;
+  color:var(--muted);
+  font-size:11px;
+}
+
+.price{
+  font-size:18px;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.lowest{
+  color:#06180e;
+  background:var(--green);
+  padding:4px 7px;
+  border-radius:7px;
+  font-size:10px;
+  font-weight:950;
+  display:inline-block;
+  margin-top:5px;
+}
+
+.price-note{
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  margin-top:4px;
+}
+
+.view-btn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-width:130px;
-  padding:10px 13px;
+  gap:7px;
+  text-decoration:none;
+  padding:9px 12px;
   border-radius:10px;
-  background:#171717;
-  color:#fff;
-  font-size:13px;
-  font-weight:800;
-  transition:.2s;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#171108;
+  font-weight:900;
+  font-size:12px;
+  white-space:nowrap;
 }
 
-.buy-btn:hover{
-  background:var(--gold-dark);
+.view-btn.disabled{
+  opacity:.45;
+  pointer-events:none;
 }
 
 .offer-list{
   display:flex;
-  flex-wrap:wrap;
+  flex-direction:column;
   gap:5px;
-  max-width:260px;
+  min-width:180px;
 }
 
 .offer{
-  padding:5px 7px;
+  padding:6px 8px;
   border-radius:7px;
+  background:rgba(85,170,255,.07);
+  border:1px solid rgba(85,170,255,.12);
+  color:#cfe7ff;
   font-size:11px;
-  font-weight:700;
-  line-height:1.25;
 }
 
-.offer-voucher{
-  color:#7c2d12;
-  background:#ffedd5;
+.offer strong{
+  color:white;
 }
 
-.offer-promo{
-  color:#5b21b6;
-  background:#ede9fe;
+/* =========================================================
+   CARDS
+========================================================= */
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+  margin-top:18px;
 }
 
-.offer-card{
-  color:#075985;
-  background:#e0f2fe;
-}
-
-.offer-upi{
-  color:#065f46;
-  background:#d1fae5;
-}
-
-.offer-cashback{
-  color:#166534;
-  background:#dcfce7;
-}
-
-.offer-other{
-  color:#374151;
-  background:#f3f4f6;
-}
-
-/* =========================
-   MOBILE CARDS
-========================= */
-
-.mobile-products{
-  display:none;
-}
-
-.mobile-card{
-  background:#fff;
+.product-card{
+  padding:20px;
+  border-radius:20px;
+  background:var(--panel);
   border:1px solid var(--border);
-  border-radius:18px;
-  padding:16px;
-  margin-bottom:12px;
-  box-shadow:0 5px 18px rgba(0,0,0,.04);
 }
 
-.mobile-card.lowest{
-  border:2px solid #52b788;
-  background:#f4fff8;
-}
-
-.mobile-top{
+.product-top{
   display:flex;
   justify-content:space-between;
+  gap:12px;
+}
+
+.product-card h3{
+  margin:12px 0 7px;
+  font-size:16px;
+  line-height:1.4;
+}
+
+.product-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.product-price{
+  margin-top:16px;
+  font-size:25px;
+  font-weight:950;
+}
+
+.seller{
+  color:var(--gold2);
+  font-weight:800;
+  font-size:12px;
+}
+
+.card-offers{
+  margin-top:14px;
+}
+
+.card-offers .offer{
+  margin-top:5px;
+}
+
+.card-footer{
+  margin-top:18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
   gap:10px;
 }
 
-.mobile-seller{
-  font-weight:900;
-}
+/* =========================================================
+   EMPTY / NOTICE
+========================================================= */
 
-.mobile-price{
-  text-align:right;
-  font-size:22px;
-  font-weight:900;
-}
-
-.mobile-details{
-  margin:12px 0;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.detail{
-  padding:9px;
-  border-radius:10px;
-  background:#f7f7f7;
-}
-
-.detail-label{
-  color:#777;
-  font-size:11px;
-}
-
-.detail-value{
-  margin-top:2px;
-  font-weight:800;
+.notice{
+  padding:22px;
+  border-radius:18px;
+  background:rgba(212,175,55,.055);
+  border:1px solid rgba(212,175,55,.16);
+  color:#e9dfbb;
+  line-height:1.7;
   font-size:13px;
 }
 
-.mobile-offers{
-  display:flex;
-  flex-wrap:wrap;
-  gap:5px;
-  margin:10px 0;
-}
-
-.mobile-buy{
-  display:flex;
-  gap:8px;
-}
-
-.mobile-buy .buy-btn{
-  flex:1;
-}
-
-/* =========================
-   EMPTY
-========================= */
-
 .empty{
-  background:#fff;
-  border:1px dashed #ccc;
-  border-radius:18px;
-  padding:50px 20px;
+  padding:45px 20px;
   text-align:center;
   color:var(--muted);
 }
 
 .empty strong{
   display:block;
-  color:#222;
-  margin-bottom:6px;
+  color:white;
+  margin-bottom:7px;
 }
 
-/* =========================
+/* =========================================================
    FOOTER
-========================= */
+========================================================= */
 
 footer{
-  background:#171717;
-  color:#aaa;
-  padding:28px 20px;
-}
-
-.footer-inner{
-  max-width:1250px;
-  margin:auto;
+  margin-top:45px;
+  padding:30px 0 50px;
+  border-top:1px solid var(--border);
+  color:var(--muted);
   font-size:12px;
   line-height:1.7;
 }
 
-.footer-inner strong{
-  color:#fff;
+.footer-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:30px;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
+.footer-title{
+  color:white;
+  font-weight:800;
+  margin-bottom:8px;
+}
 
-@media(max-width:900px){
+/* =========================================================
+   MOBILE
+========================================================= */
 
-  .controls-grid{
+@media(max-width:1000px){
+  .hero-grid{
+    grid-template-columns:1fr;
+  }
+
+  .summary{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .cards{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:650px){
+  .nav{
+    min-height:62px;
+  }
+
+  .nav-status{
+    display:none;
+  }
+
+  .hero{
+    padding-top:25px;
+  }
+
+  .hero-card{
+    padding:25px;
+  }
+
+  h1{
+    letter-spacing:-1.3px;
+  }
+
+  .gold-rates{
+    grid-template-columns:1fr;
+  }
+
+  .filters{
+    align-items:stretch;
+  }
+
+  .filter-group{
+    width:100%;
+    justify-content:space-between;
+  }
+
+  select{
+    flex:1;
+  }
+
+  .reset{
+    width:100%;
+    margin-left:0;
+  }
+
+  .summary{
     grid-template-columns:1fr 1fr;
   }
 
-  .control.search{
-    grid-column:1 / -1;
-  }
-
-  .gold-grid{
+  .cards{
     grid-template-columns:1fr;
   }
 
-  .table-wrap{
-    display:none;
-  }
-
-  .mobile-products{
-    display:block;
-    padding:10px;
-    background:#f7f7f7;
-    border:1px solid var(--border);
-    border-top:0;
-    border-radius:0 0 18px 18px;
-  }
-
-}
-
-@media(max-width:600px){
-
-  .header-inner{
-    padding:11px 14px;
-  }
-
-  .header-note{
-    display:none;
-  }
-
-  .hero-inner{
-    padding:32px 15px 28px;
-  }
-
-  .gold-section,
-  .controls-wrap,
-  .summary,
-  .products-wrap{
-    padding-left:14px;
-    padding-right:14px;
-  }
-
-  .controls-grid{
+  .footer-grid{
     grid-template-columns:1fr;
-  }
-
-  .control.search{
-    grid-column:auto;
-  }
-
-  .summary-row{
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .group-header{
-    align-items:flex-start;
-    flex-direction:column;
   }
 }
 </style>
@@ -680,170 +668,343 @@ footer{
 
 <body>
 
-<header class="header">
-  <div class="header-inner">
+<header>
+  <div class="container nav">
 
-    <a class="logo" href="./">
+    <div class="logo">
       <div class="logo-icon">₹</div>
       <div>GoldMania<span>Savings</span></div>
-    </a>
+    </div>
 
-    <div class="header-note">
-      Compare before you buy
+    <div class="nav-status">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText">Comparison ready</span>
     </div>
 
   </div>
 </header>
 
 
-<section class="hero">
-  <div class="hero-inner">
+<main class="container">
 
-    <h1>
-      Gold Coin
-      <span>Price Comparison</span>
-    </h1>
+  <!-- =====================================================
+       HERO
+  ====================================================== -->
 
-    <p>
-      Compare gold coins across leading jewellery websites.
-      See the exact product page, price, vouchers, promo codes,
-      card offers, UPI offers and cashback in one place.
-    </p>
+  <section class="hero">
 
-  </div>
-</section>
+    <div class="hero-grid">
 
+      <div class="hero-card">
 
-<section class="gold-section">
+        <div class="eyebrow">
+          Gold Coin Price Comparison
+        </div>
 
-  <div class="gold-panel">
+        <h1>
+          Compare gold coins<br>
+          without the confusion.
+        </h1>
 
-    <div class="gold-head">
+        <p class="hero-text">
+          Compare seller, purity, fineness, weight, listed price
+          and available offers in one place. Product buttons are
+          intended to open the individual official product page,
+          not a generic gold-coin category page.
+        </p>
 
-      <h2>Today's Gold Reference Price</h2>
-
-      <div class="gold-source" id="goldSource">
-        Reference data
       </div>
 
-    </div>
 
-    <div class="gold-grid">
+      <!-- ===================================================
+           GOLD PRICE
+      ==================================================== -->
 
       <div class="gold-card">
-        <div class="karat">24K Gold</div>
-        <div class="price" id="gold24">₹--</div>
-        <div class="unit">per gram</div>
-      </div>
 
-      <div class="gold-card">
-        <div class="karat">22K Gold</div>
-        <div class="price" id="gold22">₹--</div>
-        <div class="unit">per gram</div>
-      </div>
+        <div class="gold-title">
 
-      <div class="gold-card">
-        <div class="karat">18K Gold</div>
-        <div class="price" id="gold18">₹--</div>
-        <div class="unit">per gram</div>
+          <h2>Gold Price Reference</h2>
+
+          <span id="goldSource"
+                class="gold-source">
+            Not loaded
+          </span>
+
+        </div>
+
+        <div class="gold-rates">
+
+          <div class="rate">
+            <div class="rate-label">24K / gram</div>
+            <div id="rate24" class="rate-value">—</div>
+          </div>
+
+          <div class="rate">
+            <div class="rate-label">22K / gram</div>
+            <div id="rate22" class="rate-value">—</div>
+          </div>
+
+          <div class="rate">
+            <div class="rate-label">18K / gram</div>
+            <div id="rate18" class="rate-value">—</div>
+          </div>
+
+        </div>
+
+        <div id="goldUpdated"
+             class="gold-updated">
+          Gold reference data has not been supplied by a live
+          browser-accessible source.
+        </div>
+
       </div>
 
     </div>
 
-  </div>
-
-</section>
+  </section>
 
 
-<section class="controls-wrap">
+  <!-- =====================================================
+       IMPORTANT DATA NOTICE
+  ====================================================== -->
 
-  <div class="controls">
+  <section class="notice">
 
-    <div class="controls-grid">
+    <strong>Live-data rule:</strong>
 
-      <div class="control search">
-        <input
-          id="searchInput"
-          type="search"
-          placeholder="Search gold coin, Lakshmi, Ganesha..."
-          autocomplete="off"
-        >
-      </div>
+    GoldManiaSavings does not turn category pages into fake
+    product links. A product is shown as a product only when
+    an individual product URL and product-level information are
+    available.
 
-      <div class="control">
-        <select id="purityFilter">
-          <option value="">All Purity</option>
-          <option value="24K">24K</option>
-          <option value="22K">22K</option>
-          <option value="18K">18K</option>
-        </select>
-      </div>
+    Browser-only GitHub Pages cannot reliably scrape every
+    jewellery website because many stores use CORS restrictions,
+    client-side rendering and anti-bot systems. Therefore this
+    page never invents a price, offer, coupon or product URL.
 
-      <div class="control">
-        <select id="weightFilter">
-          <option value="">All Weight</option>
-        </select>
-      </div>
+  </section>
 
-      <div class="control">
-        <select id="sellerFilter">
-          <option value="">All Sellers</option>
-        </select>
-      </div>
 
-      <button
-        class="reset-btn"
-        id="resetBtn"
-        type="button"
-      >
-        Reset
-      </button>
+  <!-- =====================================================
+       FILTERS
+  ====================================================== -->
+
+  <section class="panel filters">
+
+    <div class="filter-group">
+
+      <span class="filter-label">
+        Purity
+      </span>
+
+      <select id="purityFilter">
+        <option value="ALL">All Purities</option>
+        <option value="24K">24K</option>
+        <option value="22K">22K</option>
+        <option value="18K">18K</option>
+      </select>
 
     </div>
 
-  </div>
 
-</section>
+    <div class="filter-group">
 
+      <span class="filter-label">
+        Fineness
+      </span>
 
-<section class="summary">
+      <select id="finenessFilter">
+        <option value="ALL">All Fineness</option>
+        <option value="999.9">999.9</option>
+        <option value="999">999</option>
+        <option value="995">995</option>
+        <option value="916">916</option>
+        <option value="750">750</option>
+      </select>
 
-  <div class="summary-row">
-
-    <div
-      class="result-count"
-      id="resultCount"
-    >
-      Loading products...
     </div>
 
-    <div class="lowest-note">
-      🟢 Lowest price is highlighted
+
+    <div class="filter-group">
+
+      <span class="filter-label">
+        Weight
+      </span>
+
+      <select id="weightFilter">
+        <option value="ALL">All Weights</option>
+        <option value="0.5">0.5 g</option>
+        <option value="1">1 g</option>
+        <option value="2">2 g</option>
+        <option value="2.5">2.5 g</option>
+        <option value="4">4 g</option>
+        <option value="5">5 g</option>
+        <option value="8">8 g</option>
+        <option value="10">10 g</option>
+        <option value="20">20 g</option>
+        <option value="50">50 g</option>
+      </select>
+
     </div>
 
-  </div>
 
-</section>
+    <div class="filter-group">
+
+      <span class="filter-label">
+        Seller
+      </span>
+
+      <select id="sellerFilter">
+        <option value="ALL">All Sellers</option>
+      </select>
+
+    </div>
 
 
-<main class="products-wrap" id="productsContainer">
+    <button id="resetBtn"
+            class="reset">
+      Reset Filters
+    </button>
+
+  </section>
+
+
+  <!-- =====================================================
+       SUMMARY
+  ====================================================== -->
+
+  <section class="summary">
+
+    <div class="stat">
+      <div class="stat-label">Products</div>
+      <div id="statProducts" class="stat-value">0</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-label">Sellers</div>
+      <div id="statSellers" class="stat-value">0</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-label">Lowest Listed Price</div>
+      <div id="statLowest" class="stat-value">—</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-label">Offers Available</div>
+      <div id="statOffers" class="stat-value">0</div>
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       COMPARISON
+  ====================================================== -->
+
+  <section>
+
+    <div class="section-head">
+
+      <div>
+        <h2>Product Comparison</h2>
+
+        <p>
+          Lowest listed price is highlighted in green.
+          Comparison is only made between products available
+          in the loaded dataset.
+        </p>
+      </div>
+
+    </div>
+
+
+    <div class="panel">
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+              <th>Product</th>
+              <th>Seller</th>
+              <th>Purity</th>
+              <th>Weight</th>
+              <th>Listed Price</th>
+              <th>Offers</th>
+              <th>Product</th>
+            </tr>
+
+          </thead>
+
+          <tbody id="comparisonBody"></tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       PRODUCT CARDS
+  ====================================================== -->
+
+  <section>
+
+    <div class="section-head">
+
+      <div>
+        <h2>Gold Coins</h2>
+
+        <p>
+          Individual product pages only.
+        </p>
+
+      </div>
+
+    </div>
+
+    <div id="productCards"
+         class="cards"></div>
+
+  </section>
+
 </main>
 
 
 <footer>
 
-  <div class="footer-inner">
+  <div class="container footer-grid">
 
-    <strong>GoldManiaSavings</strong>
+    <div>
 
-    compares product information supplied in this
-    static dataset.
+      <div class="footer-title">
+        GoldManiaSavings
+      </div>
 
-    Prices, stock, vouchers, promo codes and payment
-    offers can change on the seller website.
+      Price comparison interface for physical gold coins.
+      Prices, offers and product availability can change on
+      seller websites.
 
-    Always verify the final price and offer conditions
-    on the exact seller product page before purchasing.
+    </div>
+
+    <div>
+
+      <div class="footer-title">
+        Important
+      </div>
+
+      GoldManiaSavings does not claim an offer or price is
+      current unless the underlying data source actually
+      supplied that information.
+
+    </div>
 
   </div>
 
@@ -853,496 +1014,21 @@ footer{
 <script>
 "use strict";
 
-/*
-===========================================================
- GOLDMANIASAVINGS
- STATIC DATA VERSION
- ----------------------------------------------------------
- IMPORTANT:
-
- This page intentionally DOES NOT call /api/*.
-
- To update products, edit PRODUCTS below.
-
- Every product MUST have the exact product URL.
-
- Do NOT use:
-   /gold-coins.html
-   /gold+coins/
-   /collections/
-   /category/
-   /browse
-   /search
-
- as productUrl.
-
- Use the actual product detail URL.
-===========================================================
-*/
-
-
 /* =========================================================
-   GOLD PRICE
+   GOLDMANIASAVINGS
+   Browser-only frontend
+
+   IMPORTANT:
+   A GitHub Pages HTML file cannot reliably scrape arbitrary
+   ecommerce websites. Therefore products must come from an
+   actual browser-accessible data source.
+
+   The application below is deliberately strict:
+   - no category URLs as products
+   - no fabricated prices
+   - no fabricated offers
+   - exact product URL validation
 ========================================================= */
-
-const GOLD_PRICE = {
-
-  updatedAt: "2026-09-30",
-
-  source: "India gold reference data",
-
-  rates: {
-    "24K": 0,
-    "22K": 0,
-    "18K": 0
-  }
-
-};
-
-
-/*
-===========================================================
- PRODUCT DATA
-===========================================================
-
- Add exact product pages here.
-
- Example:
-
- {
-   id: "bluestone-208916",
-   sellerId: "bluestone",
-   seller: "BlueStone",
-
-   productName:
-     "50 Milligram 24 KT Lakshmi Gold Coin",
-
-   purity: "24K",
-   weight: 0.05,
-
-   listedPrice: 1400,
-   mrp: 1500,
-
-   voucher: "₹100 voucher",
-   promoCode: "GOLD100",
-   cardOffer: "10% instant discount on eligible cards",
-   upiOffer: "Extra ₹50 off on UPI",
-   cashback: "5% cashback",
-
-   offerText:
-     "Limited period offer",
-
-   productUrl:
-     "https://www.bluestone.com/gold+coins/50-milligram-24-kt-lakshmi-gold-coin~208916.html?impEvent=browseclick&posEvent=0&sortbyEvent=mostpopular&tagEvent="
-
- }
-
-===========================================================
-*/
-
-
-const PRODUCTS = [
-
-  /*
-  ---------------------------------------------------------
-  BLUESTONE
-  ---------------------------------------------------------
-  Exact product example supplied for this project.
-  ---------------------------------------------------------
-  */
-
-  {
-    id: "bluestone-208916",
-
-    sellerId: "bluestone",
-
-    seller: "BlueStone",
-
-    productName:
-      "50 Milligram 24 KT Lakshmi Gold Coin",
-
-    purity: "24K",
-
-    weight: 0.05,
-
-    listedPrice: 1400,
-
-    mrp: 1500,
-
-    voucher: "",
-
-    promoCode: "",
-
-    cardOffer: "",
-
-    upiOffer: "",
-
-    cashback: "",
-
-    offerText:
-      "",
-
-    productUrl:
-      "https://www.bluestone.com/gold+coins/50-milligram-24-kt-lakshmi-gold-coin~208916.html?impEvent=browseclick&posEvent=0&sortbyEvent=mostpopular&tagEvent=",
-
-    status: "verified",
-
-    lastUpdated:
-      "2026-09-30"
-
-  },
-
-
-  /*
-  ---------------------------------------------------------
-  CARATLANE
-  ---------------------------------------------------------
-  Add exact CaratLane product URLs here.
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "caratlane-xxxxx",
-    sellerId: "caratlane",
-    seller: "CaratLane",
-    productName: "2g 24Kt Plain Gold Coin",
-    purity: "24K",
-    weight: 2,
-    listedPrice: 30522,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  MMTC-PAMP
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "mmtc-xxxxx",
-    sellerId: "mmtc",
-    seller: "MMTC-PAMP",
-    productName: "5g 24K Gold Coin",
-    purity: "24K",
-    weight: 5,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  TANISHQ
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "tanishq-xxxxx",
-    sellerId: "tanishq",
-    seller: "Tanishq",
-    productName: "Gold Coin",
-    purity: "22K",
-    weight: 2,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  KALYAN JEWELLERS
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "kalyan-xxxxx",
-    sellerId: "kalyan",
-    seller: "Kalyan Jewellers",
-    productName: "Gold Coin",
-    purity: "22K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  SENCO
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "senco-xxxxx",
-    sellerId: "senco",
-    seller: "Senco Gold & Diamonds",
-    productName: "Gold Coin",
-    purity: "24K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  MALABAR
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "malabar-xxxxx",
-    sellerId: "malabar",
-    seller: "Malabar Gold & Diamonds",
-    productName: "Gold Coin",
-    purity: "24K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  PNG JEWELLERS
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "png-xxxxx",
-    sellerId: "png",
-    seller: "PNG Jewellers",
-    productName: "Gold Coin",
-    purity: "24K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  JOYALUKKAS
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "joyalukkas-xxxxx",
-    sellerId: "joyalukkas",
-    seller: "Joyalukkas",
-    productName: "Gold Coin",
-    purity: "24K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  CANDERE
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "candere-xxxxx",
-    sellerId: "candere",
-    seller: "Candere",
-    productName: "Gold Coin",
-    purity: "24K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  MIA BY TANISHQ
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "mia-xxxxx",
-    sellerId: "mia",
-    seller: "Mia by Tanishq",
-    productName: "Gold Coin",
-    purity: "24K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  RELIANCE JEWELS
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "reliance-xxxxx",
-    sellerId: "reliance",
-    seller: "Reliance Jewels",
-    productName: "Gold Coin",
-    purity: "24K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  },
-  */
-
-
-  /*
-  ---------------------------------------------------------
-  PC JEWELLER
-  ---------------------------------------------------------
-  */
-
-  /*
-  {
-    id: "pcj-xxxxx",
-    sellerId: "pcj",
-    seller: "PC Jeweller",
-    productName: "Gold Coin",
-    purity: "24K",
-    weight: 1,
-    listedPrice: 0,
-    mrp: 0,
-    voucher: "",
-    promoCode: "",
-    cardOffer: "",
-    upiOffer: "",
-    cashback: "",
-    offerText: "",
-    productUrl: "EXACT PRODUCT URL",
-    status: "verified",
-    lastUpdated: "2026-09-30"
-  }
-  */
-
-];
 
 
 /* =========================================================
@@ -1351,228 +1037,359 @@ const PRODUCTS = [
 
 const SELLERS = {
 
-  caratlane: "CaratLane",
+  caratlane: {
+    name: "CaratLane",
+    domain: "caratlane.com"
+  },
 
-  mmtc: "MMTC-PAMP",
+  mmtc: {
+    name: "MMTC-PAMP",
+    domain: "mmtcpamp.com"
+  },
 
-  tanishq: "Tanishq",
+  tanishq: {
+    name: "Tanishq",
+    domain: "tanishq.co.in"
+  },
 
-  kalyan: "Kalyan Jewellers",
+  kalyan: {
+    name: "Kalyan Jewellers",
+    domain: "kalyanjewellers.net"
+  },
 
-  senco: "Senco Gold & Diamonds",
+  senco: {
+    name: "Senco Gold & Diamonds",
+    domain: "sencogoldanddiamonds.com"
+  },
 
-  malabar: "Malabar Gold & Diamonds",
+  malabar: {
+    name: "Malabar Gold & Diamonds",
+    domain: "malabargoldanddiamonds.com"
+  },
 
-  png: "PNG Jewellers",
+  png: {
+    name: "PNG Jewellers",
+    domain: "pngadgil.com"
+  },
 
-  joyalukkas: "Joyalukkas",
+  joyalukkas: {
+    name: "Joyalukkas",
+    domain: "joyalukkas.in"
+  },
 
-  bluestone: "BlueStone",
+  bluestone: {
+    name: "BlueStone",
+    domain: "bluestone.com"
+  },
 
-  candere: "Candere",
+  candere: {
+    name: "Candere",
+    domain: "candere.com"
+  },
 
-  mia: "Mia by Tanishq",
+  mia: {
+    name: "Mia by Tanishq",
+    domain: "miabytanishq.com"
+  },
 
-  reliance: "Reliance Jewels",
+  reliance: {
+    name: "Reliance Jewels",
+    domain: "reliancejewels.com"
+  },
 
-  pcj: "PC Jeweller"
+  pcj: {
+    name: "PC Jeweller",
+    domain: "pcjeweller.com"
+  }
 
 };
 
 
 /* =========================================================
-   SELLER ORDER
+   DATA
 ========================================================= */
 
-const SELLER_ORDER = Object.keys(SELLERS);
+/*
+ * Do NOT put category URLs here.
+ *
+ * A product record must have:
+ *
+ * sellerId
+ * productName
+ * purity
+ * fineness
+ * weight
+ * listedPrice
+ * productUrl
+ *
+ * Offers are optional.
+ *
+ * This object is intentionally empty until genuine product
+ * data is supplied. This prevents the website from showing
+ * fake "live" prices.
+ */
+
+let PRODUCTS = [];
+
+
+/* =========================================================
+   OPTIONAL BROWSER-SAFE DATA LOADER
+========================================================= */
+
+/*
+ * If later you have a JSON file hosted on the SAME GitHub
+ * Pages origin, set DATA_URL to:
+ *
+ * "./products.json"
+ *
+ * This keeps the frontend separate from the data collector.
+ *
+ * The current requirement was one index.html, so the default
+ * is intentionally disabled.
+ */
+
+const DATA_URL = "";
+
+
+/* =========================================================
+   OPTIONAL GOLD DATA
+========================================================= */
+
+/*
+ * Same-origin gold JSON can be supplied here.
+ *
+ * Expected:
+ *
+ * {
+ *   "rates": {
+ *      "24K": 12345,
+ *      "22K": 11300,
+ *      "18K": 9250
+ *   },
+ *   "source": "...",
+ *   "updatedAt": "..."
+ * }
+ */
+
+const GOLD_DATA_URL = "";
 
 
 /* =========================================================
    DOM
 ========================================================= */
 
-const els = {
+const purityFilter =
+  document.getElementById("purityFilter");
 
-  search:
-    document.getElementById("searchInput"),
+const finenessFilter =
+  document.getElementById("finenessFilter");
 
-  purity:
-    document.getElementById("purityFilter"),
+const weightFilter =
+  document.getElementById("weightFilter");
 
-  weight:
-    document.getElementById("weightFilter"),
+const sellerFilter =
+  document.getElementById("sellerFilter");
 
-  seller:
-    document.getElementById("sellerFilter"),
+const resetBtn =
+  document.getElementById("resetBtn");
 
-  reset:
-    document.getElementById("resetBtn"),
+const comparisonBody =
+  document.getElementById("comparisonBody");
 
-  count:
-    document.getElementById("resultCount"),
+const productCards =
+  document.getElementById("productCards");
 
-  products:
-    document.getElementById("productsContainer"),
+const statProducts =
+  document.getElementById("statProducts");
 
-  gold24:
-    document.getElementById("gold24"),
+const statSellers =
+  document.getElementById("statSellers");
 
-  gold22:
-    document.getElementById("gold22"),
+const statLowest =
+  document.getElementById("statLowest");
 
-  gold18:
-    document.getElementById("gold18"),
+const statOffers =
+  document.getElementById("statOffers");
 
-  goldSource:
-    document.getElementById("goldSource")
+const statusDot =
+  document.getElementById("statusDot");
 
-};
+const statusText =
+  document.getElementById("statusText");
+
+const goldSource =
+  document.getElementById("goldSource");
+
+const goldUpdated =
+  document.getElementById("goldUpdated");
+
+const rate24 =
+  document.getElementById("rate24");
+
+const rate22 =
+  document.getElementById("rate22");
+
+const rate18 =
+  document.getElementById("rate18");
 
 
 /* =========================================================
    INIT
 ========================================================= */
 
-function init(){
+document.addEventListener(
+  "DOMContentLoaded",
+  init
+);
 
-  renderGoldPrice();
 
-  populateFilters();
+async function init(){
+
+  populateSellerFilter();
+
+  bindEvents();
+
+  /*
+   * Try same-origin data only if configured.
+   */
+
+  if(DATA_URL){
+
+    await loadProducts();
+
+  }
+
+  if(GOLD_DATA_URL){
+
+    await loadGold();
+
+  }
 
   render();
 
-  els.search.addEventListener(
-    "input",
-    render
-  );
+  updateStatus();
 
-  els.purity.addEventListener(
-    "change",
-    render
-  );
+}
 
-  els.weight.addEventListener(
-    "change",
-    render
-  );
 
-  els.seller.addEventListener(
-    "change",
-    render
-  );
+/* =========================================================
+   SELLER FILTER
+========================================================= */
 
-  els.reset.addEventListener(
+function populateSellerFilter(){
+
+  sellerFilter.innerHTML =
+    `<option value="ALL">All Sellers</option>`;
+
+  Object.entries(SELLERS)
+    .forEach(([id,seller])=>{
+
+      const option =
+        document.createElement("option");
+
+      option.value = id;
+      option.textContent = seller.name;
+
+      sellerFilter.appendChild(option);
+
+    });
+
+}
+
+
+/* =========================================================
+   EVENTS
+========================================================= */
+
+function bindEvents(){
+
+  [
+    purityFilter,
+    finenessFilter,
+    weightFilter,
+    sellerFilter
+  ]
+  .forEach(element=>{
+
+    element.addEventListener(
+      "change",
+      render
+    );
+
+  });
+
+
+  resetBtn.addEventListener(
     "click",
-    resetFilters
+    ()=>{
+
+      purityFilter.value = "ALL";
+      finenessFilter.value = "ALL";
+      weightFilter.value = "ALL";
+      sellerFilter.value = "ALL";
+
+      render();
+
+    }
   );
 
 }
 
 
 /* =========================================================
-   GOLD PRICE
+   LOAD PRODUCTS
 ========================================================= */
 
-function renderGoldPrice(){
+async function loadProducts(){
 
-  els.gold24.textContent =
-    money(
-      GOLD_PRICE.rates["24K"]
+  try{
+
+    const response =
+      await fetch(
+        DATA_URL,
+        {
+          cache:"no-store"
+        }
+      );
+
+    if(!response.ok){
+
+      throw new Error(
+        "Product data HTTP " +
+        response.status
+      );
+
+    }
+
+    const data =
+      await response.json();
+
+    const list =
+      Array.isArray(data)
+        ? data
+        : data.products;
+
+    if(!Array.isArray(list)){
+
+      throw new Error(
+        "Invalid product data"
+      );
+
+    }
+
+    PRODUCTS =
+      list
+        .map(normalizeProduct)
+        .filter(Boolean);
+
+  }catch(error){
+
+    console.error(
+      "Product data error:",
+      error
     );
 
-  els.gold22.textContent =
-    money(
-      GOLD_PRICE.rates["22K"]
-    );
-
-  els.gold18.textContent =
-    money(
-      GOLD_PRICE.rates["18K"]
-    );
-
-  els.goldSource.textContent =
-    `Updated ${GOLD_PRICE.updatedAt} • ${GOLD_PRICE.source}`;
-
-}
-
-
-/* =========================================================
-   FILTERS
-========================================================= */
-
-function populateFilters(){
-
-  const weights =
-    [...new Set(
-      PRODUCTS
-        .map(
-          product =>
-            Number(product.weight)
-        )
-        .filter(
-          weight =>
-            Number.isFinite(weight) &&
-            weight > 0
-        )
-    )]
-    .sort(
-      (a,b) =>
-        a-b
-    );
-
-
-  for(
-    const weight of weights
-  ){
-
-    const option =
-      document.createElement("option");
-
-    option.value =
-      String(weight);
-
-    option.textContent =
-      formatWeight(weight);
-
-    els.weight.appendChild(
-      option
-    );
-
-  }
-
-
-  const sellers =
-    [...new Set(
-      PRODUCTS.map(
-        product =>
-          product.sellerId
-      )
-    )]
-    .filter(Boolean)
-    .sort(
-      (a,b) =>
-        sellerRank(a) -
-        sellerRank(b)
-    );
-
-
-  for(
-    const sellerId of sellers
-  ){
-
-    const option =
-      document.createElement("option");
-
-    option.value =
-      sellerId;
-
-    option.textContent =
-      SELLERS[sellerId] ||
-      sellerId;
-
-    els.seller.appendChild(
-      option
-    );
+    PRODUCTS = [];
 
   }
 
@@ -1580,100 +1397,573 @@ function populateFilters(){
 
 
 /* =========================================================
-   RESET
+   LOAD GOLD
 ========================================================= */
 
-function resetFilters(){
+async function loadGold(){
 
-  els.search.value = "";
+  try{
 
-  els.purity.value = "";
+    const response =
+      await fetch(
+        GOLD_DATA_URL,
+        {
+          cache:"no-store"
+        }
+      );
 
-  els.weight.value = "";
+    if(!response.ok){
 
-  els.seller.value = "";
+      throw new Error(
+        "Gold data HTTP " +
+        response.status
+      );
 
-  render();
+    }
+
+    const data =
+      await response.json();
+
+    if(
+      !data ||
+      !data.rates
+    ){
+
+      throw new Error(
+        "Invalid gold data"
+      );
+
+    }
+
+    setGold(
+      data.rates,
+      data.source ||
+      "Gold reference",
+      data.updatedAt ||
+      ""
+    );
+
+  }catch(error){
+
+    console.error(
+      "Gold data error:",
+      error
+    );
+
+    clearGold();
+
+  }
 
 }
 
 
 /* =========================================================
-   FILTERED PRODUCTS
+   NORMALIZE PRODUCT
+========================================================= */
+
+function normalizeProduct(product){
+
+  if(
+    !product ||
+    typeof product !== "object"
+  ){
+
+    return null;
+
+  }
+
+
+  const sellerId =
+    String(
+      product.sellerId || ""
+    )
+    .toLowerCase()
+    .trim();
+
+
+  if(
+    !SELLERS[sellerId]
+  ){
+
+    return null;
+
+  }
+
+
+  const productUrl =
+    validateProductUrl(
+      product.productUrl,
+      sellerId
+    );
+
+
+  /*
+   * Exact product URL is mandatory.
+   */
+
+  if(!productUrl){
+
+    return null;
+
+  }
+
+
+  const productName =
+    clean(
+      product.productName ||
+      product.name
+    );
+
+
+  if(!productName){
+
+    return null;
+
+  }
+
+
+  const purity =
+    normalizePurity(
+      product.purity
+    );
+
+
+  if(!purity){
+
+    return null;
+
+  }
+
+
+  const weight =
+    number(
+      product.weight
+    );
+
+
+  if(
+    !weight ||
+    weight <= 0
+  ){
+
+    return null;
+
+  }
+
+
+  const listedPrice =
+    number(
+      product.listedPrice ??
+      product.price
+    );
+
+
+  if(
+    !listedPrice ||
+    listedPrice <= 0
+  ){
+
+    return null;
+
+  }
+
+
+  return {
+
+    id:
+      product.id ||
+      createId(
+        sellerId,
+        productUrl
+      ),
+
+    sellerId,
+
+    seller:
+      SELLERS[sellerId].name,
+
+    productName,
+
+    purity,
+
+    fineness:
+      normalizeFineness(
+        product.fineness,
+        purity
+      ),
+
+    weight,
+
+    listedPrice,
+
+    mrp:
+      number(product.mrp),
+
+    shipping:
+      number(product.shipping),
+
+    coupon:
+      number(product.coupon),
+
+    cardOffer:
+      number(product.cardOffer),
+
+    upiOffer:
+      number(product.upiOffer),
+
+    cashback:
+      number(product.cashback),
+
+    voucher:
+      clean(product.voucher),
+
+    promoCode:
+      clean(
+        product.promoCode
+      ),
+
+    offerText:
+      clean(
+        product.offerText
+      ),
+
+    productUrl,
+
+    lastUpdated:
+      product.lastUpdated || ""
+
+  };
+
+}
+
+
+/* =========================================================
+   EXACT PRODUCT URL VALIDATION
+========================================================= */
+
+function validateProductUrl(
+  value,
+  sellerId
+){
+
+  if(
+    typeof value !== "string" ||
+    !value.trim()
+  ){
+
+    return "";
+
+  }
+
+
+  let url;
+
+  try{
+
+    url =
+      new URL(
+        value.trim()
+      );
+
+  }catch{
+
+    return "";
+
+  }
+
+
+  if(
+    url.protocol !== "https:" &&
+    url.protocol !== "http:"
+  ){
+
+    return "";
+
+  }
+
+
+  const hostname =
+    url.hostname
+      .toLowerCase()
+      .replace(/^www\./,"");
+
+
+  const expected =
+    SELLERS[sellerId].domain
+      .toLowerCase()
+      .replace(/^www\./,"");
+
+
+  /*
+   * Product must remain on official seller domain.
+   */
+
+  if(
+    hostname !== expected &&
+    !hostname.endsWith(
+      "." + expected
+    )
+  ){
+
+    return "";
+
+  }
+
+
+  const path =
+    url.pathname
+      .toLowerCase();
+
+
+  /*
+   * Reject generic/category pages.
+   */
+
+  const blocked = [
+
+    "/",
+    "/gold-coins",
+    "/gold-coins/",
+    "/gold-coins.html",
+    "/gold-coins.html/",
+    "/collections/",
+    "/category/",
+    "/categories/",
+    "/search",
+    "/search/",
+    "/shop/",
+    "/products",
+    "/products/",
+    "/gold",
+    "/gold/"
+
+  ];
+
+
+  if(
+    blocked.some(
+      item =>
+        path === item ||
+        path.startsWith(item + "?")
+    )
+  ){
+
+    return "";
+
+  }
+
+
+  /*
+   * Reject obvious category/browse URLs.
+   */
+
+  const badWords = [
+
+    "browse",
+    "category",
+    "categories",
+    "collection",
+    "collections",
+    "filter",
+    "sortby",
+    "sort-by",
+    "search?"
+
+  ];
+
+
+  if(
+    badWords.some(
+      word =>
+        path.includes(word)
+    )
+  ){
+
+    return "";
+
+  }
+
+
+  /*
+   * A product path normally contains a
+   * meaningful slug/id.
+   */
+
+  if(
+    path.length < 6
+  ){
+
+    return "";
+
+  }
+
+
+  return url.toString();
+
+}
+
+
+/* =========================================================
+   PURITY
+========================================================= */
+
+function normalizePurity(value){
+
+  const v =
+    String(value || "")
+      .toUpperCase()
+      .replace(/\s/g,"");
+
+
+  if(
+    v.includes("24") ||
+    v.includes("999.9") ||
+    v.includes("999") ||
+    v.includes("995")
+  ){
+
+    return "24K";
+
+  }
+
+
+  if(
+    v.includes("22") ||
+    v.includes("916")
+  ){
+
+    return "22K";
+
+  }
+
+
+  if(
+    v.includes("18") ||
+    v.includes("750")
+  ){
+
+    return "18K";
+
+  }
+
+
+  return "";
+
+}
+
+
+/* =========================================================
+   FINENESS
+========================================================= */
+
+function normalizeFineness(
+  value,
+  purity
+){
+
+  if(value){
+
+    const text =
+      String(value)
+        .replace(/[^\d.]/g,"");
+
+    const n =
+      Number(text);
+
+    if(
+      Number.isFinite(n) &&
+      n > 0
+    ){
+
+      return String(n);
+
+    }
+
+  }
+
+
+  if(purity === "24K"){
+    return "999.9";
+  }
+
+  if(purity === "22K"){
+    return "916";
+  }
+
+  if(purity === "18K"){
+    return "750";
+  }
+
+  return "";
+
+}
+
+
+/* =========================================================
+   FILTER
 ========================================================= */
 
 function getFilteredProducts(){
 
-  const query =
-    els.search.value
-      .trim()
-      .toLowerCase();
-
   const purity =
-    els.purity.value;
+    purityFilter.value;
+
+  const fineness =
+    finenessFilter.value;
 
   const weight =
-    els.weight.value;
+    weightFilter.value;
 
   const seller =
-    els.seller.value;
+    sellerFilter.value;
 
 
-  return PRODUCTS.filter(
-    product => {
+  return PRODUCTS.filter(product=>{
 
-      if(
-        !isValidProduct(product)
-      ){
-        return false;
-      }
+    if(
+      purity !== "ALL" &&
+      product.purity !== purity
+    ){
 
-
-      if(
-        query &&
-        ![
-          product.productName,
-          product.seller,
-          product.purity,
-          String(product.weight)
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query)
-      ){
-        return false;
-      }
-
-
-      if(
-        purity &&
-        product.purity !== purity
-      ){
-        return false;
-      }
-
-
-      if(
-        weight &&
-        Number(product.weight) !==
-        Number(weight)
-      ){
-        return false;
-      }
-
-
-      if(
-        seller &&
-        product.sellerId !== seller
-      ){
-        return false;
-      }
-
-
-      return true;
+      return false;
 
     }
-  );
+
+
+    if(
+      fineness !== "ALL" &&
+      product.fineness !== fineness
+    ){
+
+      return false;
+
+    }
+
+
+    if(
+      weight !== "ALL" &&
+      Number(product.weight) !==
+      Number(weight)
+    ){
+
+      return false;
+
+    }
+
+
+    if(
+      seller !== "ALL" &&
+      product.sellerId !== seller
+    ){
+
+      return false;
+
+    }
+
+
+    return true;
+
+  });
 
 }
 
@@ -1684,23 +1974,94 @@ function getFilteredProducts(){
 
 function render(){
 
-  const filtered =
+  const products =
     getFilteredProducts();
 
+  renderStats(products);
 
-  els.count.textContent =
-    `${filtered.length} product${filtered.length === 1 ? "" : "s"} found`;
+  renderTable(products);
+
+  renderCards(products);
+
+}
 
 
-  if(
-    filtered.length === 0
-  ){
+/* =========================================================
+   STATS
+========================================================= */
 
-    els.products.innerHTML = `
-      <div class="empty">
-        <strong>No matching products</strong>
-        Try changing the search, purity, weight or seller filter.
-      </div>
+function renderStats(products){
+
+  statProducts.textContent =
+    products.length;
+
+
+  const sellers =
+    new Set(
+      products.map(
+        p => p.sellerId
+      )
+    );
+
+
+  statSellers.textContent =
+    sellers.size;
+
+
+  if(products.length){
+
+    const lowest =
+      Math.min(
+        ...products.map(
+          p => p.listedPrice
+        )
+      );
+
+    statLowest.textContent =
+      money(lowest);
+
+  }else{
+
+    statLowest.textContent =
+      "—";
+
+  }
+
+
+  const offers =
+    products.filter(
+      hasOffer
+    ).length;
+
+
+  statOffers.textContent =
+    offers;
+
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+function renderTable(products){
+
+  comparisonBody.innerHTML = "";
+
+
+  if(!products.length){
+
+    comparisonBody.innerHTML = `
+      <tr>
+        <td colspan="7">
+          <div class="empty">
+            <strong>No verified product data available</strong>
+            Products will appear here only when an exact
+            individual product URL and product-level price
+            data are available.
+          </div>
+        </td>
+      </tr>
     `;
 
     return;
@@ -1708,24 +2069,49 @@ function render(){
   }
 
 
+  /*
+   * Compare by same weight + purity + fineness.
+   */
+
   const groups =
-    groupProducts(
-      filtered
-    );
+    groupProducts(products);
 
 
-  els.products.innerHTML =
-    Object.values(groups)
+  const rows = [];
+
+
+  groups.forEach(group=>{
+
+    const lowest =
+      Math.min(
+        ...group.map(
+          p => p.listedPrice
+        )
+      );
+
+
+    group
       .sort(
-        compareGroups
+        (a,b)=>
+          a.listedPrice -
+          b.listedPrice
       )
-      .map(
-        group =>
-          renderGroup(
-            group
+      .forEach(product=>{
+
+        rows.push(
+          renderRow(
+            product,
+            lowest
           )
-      )
-      .join("");
+        );
+
+      });
+
+  });
+
+
+  comparisonBody.innerHTML =
+    rows.join("");
 
 }
 
@@ -1736,343 +2122,97 @@ function render(){
 
 function groupProducts(products){
 
-  const groups = {};
+  const map =
+    new Map();
 
 
-  for(
-    const product of products
-  ){
+  products.forEach(product=>{
 
     const key =
-      buildComparisonKey(
-        product
-      );
+      [
+        product.weight,
+        product.purity,
+        product.fineness
+      ].join("|");
 
 
-    if(
-      !groups[key]
-    ){
+    if(!map.has(key)){
 
-      groups[key] = {
-
+      map.set(
         key,
-
-        productName:
-          product.productName,
-
-        purity:
-          product.purity,
-
-        weight:
-          product.weight,
-
-        products: []
-
-      };
+        []
+      );
 
     }
 
 
-    groups[key].products.push(
+    map.get(key).push(
       product
     );
 
-  }
+  });
 
 
-  return groups;
-
-}
-
-
-/* =========================================================
-   COMPARISON KEY
-========================================================= */
-
-function buildComparisonKey(product){
-
-  const normalized =
-    normalizeName(
-      product.productName
-    );
-
-
-  return [
-    normalized,
-    product.purity,
-    Number(product.weight)
-  ].join("|");
-
-}
-
-
-/*
-===========================================================
- Product names from different sellers often differ slightly.
-
- Example:
-
- "50 Milligram 24 KT Lakshmi Gold Coin"
- "50mg 24K Lakshmi Gold Coin"
-
- Normalize them so the comparison can group them.
-===========================================================
-*/
-
-function normalizeName(name){
-
-  return String(name || "")
-    .toLowerCase()
-    .replace(
-      /\b24\s*k(?:t|arat)?\b/g,
-      ""
-    )
-    .replace(
-      /\b22\s*k(?:t|arat)?\b/g,
-      ""
-    )
-    .replace(
-      /\b18\s*k(?:t|arat)?\b/g,
-      ""
-    )
-    .replace(
-      /\bmilligrams?\b/g,
-      "mg"
-    )
-    .replace(
-      /\bgrams?\b/g,
-      "g"
-    )
-    .replace(
-      /\b\d+(?:\.\d+)?\s*(?:mg|g)\b/g,
-      ""
-    )
-    .replace(
-      /[^a-z0-9]+/g,
-      " "
-    )
-    .replace(
-      /\bgold\b/g,
-      ""
-    )
-    .replace(
-      /\bcoin\b/g,
-      ""
-    )
-    .replace(
-      /\s+/g,
-      " "
-    )
-    .trim();
+  return Array.from(
+    map.values()
+  );
 
 }
 
 
 /* =========================================================
-   GROUP SORT
+   TABLE ROW
 ========================================================= */
 
-function compareGroups(a,b){
-
-  const aPrice =
-    lowestPrice(
-      a.products
-    );
-
-  const bPrice =
-    lowestPrice(
-      b.products
-    );
-
-
-  return aPrice - bPrice;
-
-}
-
-
-/* =========================================================
-   RENDER GROUP
-========================================================= */
-
-function renderGroup(group){
-
-  const products =
-    [...group.products]
-      .sort(
-        compareProducts
-      );
-
-
-  const lowest =
-    lowestPrice(
-      products
-    );
-
-
-  return `
-
-    <section class="group">
-
-      <div class="group-header">
-
-        <div>
-
-          <h2 class="group-title">
-            ${escapeHTML(
-              group.productName
-            )}
-          </h2>
-
-          <div class="group-meta">
-            ${escapeHTML(
-              group.purity
-            )}
-            •
-            ${escapeHTML(
-              formatWeight(
-                group.weight
-              )
-            )}
-            •
-            ${products.length}
-            seller${products.length === 1 ? "" : "s"}
-          </div>
-
-        </div>
-
-        <div class="group-meta">
-          Lowest:
-          <strong>
-            ${money(lowest)}
-          </strong>
-        </div>
-
-      </div>
-
-
-      <div class="table-wrap">
-
-        <table class="compare-table">
-
-          <thead>
-
-            <tr>
-
-              <th>Seller</th>
-
-              <th>Product</th>
-
-              <th>Price</th>
-
-              <th>Offers</th>
-
-              <th>Exact Product</th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            ${products
-              .map(
-                product =>
-                  renderDesktopRow(
-                    product,
-                    lowest
-                  )
-              )
-              .join("")}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-
-      <div class="mobile-products">
-
-        ${products
-          .map(
-            product =>
-              renderMobileCard(
-                product,
-                lowest
-              )
-          )
-          .join("")}
-
-      </div>
-
-    </section>
-
-  `;
-
-}
-
-
-/* =========================================================
-   DESKTOP ROW
-========================================================= */
-
-function renderDesktopRow(
+function renderRow(
   product,
   lowest
 ){
 
   const isLowest =
-    Number(product.listedPrice) ===
-    Number(lowest);
+    product.listedPrice === lowest;
 
 
   return `
-
-    <tr class="${isLowest ? "lowest-row" : ""}">
-
-      <td>
-
-        <div class="seller">
-          ${escapeHTML(
-            product.seller
-          )}
-        </div>
-
-        ${
-          isLowest
-            ? `
-              <div class="lowest-badge">
-                ✓ LOWEST PRICE
-              </div>
-            `
-            : ""
-        }
-
-      </td>
-
+    <tr>
 
       <td>
-
         <div class="product-name">
           ${escapeHTML(
             product.productName
           )}
         </div>
+      </td>
 
-        <div class="product-sub">
+      <td>
+        <div class="seller-name">
+          ${escapeHTML(
+            product.seller
+          )}
+        </div>
+      </td>
+
+      <td>
+
+        <span class="purity">
           ${escapeHTML(
             product.purity
           )}
-          •
+        </span>
+
+        <span class="fineness">
           ${escapeHTML(
-            formatWeight(
-              product.weight
-            )
+            product.fineness
           )}
-        </div>
+        </span>
 
       </td>
 
+      <td>
+        ${formatWeight(
+          product.weight
+        )}
+      </td>
 
       <td>
 
@@ -2083,171 +2223,195 @@ function renderDesktopRow(
         </div>
 
         ${
-          Number(product.mrp) >
-          Number(product.listedPrice)
-            ? `
-              <div class="mrp">
-                ${money(product.mrp)}
-              </div>
-            `
-            : ""
+          isLowest
+          ? `<span class="lowest">
+               LOWEST LISTED PRICE
+             </span>`
+          : ""
+        }
+
+        ${
+          product.mrp > product.listedPrice
+          ? `
+            <span class="price-note">
+              MRP ${money(product.mrp)}
+            </span>
+          `
+          : ""
         }
 
       </td>
 
-
       <td>
-
-        ${renderOffers(
-          product
-        )}
-
+        ${renderOffers(product)}
       </td>
 
-
       <td>
-
-        <a
-          class="buy-btn"
-          href="${safeUrl(
-            product.productUrl
-          )}"
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-        >
-          View Exact Product →
-        </a>
-
+        ${
+          product.productUrl
+          ? `
+            <a
+              class="view-btn"
+              href="${escapeAttribute(
+                product.productUrl
+              )}"
+              target="_blank"
+              rel="noopener noreferrer">
+              View Exact Product →
+            </a>
+          `
+          : `
+            <span class="price-note">
+              Exact link unavailable
+            </span>
+          `
+        }
       </td>
 
     </tr>
-
   `;
 
 }
 
 
 /* =========================================================
-   MOBILE CARD
+   CARDS
 ========================================================= */
 
-function renderMobileCard(
-  product,
-  lowest
-){
+function renderCards(products){
 
-  const isLowest =
-    Number(product.listedPrice) ===
-    Number(lowest);
+  productCards.innerHTML = "";
 
 
-  return `
+  if(!products.length){
 
-    <article
-      class="mobile-card ${isLowest ? "lowest" : ""}"
-    >
-
-      <div class="mobile-top">
-
-        <div>
-
-          <div class="mobile-seller">
-            ${escapeHTML(
-              product.seller
-            )}
-          </div>
-
-          ${
-            isLowest
-              ? `
-                <div class="lowest-badge">
-                  ✓ LOWEST PRICE
-                </div>
-              `
-              : ""
-          }
-
+    productCards.innerHTML = `
+      <div class="product-card">
+        <div class="empty">
+          <strong>No products loaded</strong>
+          No verified individual product records
+          are currently available.
         </div>
+      </div>
+    `;
 
-        <div class="mobile-price">
-          ${money(
-            product.listedPrice
+    return;
+
+  }
+
+
+  products.forEach(product=>{
+
+    const card =
+      document.createElement(
+        "article"
+      );
+
+    card.className =
+      "product-card";
+
+
+    card.innerHTML = `
+
+      <div class="product-top">
+
+        <div class="seller">
+          ${escapeHTML(
+            product.seller
           )}
         </div>
 
+        <span class="purity">
+          ${escapeHTML(
+            product.purity
+          )}
+        </span>
+
       </div>
 
 
-      <div class="product-name">
+      <h3>
         ${escapeHTML(
           product.productName
         )}
-      </div>
+      </h3>
 
 
-      <div class="mobile-details">
+      <div class="product-meta">
 
-        <div class="detail">
+        <span class="purity">
+          ${formatWeight(
+            product.weight
+          )}
+        </span>
 
-          <div class="detail-label">
-            Purity
-          </div>
-
-          <div class="detail-value">
-            ${escapeHTML(
-              product.purity
-            )}
-          </div>
-
-        </div>
-
-
-        <div class="detail">
-
-          <div class="detail-label">
-            Weight
-          </div>
-
-          <div class="detail-value">
-            ${escapeHTML(
-              formatWeight(
-                product.weight
-              )
-            )}
-          </div>
-
-        </div>
+        <span class="purity">
+          ${escapeHTML(
+            product.fineness
+          )}
+        </span>
 
       </div>
 
 
-      <div class="mobile-offers">
-
-        ${renderOffers(
-          product
+      <div class="product-price">
+        ${money(
+          product.listedPrice
         )}
+      </div>
+
+
+      <div class="card-offers">
+
+        ${
+          hasOffer(product)
+          ? renderOffers(product)
+          : `
+            <span class="price-note">
+              No verified offer data supplied
+            </span>
+          `
+        }
 
       </div>
 
 
-      <div class="mobile-buy">
+      <div class="card-footer">
 
-        <a
-          class="buy-btn"
-          href="${safeUrl(
-            product.productUrl
-          )}"
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-        >
-          View Exact Product →
-        </a>
+        <span class="price-note">
+          Listed price
+        </span>
+
+        ${
+          product.productUrl
+          ? `
+            <a
+              class="view-btn"
+              href="${escapeAttribute(
+                product.productUrl
+              )}"
+              target="_blank"
+              rel="noopener noreferrer">
+              Buy / View →
+            </a>
+          `
+          : `
+            <span class="price-note">
+              No exact URL
+            </span>
+          `
+        }
 
       </div>
 
-    </article>
+    `;
 
-  `;
+
+    productCards.appendChild(
+      card
+    );
+
+  });
 
 }
 
@@ -2256,129 +2420,135 @@ function renderMobileCard(
    OFFERS
 ========================================================= */
 
+function hasOffer(product){
+
+  return Boolean(
+    product.coupon ||
+    product.cardOffer ||
+    product.upiOffer ||
+    product.cashback ||
+    product.voucher ||
+    product.promoCode ||
+    product.offerText
+  );
+
+}
+
+
 function renderOffers(product){
 
   const offers = [];
 
 
-  if(
-    hasValue(
-      product.voucher
-    )
-  ){
+  if(product.coupon){
 
-    offers.push(`
-      <span class="offer offer-voucher">
-        🎟 Voucher:
-        ${escapeHTML(
-          product.voucher
-        )}
-      </span>
-    `);
+    offers.push(
+      `<div class="offer">
+        Coupon:
+        <strong>
+          ${money(product.coupon)}
+        </strong>
+      </div>`
+    );
 
   }
 
 
-  if(
-    hasValue(
-      product.promoCode
-    )
-  ){
+  if(product.cardOffer){
 
-    offers.push(`
-      <span class="offer offer-promo">
-        🏷 Promo:
-        ${escapeHTML(
-          product.promoCode
-        )}
-      </span>
-    `);
+    offers.push(
+      `<div class="offer">
+        Card offer:
+        <strong>
+          ${money(product.cardOffer)}
+        </strong>
+      </div>`
+    );
 
   }
 
 
-  if(
-    hasValue(
-      product.cardOffer
-    )
-  ){
+  if(product.upiOffer){
 
-    offers.push(`
-      <span class="offer offer-card">
-        💳 Card:
-        ${escapeHTML(
-          product.cardOffer
-        )}
-      </span>
-    `);
+    offers.push(
+      `<div class="offer">
+        UPI offer:
+        <strong>
+          ${money(product.upiOffer)}
+        </strong>
+      </div>`
+    );
 
   }
 
 
-  if(
-    hasValue(
-      product.upiOffer
-    )
-  ){
+  if(product.cashback){
 
-    offers.push(`
-      <span class="offer offer-upi">
-        📲 UPI:
-        ${escapeHTML(
-          product.upiOffer
-        )}
-      </span>
-    `);
+    offers.push(
+      `<div class="offer">
+        Cashback:
+        <strong>
+          ${money(product.cashback)}
+        </strong>
+      </div>`
+    );
 
   }
 
 
-  if(
-    hasValue(
-      product.cashback
-    )
-  ){
+  if(product.voucher){
 
-    offers.push(`
-      <span class="offer offer-cashback">
-        💰 Cashback:
-        ${escapeHTML(
-          product.cashback
-        )}
-      </span>
-    `);
+    offers.push(
+      `<div class="offer">
+        Voucher:
+        <strong>
+          ${escapeHTML(
+            product.voucher
+          )}
+        </strong>
+      </div>`
+    );
 
   }
 
 
-  if(
-    hasValue(
-      product.offerText
-    )
-  ){
+  if(product.promoCode){
 
-    offers.push(`
-      <span class="offer offer-other">
-        🎁
+    offers.push(
+      `<div class="offer">
+        Promo:
+        <strong>
+          ${escapeHTML(
+            product.promoCode
+          )}
+        </strong>
+      </div>`
+    );
+
+  }
+
+
+  if(product.offerText){
+
+    offers.push(
+      `<div class="offer">
         ${escapeHTML(
           product.offerText
         )}
-      </span>
-    `);
+      </div>`
+    );
 
   }
 
 
-  if(
-    offers.length === 0
-  ){
+  if(!offers.length){
 
     return `
-      <span
-        class="offer offer-other"
-      >
-        No listed offer
-      </span>
+      <div class="offer-list">
+        <span class="price-note">
+          No verified offers
+        </span>
+      </div>
     `;
 
   }
@@ -2394,263 +2564,86 @@ function renderOffers(product){
 
 
 /* =========================================================
-   PRODUCT VALIDATION
+   GOLD
 ========================================================= */
 
-function isValidProduct(product){
+function setGold(
+  rates,
+  source,
+  updatedAt
+){
 
-  if(
-    !product ||
-    typeof product !== "object"
-  ){
-    return false;
-  }
+  rate24.textContent =
+    rates["24K"]
+      ? money(rates["24K"])
+      : "—";
 
+  rate22.textContent =
+    rates["22K"]
+      ? money(rates["22K"])
+      : "—";
 
-  if(
-    !product.seller ||
-    !product.productName
-  ){
-    return false;
-  }
-
-
-  if(
-    !product.purity ||
-    !product.weight
-  ){
-    return false;
-  }
+  rate18.textContent =
+    rates["18K"]
+      ? money(rates["18K"])
+      : "—";
 
 
-  if(
-    !Number.isFinite(
-      Number(product.listedPrice)
-    ) ||
-    Number(product.listedPrice) <= 0
-  ){
-    return false;
-  }
+  goldSource.textContent =
+    source || "Reference";
 
 
-  /*
-   * Critical:
-   * Product must have an exact URL.
-   */
+  goldUpdated.textContent =
+    updatedAt
+      ? "Updated: " +
+        formatDate(updatedAt)
+      : "Updated time unavailable.";
 
-  if(
-    !isExactProductUrl(
-      product.productUrl
-    )
-  ){
-    return false;
-  }
+}
 
 
-  return true;
+function clearGold(){
+
+  rate24.textContent = "—";
+  rate22.textContent = "—";
+  rate18.textContent = "—";
+
+  goldSource.textContent =
+    "Not available";
+
+  goldUpdated.textContent =
+    "No browser-accessible live gold-price source is configured.";
 
 }
 
 
 /* =========================================================
-   EXACT PRODUCT URL VALIDATION
+   STATUS
 ========================================================= */
 
-function isExactProductUrl(value){
+function updateStatus(){
 
   if(
-    typeof value !== "string" ||
-    !/^https?:\/\//i.test(value)
-  ){
-    return false;
-  }
-
-
-  const url =
-    value.toLowerCase();
-
-
-  /*
-   * Never show catalogue/browse/search pages
-   * as a product.
-   */
-
-  const badPatterns = [
-
-    "/search",
-
-    "?search=",
-
-    "/browse",
-
-    "/category/",
-
-    "/categories/",
-
-    "/collections/",
-
-    "/collection/",
-
-    "gold-coins.html",
-
-    "/gold-coins.html",
-
-    "/goldcoins.html",
-
-    "/jewellery.html",
-
-    "/products.html",
-
-    "/products?"
-
-  ];
-
-
-  for(
-    const bad of badPatterns
+    PRODUCTS.length > 0
   ){
 
-    if(
-      url.includes(bad)
-    ){
-      return false;
-    }
-
-  }
-
-
-  /*
-   * Generic seller homepage is invalid.
-   */
-
-  try{
-
-    const parsed =
-      new URL(value);
-
-    const path =
-      parsed.pathname
-        .replace(
-          /^\/+/,
-          ""
-        )
-        .trim();
-
-
-    if(
-      !path ||
-      path === "index.html"
-    ){
-      return false;
-    }
-
-  }catch{
-
-    return false;
-
-  }
-
-
-  return true;
-
-}
-
-
-/* =========================================================
-   LOWEST PRICE
-========================================================= */
-
-function lowestPrice(products){
-
-  const prices =
-    products
-      .map(
-        product =>
-          Number(
-            product.listedPrice
-          )
-      )
-      .filter(
-        price =>
-          Number.isFinite(price) &&
-          price > 0
-      );
-
-
-  if(
-    prices.length === 0
-  ){
-    return 0;
-  }
-
-
-  return Math.min(
-    ...prices
-  );
-
-}
-
-
-/* =========================================================
-   PRODUCT SORT
-========================================================= */
-
-function compareProducts(a,b){
-
-  const priceDiff =
-    Number(a.listedPrice) -
-    Number(b.listedPrice);
-
-
-  if(
-    priceDiff !== 0
-  ){
-    return priceDiff;
-  }
-
-
-  return (
-    sellerRank(
-      a.sellerId
-    ) -
-    sellerRank(
-      b.sellerId
-    )
-  );
-
-}
-
-
-/* =========================================================
-   SELLER RANK
-========================================================= */
-
-function sellerRank(sellerId){
-
-  const index =
-    SELLER_ORDER.indexOf(
-      sellerId
+    statusDot.classList.remove(
+      "offline"
     );
 
+    statusText.textContent =
+      "Verified product data loaded";
 
-  return index === -1
-    ? 999
-    : index;
+  }else{
 
-}
+    statusDot.classList.add(
+      "offline"
+    );
 
+    statusText.textContent =
+      "Waiting for product data";
 
-/* =========================================================
-   VALUE
-========================================================= */
-
-function hasValue(value){
-
-  return (
-    value !== null &&
-    value !== undefined &&
-    String(value).trim() !== ""
-  );
+  }
 
 }
 
@@ -2661,15 +2654,16 @@ function hasValue(value){
 
 function money(value){
 
-  const number =
+  const n =
     Number(value);
 
 
   if(
-    !Number.isFinite(number) ||
-    number <= 0
+    !Number.isFinite(n)
   ){
-    return "₹--";
+
+    return "—";
+
   }
 
 
@@ -2678,9 +2672,9 @@ function money(value){
     {
       style:"currency",
       currency:"INR",
-      maximumFractionDigits:0
+      maximumFractionDigits:2
     }
-  ).format(number);
+  ).format(n);
 
 }
 
@@ -2691,94 +2685,162 @@ function money(value){
 
 function formatWeight(value){
 
-  const number =
+  const n =
     Number(value);
 
 
-  if(
-    !Number.isFinite(number)
-  ){
-    return "";
+  if(!Number.isFinite(n)){
+    return "—";
   }
 
 
-  if(
-    number < 1
-  ){
-
-    const mg =
-      Math.round(
-        number * 1000
-      );
-
-    return `${mg} mg`;
-
-  }
-
-
-  return `${number} g`;
-
-}
-
-
-/* =========================================================
-   URL
-========================================================= */
-
-function safeUrl(value){
-
-  if(
-    !isExactProductUrl(
-      value
-    )
-  ){
-    return "#";
-  }
-
-
-  return escapeAttribute(
-    value
+  return (
+    n.toLocaleString(
+      "en-IN",
+      {
+        maximumFractionDigits:3
+      }
+    ) +
+    " g"
   );
 
 }
 
 
 /* =========================================================
-   ESCAPE HTML
+   NUMBER
 ========================================================= */
 
-function escapeHTML(value){
+function number(value){
 
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
+  if(
+    value === null ||
+    value === undefined ||
+    value === ""
+  ){
+
+    return 0;
+
+  }
+
+
+  const n =
+    Number(
+      String(value)
+        .replace(/₹/g,"")
+        .replace(/,/g,"")
+        .trim()
     );
+
+
+  return Number.isFinite(n)
+    ? n
+    : 0;
 
 }
 
 
 /* =========================================================
-   ESCAPE ATTRIBUTE
+   TEXT
 ========================================================= */
+
+function clean(value){
+
+  return String(
+    value || ""
+  )
+  .replace(/\s+/g," ")
+  .trim();
+
+}
+
+
+/* =========================================================
+   ID
+========================================================= */
+
+function createId(
+  sellerId,
+  url
+){
+
+  let hash = 0;
+
+  const text =
+    sellerId +
+    "|" +
+    url;
+
+
+  for(
+    let i=0;
+    i<text.length;
+    i++
+  ){
+
+    hash =
+      (
+        (hash << 5) -
+        hash +
+        text.charCodeAt(i)
+      ) | 0;
+
+  }
+
+
+  return (
+    sellerId +
+    "-" +
+    Math.abs(hash)
+  );
+
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+function formatDate(value){
+
+  try{
+
+    return new Date(
+      value
+    ).toLocaleString(
+      "en-IN",
+      {
+        dateStyle:"medium",
+        timeStyle:"short"
+      }
+    );
+
+  }catch{
+
+    return String(value);
+
+  }
+
+}
+
+
+/* =========================================================
+   ESCAPE
+========================================================= */
+
+function escapeHTML(value){
+
+  return String(
+    value || ""
+  )
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
+
+}
+
 
 function escapeAttribute(value){
 
@@ -2790,10 +2852,37 @@ function escapeAttribute(value){
 
 
 /* =========================================================
-   START
+   EXPOSE FOR DEBUGGING
 ========================================================= */
 
-init();
+window.GoldManiaSavings = {
+
+  getProducts(){
+    return PRODUCTS;
+  },
+
+  setProducts(products){
+
+    PRODUCTS =
+      Array.isArray(products)
+        ? products
+            .map(normalizeProduct)
+            .filter(Boolean)
+        : [];
+
+    populateSellerFilter();
+
+    render();
+
+    updateStatus();
+
+  },
+
+  setGold,
+
+  clearGold
+
+};
 
 </script>
 
