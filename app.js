@@ -1,22 +1,19 @@
-/* =========================================================
-   GoldManiaSavings - Frontend
-   Cloudflare Worker API
-========================================================= */
-
 "use strict";
 
 /* =========================================================
-   CONFIG
+   GoldManiaSavings
+   Frontend API client
 ========================================================= */
 
 const API_BASE =
   "https://goldmaniasavings-api.onlinetechmine.workers.dev";
 
 const API = {
-  gold: `${API_BASE}/api/gold`,
-  products: `${API_BASE}/api/products`,
-  offers: `${API_BASE}/api/offers`,
-  history: `${API_BASE}/api/history`
+  health: API_BASE + "/api/health",
+  gold: API_BASE + "/api/gold",
+  products: API_BASE + "/api/products",
+  offers: API_BASE + "/api/offers",
+  history: API_BASE + "/api/history"
 };
 
 
@@ -25,32 +22,31 @@ const API = {
 ========================================================= */
 
 const state = {
+  health: null,
   gold: null,
   products: [],
   offers: [],
   history: [],
-  filters: {
-    purity: "",
-    weight: "",
-    seller: ""
-  }
+  errors: []
 };
 
 
 /* =========================================================
-   HELPERS
+   DOM
 ========================================================= */
 
-function $(id) {
-  return document.getElementById(id);
-}
+function getEl(...ids) {
 
-
-function firstElement(...ids) {
   for (const id of ids) {
-    const el = $(id);
-    if (el) return el;
+
+    const el = document.getElementById(id);
+
+    if (el) {
+      return el;
+    }
+
   }
+
   return null;
 }
 
@@ -63,42 +59,45 @@ function setText(ids, value) {
 
   ids.forEach(id => {
 
-    const el = $(id);
+    const el = document.getElementById(id);
 
     if (el) {
       el.textContent = value;
     }
 
   });
+
 }
 
 
-function numberValue(value, fallback = 0) {
+/* =========================================================
+   UTILITIES
+========================================================= */
+
+function num(value) {
 
   if (
     value === null ||
     value === undefined ||
     value === ""
   ) {
-    return fallback;
+    return 0;
   }
 
   const n = Number(
     String(value)
+      .replace(/₹/g, "")
       .replace(/,/g, "")
-      .replace(/[₹]/g, "")
       .trim()
   );
 
-  return Number.isFinite(n)
-    ? n
-    : fallback;
+  return Number.isFinite(n) ? n : 0;
 }
 
 
 function money(value) {
 
-  const n = numberValue(value);
+  const n = num(value);
 
   if (!n) {
     return "₹0";
@@ -115,22 +114,11 @@ function money(value) {
 }
 
 
-function text(value) {
+function esc(value) {
 
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return "";
-  }
-
-  return String(value);
-}
-
-
-function escapeHTML(value) {
-
-  return text(value)
+  return String(
+    value ?? ""
+  )
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -139,39 +127,33 @@ function escapeHTML(value) {
 }
 
 
-function getUrl(value) {
+function dateText(value) {
 
   if (!value) {
     return "";
   }
 
-  if (typeof value === "string") {
-    return value;
+  const d = new Date(value);
+
+  if (Number.isNaN(d.getTime())) {
+    return String(value);
   }
 
-  if (typeof value === "object") {
-
-    return (
-      value.url ||
-      value.href ||
-      value.link ||
-      value.productUrl ||
-      ""
-    );
-
-  }
-
-  return "";
+  return d.toLocaleString("en-IN");
 }
 
 
 /* =========================================================
-   API FETCH
+   API
 ========================================================= */
 
-async function apiFetch(url) {
+async function request(url) {
 
-  console.log("[GoldMania] API:", url);
+  console.log(
+    "[GoldMania API]",
+    url
+  );
+
 
   const response = await fetch(
     url,
@@ -185,31 +167,30 @@ async function apiFetch(url) {
     }
   );
 
+
   const contentType =
     response.headers.get(
       "content-type"
     ) || "";
 
-  let data;
 
-  if (
-    contentType.includes(
-      "application/json"
-    )
-  ) {
-
-    data = await response.json();
-
-  } else {
+  if (!contentType.includes("json")) {
 
     const raw =
       await response.text();
 
     throw new Error(
-      `API returned non-JSON response (${response.status}): ${raw.slice(0, 120)}`
+      "API did not return JSON (" +
+      response.status +
+      "): " +
+      raw.slice(0, 200)
     );
 
   }
+
+
+  const data =
+    await response.json();
 
 
   if (!response.ok) {
@@ -222,20 +203,74 @@ async function apiFetch(url) {
   }
 
 
-  if (
-    data &&
-    data.ok === false
-  ) {
+  return data;
 
-    throw new Error(
-      data.message ||
-      "API returned ok:false"
+}
+
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
+async function loadHealth() {
+
+  try {
+
+    const data =
+      await request(API.health);
+
+
+    state.health =
+      data;
+
+
+    console.log(
+      "[GoldMania] HEALTH",
+      data
     );
 
+
+    setText(
+      [
+        "apiStatus",
+        "api-status",
+        "connectionStatus"
+      ],
+      data?.ok
+        ? "Connected"
+        : "Unavailable"
+    );
+
+
+    return data;
+
+  } catch (error) {
+
+    console.error(
+      "[GoldMania] HEALTH ERROR",
+      error
+    );
+
+
+    setText(
+      [
+        "apiStatus",
+        "api-status",
+        "connectionStatus"
+      ],
+      "API Error"
+    );
+
+
+    state.errors.push(
+      "Health: " +
+      error.message
+    );
+
+
+    return null;
+
   }
-
-
-  return data;
 
 }
 
@@ -256,6 +291,7 @@ async function loadGold() {
     "Loading..."
   );
 
+
   setText(
     [
       "gold22",
@@ -265,6 +301,7 @@ async function loadGold() {
     ],
     "Loading..."
   );
+
 
   setText(
     [
@@ -280,49 +317,47 @@ async function loadGold() {
   try {
 
     const data =
-      await apiFetch(
-        API.gold
-      );
+      await request(API.gold);
+
+
+    state.gold =
+      data;
 
 
     console.log(
-      "[GoldMania] GOLD:",
+      "[GoldMania] GOLD",
       data
     );
 
 
-    state.gold = data;
-
-
-    const india =
+    const reference =
       data?.indiaReference ||
       data?.india ||
-      data?.reference ||
       {};
 
 
     const rates =
-      india?.rates ||
+      reference?.rates ||
       data?.rates ||
       {};
 
 
-    const rate24 =
-      extractRate(
+    const r24 =
+      getRate(
         rates,
         "24K"
       );
 
 
-    const rate22 =
-      extractRate(
+    const r22 =
+      getRate(
         rates,
         "22K"
       );
 
 
-    const rate18 =
-      extractRate(
+    const r18 =
+      getRate(
         rates,
         "18K"
       );
@@ -335,8 +370,8 @@ async function loadGold() {
         "price24",
         "rate24"
       ],
-      rate24
-        ? money(rate24)
+      r24
+        ? money(r24)
         : "Unavailable"
     );
 
@@ -348,8 +383,8 @@ async function loadGold() {
         "price22",
         "rate22"
       ],
-      rate22
-        ? money(rate22)
+      r22
+        ? money(r22)
         : "Unavailable"
     );
 
@@ -361,8 +396,8 @@ async function loadGold() {
         "price18",
         "rate18"
       ],
-      rate18
-        ? money(rate18)
+      r18
+        ? money(r18)
         : "Unavailable"
     );
 
@@ -370,20 +405,12 @@ async function loadGold() {
     setText(
       [
         "goldSource",
-        "gold-source",
-        "goldSourceName"
+        "gold-source"
       ],
-      india?.source ||
+      reference?.source ||
       data?.source ||
-      "India Reference"
+      ""
     );
-
-
-    const updated =
-      data?.updatedAt ||
-      data?.timestamp ||
-      india?.updatedAt ||
-      "";
 
 
     setText(
@@ -392,9 +419,10 @@ async function loadGold() {
         "gold-updated",
         "updatedAt"
       ],
-      updated
-        ? formatDate(updated)
-        : ""
+      dateText(
+        data?.updatedAt ||
+        data?.timestamp
+      )
     );
 
 
@@ -403,7 +431,7 @@ async function loadGold() {
   } catch (error) {
 
     console.error(
-      "[GoldMania] Gold error:",
+      "[GoldMania] GOLD ERROR",
       error
     );
 
@@ -451,6 +479,12 @@ async function loadGold() {
     );
 
 
+    state.errors.push(
+      "Gold: " +
+      error.message
+    );
+
+
     return null;
 
   }
@@ -458,24 +492,10 @@ async function loadGold() {
 }
 
 
-function extractRate(rates, key) {
+function getRate(rates, key) {
 
   const value =
     rates?.[key];
-
-
-  if (
-    typeof value === "number"
-  ) {
-    return value;
-  }
-
-
-  if (
-    typeof value === "string"
-  ) {
-    return numberValue(value);
-  }
 
 
   if (
@@ -483,17 +503,17 @@ function extractRate(rates, key) {
     value !== null
   ) {
 
-    return numberValue(
+    return num(
       value.perGram ??
-      value.price ??
       value.rate ??
+      value.price ??
       value.value
     );
 
   }
 
 
-  return 0;
+  return num(value);
 
 }
 
@@ -505,14 +525,21 @@ function extractRate(rates, key) {
 async function loadProducts() {
 
   const container =
-    getProductsContainer();
+    getEl(
+      "products",
+      "productList",
+      "productsGrid",
+      "goldProducts",
+      "gold-products",
+      "productGrid"
+    );
 
 
   if (container) {
 
     container.innerHTML = `
       <div class="loading-products">
-        Loading gold products...
+        Loading products...
       </div>
     `;
 
@@ -521,60 +548,14 @@ async function loadProducts() {
 
   try {
 
-    const params =
-      new URLSearchParams();
-
-
-    if (
-      state.filters.purity
-    ) {
-
-      params.set(
-        "purity",
-        state.filters.purity
-      );
-
-    }
-
-
-    if (
-      state.filters.weight
-    ) {
-
-      params.set(
-        "weight",
-        state.filters.weight
-      );
-
-    }
-
-
-    if (
-      state.filters.seller
-    ) {
-
-      params.set(
-        "seller",
-        state.filters.seller
-      );
-
-    }
-
-
-    const query =
-      params.toString()
-        ? `?${params.toString()}`
-        : "";
-
-
     const data =
-      await apiFetch(
-        `${API.products}${query}`
+      await request(
+        API.products
       );
 
 
     console.log(
-      "[GoldMania] PRODUCTS:",
+      "[GoldMania] PRODUCTS",
       data
     );
 
@@ -587,16 +568,10 @@ async function loadProducts() {
         : [];
 
 
-    renderProducts(
-      state.products
-    );
-
-
     setText(
       [
         "productCount",
         "productsCount",
-        "product-count",
         "count"
       ],
       state.products.length
@@ -608,12 +583,13 @@ async function loadProducts() {
         "productUpdated",
         "productsUpdated"
       ],
-      data?.updatedAt
-        ? formatDate(
-            data.updatedAt
-          )
-        : ""
+      dateText(
+        data?.updatedAt
+      )
     );
+
+
+    renderProducts();
 
 
     populateFilters();
@@ -624,7 +600,7 @@ async function loadProducts() {
   } catch (error) {
 
     console.error(
-      "[GoldMania] Products error:",
+      "[GoldMania] PRODUCTS ERROR",
       error
     );
 
@@ -636,19 +612,32 @@ async function loadProducts() {
 
       container.innerHTML = `
         <div class="api-error">
-          <strong>Products unavailable</strong>
-          <div>${escapeHTML(error.message)}</div>
+
+          <strong>
+            Products could not be loaded
+          </strong>
+
+          <p>
+            ${esc(error.message)}
+          </p>
 
           <button
             type="button"
-            onclick="window.GoldMania.reloadProducts()"
+            onclick="GoldMania.reloadProducts()"
           >
             Retry
           </button>
+
         </div>
       `;
 
     }
+
+
+    state.errors.push(
+      "Products: " +
+      error.message
+    );
 
 
     return null;
@@ -659,37 +648,26 @@ async function loadProducts() {
 
 
 /* =========================================================
-   PRODUCTS CONTAINER
-========================================================= */
-
-function getProductsContainer() {
-
-  return firstElement(
-    "products",
-    "productList",
-    "productsGrid",
-    "goldProducts",
-    "gold-products",
-    "productGrid"
-  );
-
-}
-
-
-/* =========================================================
    PRODUCT RENDER
 ========================================================= */
 
-function renderProducts(products) {
+function renderProducts() {
 
   const container =
-    getProductsContainer();
+    getEl(
+      "products",
+      "productList",
+      "productsGrid",
+      "goldProducts",
+      "gold-products",
+      "productGrid"
+    );
 
 
   if (!container) {
 
     console.warn(
-      "[GoldMania] Product container not found."
+      "[GoldMania] NO PRODUCT CONTAINER FOUND"
     );
 
     return;
@@ -697,17 +675,11 @@ function renderProducts(products) {
   }
 
 
-  if (
-    !Array.isArray(products) ||
-    products.length === 0
-  ) {
+  if (!state.products.length) {
 
     container.innerHTML = `
       <div class="empty-products">
-        <strong>No gold products found.</strong>
-        <div>
-          Try another weight, purity or seller.
-        </div>
+        No products found.
       </div>
     `;
 
@@ -717,21 +689,18 @@ function renderProducts(products) {
 
 
   container.innerHTML =
-    products
-      .map(
-        renderProduct
-      )
+    state.products
+      .map(productCard)
       .join("");
 
 }
 
 
-function renderProduct(product) {
+function productCard(product) {
 
   const seller =
     product?.seller ||
     product?.source ||
-    product?.sellerName ||
     product?.sellerId ||
     "Seller";
 
@@ -748,13 +717,11 @@ function renderProduct(product) {
 
 
   const weight =
-    numberValue(
-      product?.weight
-    );
+    num(product?.weight);
 
 
   const price =
-    numberValue(
+    num(
       product?.listedPrice ??
       product?.price ??
       product?.salePrice
@@ -762,20 +729,12 @@ function renderProduct(product) {
 
 
   const mrp =
-    numberValue(
-      product?.mrp
-    );
+    num(product?.mrp);
 
 
-  const shipping =
-    numberValue(
-      product?.shipping
-    );
-
-
-  const productUrl =
-    getUrl(
-      product?.productUrl ??
+  const url =
+    getProductUrl(
+      product?.productUrl ||
       product?.url
     );
 
@@ -784,52 +743,48 @@ function renderProduct(product) {
 
 
   if (
-    numberValue(
-      product?.coupon
-    ) > 0
+    num(product?.coupon)
   ) {
 
     offers.push(
-      `Coupon ${money(product.coupon)}`
+      "Coupon: " +
+      money(product.coupon)
     );
 
   }
 
 
   if (
-    numberValue(
-      product?.cardOffer
-    ) > 0
+    num(product?.cardOffer)
   ) {
 
     offers.push(
-      `Card ${money(product.cardOffer)}`
+      "Card: " +
+      money(product.cardOffer)
     );
 
   }
 
 
   if (
-    numberValue(
-      product?.upiOffer
-    ) > 0
+    num(product?.upiOffer)
   ) {
 
     offers.push(
-      `UPI ${money(product.upiOffer)}`
+      "UPI: " +
+      money(product.upiOffer)
     );
 
   }
 
 
   if (
-    numberValue(
-      product?.cashback
-    ) > 0
+    num(product?.cashback)
   ) {
 
     offers.push(
-      `Cashback ${money(product.cashback)}`
+      "Cashback: " +
+      money(product.cashback)
     );
 
   }
@@ -840,7 +795,8 @@ function renderProduct(product) {
   ) {
 
     offers.push(
-      `Voucher: ${text(product.voucher)}`
+      "Voucher: " +
+      product.voucher
     );
 
   }
@@ -851,7 +807,8 @@ function renderProduct(product) {
   ) {
 
     offers.push(
-      `Promo: ${text(product.promoCode)}`
+      "Promo: " +
+      product.promoCode
     );
 
   }
@@ -862,75 +819,28 @@ function renderProduct(product) {
   ) {
 
     offers.push(
-      text(product.offerText)
+      product.offerText
     );
 
   }
 
 
-  const offersHTML =
-    offers.length
-      ? `
-        <div class="product-offers">
-          ${offers
-            .map(
-              item =>
-                `<span class="offer">
-                  ${escapeHTML(item)}
-                </span>`
-            )
-            .join("")}
-        </div>
-      `
-      : "";
-
-
-  const mrpHTML =
-    mrp > price
-      ? `
-        <span class="product-mrp">
-          ${money(mrp)}
-        </span>
-      `
-      : "";
-
-
-  const linkHTML =
-    productUrl
-      ? `
-        <a
-          class="product-link"
-          href="${escapeHTML(productUrl)}"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          View product
-        </a>
-      `
-      : "";
-
-
   return `
-    <article
-      class="product-card"
-      data-seller="${escapeHTML(seller)}"
-      data-purity="${escapeHTML(purity)}"
-      data-weight="${weight}"
-    >
+    <article class="product-card">
 
       <div class="product-seller">
-        ${escapeHTML(seller)}
+        ${esc(seller)}
       </div>
 
       <h3 class="product-name">
-        ${escapeHTML(name)}
+        ${esc(name)}
       </h3>
 
       <div class="product-meta">
 
         ${
           purity
-            ? `<span>${escapeHTML(purity)}</span>`
+            ? `<span>${esc(purity)}</span>`
             : ""
         }
 
@@ -943,32 +853,96 @@ function renderProduct(product) {
       </div>
 
       <div class="product-price">
+
         ${
           price
             ? money(price)
             : "Price unavailable"
         }
 
-        ${mrpHTML}
+        ${
+          mrp > price
+            ? `
+              <del>
+                ${money(mrp)}
+              </del>
+            `
+            : ""
+        }
 
       </div>
 
       ${
-        shipping > 0
+        offers.length
           ? `
-            <div class="product-shipping">
-              Shipping: ${money(shipping)}
+            <div class="product-offers">
+
+              ${offers
+                .map(
+                  item =>
+                    `<div class="offer">
+                      ${esc(item)}
+                    </div>`
+                )
+                .join("")}
+
             </div>
           `
           : ""
       }
 
-      ${offersHTML}
-
-      ${linkHTML}
+      ${
+        url
+          ? `
+            <a
+              href="${esc(url)}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="product-link"
+            >
+              View Product
+            </a>
+          `
+          : ""
+      }
 
     </article>
   `;
+
+}
+
+
+function getProductUrl(value) {
+
+  if (!value) {
+    return "";
+  }
+
+
+  if (
+    typeof value === "string"
+  ) {
+
+    return value;
+
+  }
+
+
+  if (
+    typeof value === "object"
+  ) {
+
+    return (
+      value.url ||
+      value.href ||
+      value.link ||
+      ""
+    );
+
+  }
+
+
+  return "";
 
 }
 
@@ -980,37 +954,19 @@ function renderProduct(product) {
 async function loadOffers() {
 
   const container =
-    firstElement(
+    getEl(
       "offers",
       "offerList",
-      "offersGrid",
-      "offer-grid"
+      "offersGrid"
     );
-
-
-  if (container) {
-
-    container.innerHTML = `
-      <div>
-        Loading offers...
-      </div>
-    `;
-
-  }
 
 
   try {
 
     const data =
-      await apiFetch(
+      await request(
         API.offers
       );
-
-
-    console.log(
-      "[GoldMania] OFFERS:",
-      data
-    );
 
 
     state.offers =
@@ -1021,18 +977,58 @@ async function loadOffers() {
         : [];
 
 
-    renderOffers(
+    if (!container) {
+      return data;
+    }
+
+
+    if (!state.offers.length) {
+
+      container.innerHTML = `
+        <div>
+          No visible offers currently found.
+        </div>
+      `;
+
+      return data;
+
+    }
+
+
+    container.innerHTML =
       state.offers
-    );
+        .map(
+          offer => `
+            <div class="offer-card">
 
+              <strong>
+                ${esc(
+                  offer?.seller ||
+                  offer?.source ||
+                  ""
+                )}
+              </strong>
 
-    setText(
-      [
-        "offerCount",
-        "offersCount"
-      ],
-      state.offers.length
-    );
+              <div>
+                ${esc(
+                  offer?.productName ||
+                  ""
+                )}
+              </div>
+
+              <div>
+                ${esc(
+                  offer?.offerText ||
+                  offer?.promoCode ||
+                  offer?.voucher ||
+                  ""
+                )}
+              </div>
+
+            </div>
+          `
+        )
+        .join("");
 
 
     return data;
@@ -1040,7 +1036,7 @@ async function loadOffers() {
   } catch (error) {
 
     console.error(
-      "[GoldMania] Offers error:",
+      "[GoldMania] OFFERS ERROR",
       error
     );
 
@@ -1049,171 +1045,17 @@ async function loadOffers() {
 
       container.innerHTML = `
         <div class="api-error">
-          Offers unavailable
+          Offers unavailable:
+          ${esc(error.message)}
         </div>
       `;
 
     }
 
+
     return null;
 
   }
-
-}
-
-
-function renderOffers(offers) {
-
-  const container =
-    firstElement(
-      "offers",
-      "offerList",
-      "offersGrid",
-      "offer-grid"
-    );
-
-
-  if (!container) {
-    return;
-  }
-
-
-  if (!offers.length) {
-
-    container.innerHTML = `
-      <div class="empty-offers">
-        No visible offers currently found.
-      </div>
-    `;
-
-    return;
-
-  }
-
-
-  container.innerHTML =
-    offers
-      .map(
-        offer => {
-
-          const seller =
-            offer?.seller ||
-            offer?.source ||
-            "";
-
-
-          const product =
-            offer?.productName ||
-            "";
-
-
-          const details = [];
-
-
-          if (
-            offer?.coupon
-          ) {
-
-            details.push(
-              `Coupon: ${money(offer.coupon)}`
-            );
-
-          }
-
-
-          if (
-            offer?.cardOffer
-          ) {
-
-            details.push(
-              `Card: ${money(offer.cardOffer)}`
-            );
-
-          }
-
-
-          if (
-            offer?.upiOffer
-          ) {
-
-            details.push(
-              `UPI: ${money(offer.upiOffer)}`
-            );
-
-          }
-
-
-          if (
-            offer?.cashback
-          ) {
-
-            details.push(
-              `Cashback: ${money(offer.cashback)}`
-            );
-
-          }
-
-
-          if (
-            offer?.voucher
-          ) {
-
-            details.push(
-              `Voucher: ${text(offer.voucher)}`
-            );
-
-          }
-
-
-          if (
-            offer?.promoCode
-          ) {
-
-            details.push(
-              `Promo: ${text(offer.promoCode)}`
-            );
-
-          }
-
-
-          if (
-            offer?.offerText
-          ) {
-
-            details.push(
-              text(offer.offerText)
-            );
-
-          }
-
-
-          return `
-            <div class="offer-card">
-
-              <div class="offer-seller">
-                ${escapeHTML(seller)}
-              </div>
-
-              <div class="offer-product">
-                ${escapeHTML(product)}
-              </div>
-
-              <div class="offer-details">
-                ${
-                  details.length
-                    ? details
-                        .map(escapeHTML)
-                        .join(" • ")
-                    : "Visible offer details unavailable"
-                }
-              </div>
-
-            </div>
-          `;
-
-        }
-      )
-      .join("");
 
 }
 
@@ -1225,7 +1067,7 @@ function renderOffers(offers) {
 async function loadHistory() {
 
   const container =
-    firstElement(
+    getEl(
       "history",
       "historyList",
       "goldHistory"
@@ -1235,15 +1077,9 @@ async function loadHistory() {
   try {
 
     const data =
-      await apiFetch(
+      await request(
         API.history
       );
-
-
-    console.log(
-      "[GoldMania] HISTORY:",
-      data
-    );
 
 
     state.history =
@@ -1259,19 +1095,9 @@ async function loadHistory() {
     }
 
 
-    if (!state.history.length) {
-
-      container.innerHTML = `
-        <div>No gold history available.</div>
-      `;
-
-      return data;
-
-    }
-
-
     container.innerHTML =
-      [...state.history]
+      state.history
+        .slice()
         .reverse()
         .map(
           item => {
@@ -1283,34 +1109,31 @@ async function loadHistory() {
             return `
               <div class="history-row">
 
-                <div>
-                  ${escapeHTML(
+                <span>
+                  ${esc(
                     item?.date ||
                     item?.timestamp ||
                     ""
                   )}
-                </div>
+                </span>
 
-                <div>
-                  24K:
-                  ${money(
+                <span>
+                  24K ${money(
                     rates["24K"]
                   )}
-                </div>
+                </span>
 
-                <div>
-                  22K:
-                  ${money(
+                <span>
+                  22K ${money(
                     rates["22K"]
                   )}
-                </div>
+                </span>
 
-                <div>
-                  18K:
-                  ${money(
+                <span>
+                  18K ${money(
                     rates["18K"]
                   )}
-                </div>
+                </span>
 
               </div>
             `;
@@ -1325,7 +1148,7 @@ async function loadHistory() {
   } catch (error) {
 
     console.error(
-      "[GoldMania] History error:",
+      "[GoldMania] HISTORY ERROR",
       error
     );
 
@@ -1334,7 +1157,8 @@ async function loadHistory() {
 
       container.innerHTML = `
         <div class="api-error">
-          History unavailable
+          History unavailable:
+          ${esc(error.message)}
         </div>
       `;
 
@@ -1352,24 +1176,156 @@ async function loadHistory() {
    FILTERS
 ========================================================= */
 
-function setupFilters() {
-
-  const purity =
-    firstElement(
-      "purityFilter",
-      "purity"
-    );
-
+function populateFilters() {
 
   const weight =
-    firstElement(
+    getEl(
       "weightFilter",
       "weight"
     );
 
 
   const seller =
-    firstElement(
+    getEl(
+      "sellerFilter",
+      "seller"
+    );
+
+
+  if (weight) {
+
+    const values =
+      [
+        ...new Set(
+          state.products
+            .map(
+              p => num(p?.weight)
+            )
+            .filter(
+              Boolean
+            )
+        )
+      ]
+      .sort(
+        (a, b) =>
+          a - b
+      );
+
+
+    values.forEach(value => {
+
+      if (
+        [...weight.options]
+          .some(
+            o =>
+              o.value ===
+              String(value)
+          )
+      ) {
+        return;
+      }
+
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+
+      option.value =
+        String(value);
+
+
+      option.textContent =
+        `${value} g`;
+
+
+      weight.appendChild(
+        option
+      );
+
+    });
+
+  }
+
+
+  if (seller) {
+
+    const sellers =
+      [
+        ...new Set(
+          state.products
+            .map(
+              p =>
+                p?.seller ||
+                p?.source
+            )
+            .filter(Boolean)
+        )
+      ]
+      .sort();
+
+
+    sellers.forEach(name => {
+
+      if (
+        [...seller.options]
+          .some(
+            o =>
+              o.value === name
+          )
+      ) {
+        return;
+      }
+
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+
+      option.value =
+        name;
+
+
+      option.textContent =
+        name;
+
+
+      seller.appendChild(
+        option
+      );
+
+    });
+
+  }
+
+}
+
+
+/* =========================================================
+   FILTER EVENTS
+========================================================= */
+
+function setupFilters() {
+
+  const purity =
+    getEl(
+      "purityFilter",
+      "purity"
+    );
+
+
+  const weight =
+    getEl(
+      "weightFilter",
+      "weight"
+    );
+
+
+  const seller =
+    getEl(
       "sellerFilter",
       "seller"
     );
@@ -1381,10 +1337,11 @@ function setupFilters() {
       "change",
       () => {
 
-        state.filters.purity =
-          purity.value;
-
-        loadProducts();
+        loadProductsWithFilters(
+          purity.value,
+          weight?.value || "",
+          seller?.value || ""
+        );
 
       }
     );
@@ -1398,10 +1355,11 @@ function setupFilters() {
       "change",
       () => {
 
-        state.filters.weight =
-          weight.value;
-
-        loadProducts();
+        loadProductsWithFilters(
+          purity?.value || "",
+          weight.value,
+          seller?.value || ""
+        );
 
       }
     );
@@ -1415,239 +1373,102 @@ function setupFilters() {
       "change",
       () => {
 
-        state.filters.seller =
-          seller.value;
-
-        loadProducts();
-
-      }
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   POPULATE FILTERS
-========================================================= */
-
-function populateFilters() {
-
-  populateWeightFilter();
-  populateSellerFilter();
-
-}
-
-
-function populateWeightFilter() {
-
-  const select =
-    firstElement(
-      "weightFilter",
-      "weight"
-    );
-
-
-  if (!select) {
-    return;
-  }
-
-
-  const values =
-    new Set(
-      Array.from(
-        select.options
-      )
-      .map(
-        option =>
-          option.value
-      )
-    );
-
-
-  const weights =
-    state.products
-      .map(
-        product =>
-          numberValue(
-            product?.weight
-          )
-      )
-      .filter(
-        weight =>
-          weight > 0
-      );
-
-
-  [...new Set(weights)]
-    .sort(
-      (a, b) =>
-        a - b
-    )
-    .forEach(
-      weight => {
-
-        const value =
-          String(weight);
-
-
-        if (
-          values.has(value)
-        ) {
-          return;
-        }
-
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-
-        option.value =
-          value;
-
-
-        option.textContent =
-          `${weight} g`;
-
-
-        select.appendChild(
-          option
+        loadProductsWithFilters(
+          purity?.value || "",
+          weight?.value || "",
+          seller.value
         );
 
       }
     );
 
+  }
+
 }
 
 
-function populateSellerFilter() {
+async function loadProductsWithFilters(
+  purity,
+  weight,
+  seller
+) {
 
-  const select =
-    firstElement(
-      "sellerFilter",
-      "seller"
+  let url =
+    API.products;
+
+
+  const params =
+    new URLSearchParams();
+
+
+  if (purity) {
+    params.set(
+      "purity",
+      purity
     );
-
-
-  if (!select) {
-    return;
   }
 
 
-  const values =
-    new Set(
-      Array.from(
-        select.options
-      )
-      .map(
-        option =>
-          option.value
-      )
+  if (weight) {
+    params.set(
+      "weight",
+      weight
     );
+  }
 
 
-  const sellers =
-    state.products
-      .map(
-        product =>
-          product?.seller ||
-          product?.source
-      )
-      .filter(Boolean);
-
-
-  [...new Set(sellers)]
-    .sort()
-    .forEach(
-      seller => {
-
-        if (
-          values.has(seller)
-        ) {
-          return;
-        }
-
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-
-        option.value =
-          seller;
-
-
-        option.textContent =
-          seller;
-
-
-        select.appendChild(
-          option
-        );
-
-      }
+  if (seller) {
+    params.set(
+      "seller",
+      seller
     );
+  }
 
-}
 
+  if (
+    params.toString()
+  ) {
 
-/* =========================================================
-   HEALTH CHECK
-========================================================= */
+    url +=
+      "?" +
+      params.toString();
 
-async function checkAPI() {
+  }
+
 
   try {
 
     const data =
-      await apiFetch(
-        `${API_BASE}/api/health`
-      );
+      await request(url);
 
 
-    console.log(
-      "[GoldMania] API HEALTH:",
-      data
-    );
+    state.products =
+      Array.isArray(
+        data?.products
+      )
+        ? data.products
+        : [];
+
+
+    renderProducts();
 
 
     setText(
       [
-        "apiStatus",
-        "api-status",
-        "connectionStatus"
+        "productCount",
+        "productsCount",
+        "count"
       ],
-      data?.ok
-        ? "Connected"
-        : "Unavailable"
+      state.products.length
     );
 
-
-    return data;
 
   } catch (error) {
 
     console.error(
-      "[GoldMania] Health error:",
+      "[GoldMania] FILTER ERROR",
       error
     );
-
-
-    setText(
-      [
-        "apiStatus",
-        "api-status",
-        "connectionStatus"
-      ],
-      "API unavailable"
-    );
-
-
-    return null;
 
   }
 
@@ -1655,7 +1476,7 @@ async function checkAPI() {
 
 
 /* =========================================================
-   LOAD ALL
+   LOAD EVERYTHING
 ========================================================= */
 
 async function loadAll() {
@@ -1665,7 +1486,10 @@ async function loadAll() {
   );
 
 
-  await checkAPI();
+  state.errors = [];
+
+
+  await loadHealth();
 
 
   await Promise.allSettled([
@@ -1677,14 +1501,15 @@ async function loadAll() {
 
 
   console.log(
-    "[GoldMania] Finished."
+    "[GoldMania] Complete",
+    state
   );
 
 }
 
 
 /* =========================================================
-   PUBLIC API
+   PUBLIC
 ========================================================= */
 
 window.GoldMania = {
@@ -1699,7 +1524,7 @@ window.GoldMania = {
 
   reloadHistory: loadHistory,
 
-  checkAPI: checkAPI,
+  checkAPI: loadHealth,
 
   getState: () => state
 
@@ -1707,13 +1532,26 @@ window.GoldMania = {
 
 
 /* =========================================================
-   START
+   INIT
 ========================================================= */
 
 function init() {
 
   console.log(
-    "[GoldMania] app.js loaded"
+    "================================"
+  );
+
+  console.log(
+    "GoldManiaSavings app.js loaded"
+  );
+
+  console.log(
+    "API:",
+    API_BASE
+  );
+
+  console.log(
+    "================================"
   );
 
 
