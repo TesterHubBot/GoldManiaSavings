@@ -1,41 +1,52 @@
 /* =========================================================
    GoldManiaSavings
-   Frontend Application
-   app.js
-   ========================================================= */
+   FINAL app.js
+   Frontend controller for index.html + style.css
+
+   Backend:
+   https://goldmaniasavings-api.onlinetechmine.workers.dev
+
+   IMPORTANT:
+   This frontend does NOT scrape seller websites directly.
+   The Cloudflare Worker is responsible for fetching /
+   normalising / caching seller data.
+
+   Expected endpoints:
+   /api/health
+   /api/gold
+   /api/sellers
+   /api/products
+   /api/offers
+   /api/history
+========================================================= */
 
 "use strict";
 
 /* =========================================================
    CONFIG
-   ========================================================= */
+========================================================= */
 
 const CONFIG = {
   API_BASE:
     "https://goldmaniasavings-api.onlinetechmine.workers.dev",
 
-  ENDPOINTS: {
-    health: "/api/health",
-    gold: "/api/gold",
-    sellers: "/api/sellers",
-    products: "/api/products",
-    offers: "/api/offers",
-    history: "/api/history"
-  },
+  REQUEST_TIMEOUT:
+    20000,
 
-  REFRESH_MS: 5 * 60 * 1000,
+  GOLD_REFRESH_MS:
+    5 * 60 * 1000,
 
-  FETCH_TIMEOUT_MS: 15000,
+  PRODUCT_REFRESH_MS:
+    10 * 60 * 1000,
 
-  DEFAULT_PURITY: "ALL",
-
-  DEFAULT_SORT: "PRICE_ASC"
+  MAX_PRODUCTS:
+    1000
 };
 
 
 /* =========================================================
    STATE
-   ========================================================= */
+========================================================= */
 
 const state = {
   gold: null,
@@ -50,325 +61,159 @@ const state = {
 
   selectedPurity: "ALL",
 
-  selectedWeight: "ALL",
-
   selectedSeller: "ALL",
 
-  sort: "PRICE_ASC",
+  selectedWeight: "ALL",
 
-  loading: false,
+  sortBy: "price-asc",
 
-  goldLoading: false,
+  loadingGold: false,
 
-  productsLoading: false,
+  loadingProducts: false,
 
-  lastProductsUpdate: null,
+  loadingOffers: false,
 
   lastGoldUpdate: null,
 
-  apiOnline: false,
+  lastProductUpdate: null,
 
-  error: null
+  apiOnline: false
 };
 
 
 /* =========================================================
    DOM HELPERS
-   ========================================================= */
+========================================================= */
 
-function $(selector) {
-  return document.querySelector(selector);
+function $(selector, root = document) {
+  return root.querySelector(selector);
 }
 
-function $$(selector) {
+
+function $all(selector, root = document) {
   return Array.from(
-    document.querySelectorAll(selector)
+    root.querySelectorAll(selector)
   );
 }
 
-function byId(id) {
-  return document.getElementById(id);
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 
 /* =========================================================
-   INIT
-   ========================================================= */
+   NUMBER HELPERS
+========================================================= */
 
-document.addEventListener(
-  "DOMContentLoaded",
-  init
-);
-
-async function init() {
-
-  bindEvents();
-
-  renderInitialUI();
-
-  await loadApplicationData();
-
-  startAutoRefresh();
-}
-
-
-/* =========================================================
-   EVENTS
-   ========================================================= */
-
-function bindEvents() {
-
-  document.addEventListener(
-    "click",
-    handleDocumentClick
-  );
-
-  document.addEventListener(
-    "change",
-    handleDocumentChange
-  );
-
-}
-
-
-/* =========================================================
-   CLICK EVENTS
-   ========================================================= */
-
-function handleDocumentClick(event) {
-
-  const purityButton =
-    event.target.closest(
-      "[data-purity]"
-    );
-
-  if (purityButton) {
-
-    state.selectedPurity =
-      purityButton.dataset.purity ||
-      "ALL";
-
-    updateActiveControls();
-
-    renderProducts();
-
-    return;
-  }
-
-
-  const sellerButton =
-    event.target.closest(
-      "[data-seller]"
-    );
-
-  if (sellerButton) {
-
-    state.selectedSeller =
-      sellerButton.dataset.seller ||
-      "ALL";
-
-    updateActiveControls();
-
-    renderProducts();
-
-    return;
-  }
-
-
-  const weightButton =
-    event.target.closest(
-      "[data-weight]"
-    );
-
-  if (weightButton) {
-
-    state.selectedWeight =
-      weightButton.dataset.weight ||
-      "ALL";
-
-    updateActiveControls();
-
-    renderProducts();
-
-    return;
-  }
-
-
-  const sortButton =
-    event.target.closest(
-      "[data-sort]"
-    );
-
-  if (sortButton) {
-
-    state.sort =
-      sortButton.dataset.sort ||
-      CONFIG.DEFAULT_SORT;
-
-    updateActiveControls();
-
-    renderProducts();
-
-    return;
-  }
-
-
-  const compareButton =
-    event.target.closest(
-      "[data-compare]"
-    );
-
-  if (compareButton) {
-
-    const productId =
-      compareButton.dataset.compare;
-
-    openComparison(
-      productId
-    );
-
-    return;
-  }
-
-
-  const closeButton =
-    event.target.closest(
-      "[data-close-modal]"
-    );
-
-  if (closeButton) {
-
-    closeComparison();
-
-    return;
-  }
-
-}
-
-
-/* =========================================================
-   CHANGE EVENTS
-   ========================================================= */
-
-function handleDocumentChange(event) {
-
+function number(value) {
   if (
-    event.target.matches(
-      "#puritySelect"
-    )
+    value === null ||
+    value === undefined ||
+    value === ""
   ) {
-
-    state.selectedPurity =
-      event.target.value;
-
-    updateActiveControls();
-
-    renderProducts();
-
+    return 0;
   }
 
-
-  if (
-    event.target.matches(
-      "#sellerSelect"
-    )
-  ) {
-
-    state.selectedSeller =
-      event.target.value;
-
-    updateActiveControls();
-
-    renderProducts();
-
+  if (typeof value === "number") {
+    return Number.isFinite(value)
+      ? value
+      : 0;
   }
 
+  const cleaned =
+    String(value)
+      .replace(/[₹,\s]/g, "");
 
-  if (
-    event.target.matches(
-      "#weightSelect"
-    )
-  ) {
+  const match =
+    cleaned.match(
+      /-?\d+(?:\.\d+)?/
+    );
 
-    state.selectedWeight =
-      event.target.value;
-
-    updateActiveControls();
-
-    renderProducts();
-
+  if (!match) {
+    return 0;
   }
 
+  const result =
+    Number(match[0]);
 
-  if (
-    event.target.matches(
-      "#sortSelect"
-    )
-  ) {
+  return Number.isFinite(result)
+    ? result
+    : 0;
+}
 
-    state.sort =
-      event.target.value;
 
-    updateActiveControls();
+function formatINR(value) {
+  const amount = number(value);
 
-    renderProducts();
-
+  if (!amount) {
+    return "₹—";
   }
 
+  return new Intl.NumberFormat(
+    "en-IN",
+    {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0
+    }
+  ).format(amount);
+}
+
+
+function formatNumber(value) {
+  const amount = number(value);
+
+  if (!amount) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat(
+    "en-IN",
+    {
+      maximumFractionDigits: 2
+    }
+  ).format(amount);
 }
 
 
 /* =========================================================
-   LOAD ALL DATA
-   ========================================================= */
-
-async function loadApplicationData() {
-
-  setGlobalLoading(true);
-
-  await Promise.allSettled([
-    loadHealth(),
-    loadGold(),
-    loadSellers(),
-    loadProducts(),
-    loadOffers(),
-    loadHistory()
-  ]);
-
-  setGlobalLoading(false);
-
-  renderAll();
-
-}
-
-
-/* =========================================================
-   API FETCH
-   ========================================================= */
+   API
+========================================================= */
 
 async function apiFetch(
-  endpoint,
+  path,
   options = {}
 ) {
-
   const controller =
     new AbortController();
 
   const timeout =
     setTimeout(
-      () => controller.abort(),
-      CONFIG.FETCH_TIMEOUT_MS
+      () =>
+        controller.abort(),
+      CONFIG.REQUEST_TIMEOUT
     );
 
   try {
+    const separator =
+      path.includes("?")
+        ? "&"
+        : "?";
+
+    const url =
+      `${CONFIG.API_BASE}${path}${separator}_=${Date.now()}`;
 
     const response =
       await fetch(
-        CONFIG.API_BASE +
-        endpoint,
+        url,
         {
           ...options,
-
           signal:
             controller.signal,
 
@@ -377,204 +222,802 @@ async function apiFetch(
               "application/json",
 
             ...(options.headers || {})
-          }
+          },
+
+          cache:
+            "no-store"
         }
       );
 
-
     if (!response.ok) {
-
       throw new Error(
         `HTTP ${response.status}`
       );
-
     }
-
 
     const data =
       await response.json();
 
-
     return data;
 
   } finally {
-
     clearTimeout(timeout);
-
   }
-
 }
 
 
 /* =========================================================
    HEALTH
-   ========================================================= */
+========================================================= */
 
-async function loadHealth() {
-
+async function checkAPI() {
   try {
-
     const data =
       await apiFetch(
-        CONFIG.ENDPOINTS.health
+        "/api/health"
       );
-
 
     state.apiOnline =
-      Boolean(
-        data &&
-        data.ok
-      );
+      data?.ok === true;
+
+    setConnectionStatus(
+      true
+    );
+
+    return true;
 
   } catch (error) {
 
-    state.apiOnline = false;
-
     console.error(
-      "Health check failed:",
+      "API health check failed:",
       error
     );
 
-  }
+    state.apiOnline =
+      false;
 
+    setConnectionStatus(
+      false
+    );
+
+    return false;
+  }
 }
 
 
 /* =========================================================
-   GOLD
-   ========================================================= */
+   CONNECTION STATUS
+========================================================= */
 
-async function loadGold() {
+function setConnectionStatus(
+  online
+) {
 
-  state.goldLoading = true;
+  const elements = [
+    "#apiStatus",
+    "#connectionStatus",
+    "[data-api-status]"
+  ];
 
-  renderGoldLoading();
+  for (
+    const selector of elements
+  ) {
 
+    const element =
+      $(selector);
+
+    if (!element) {
+      continue;
+    }
+
+    element.textContent =
+      online
+        ? "Live"
+        : "Offline";
+
+    element.classList.toggle(
+      "online",
+      online
+    );
+
+    element.classList.toggle(
+      "offline",
+      !online
+    );
+  }
+}
+
+
+/* =========================================================
+   GOLD PRICE
+========================================================= */
+
+async function loadGoldPrice() {
+
+  if (state.loadingGold) {
+    return;
+  }
+
+  state.loadingGold = true;
+
+  setGoldLoading(
+    true
+  );
 
   try {
 
     const data =
       await apiFetch(
-        CONFIG.ENDPOINTS.gold
+        "/api/gold"
       );
 
-
-    if (
-      !data ||
-      !data.ok
-    ) {
-
+    if (!data?.ok) {
       throw new Error(
         data?.message ||
-        "Gold data unavailable"
+        "Gold price unavailable"
       );
-
     }
 
-
     state.gold =
-      normalizeGoldResponse(
-        data
-      );
+      data;
 
     state.lastGoldUpdate =
-      new Date();
+      data.timestamp ||
+      new Date().toISOString();
+
+    state.apiOnline =
+      true;
+
+    setConnectionStatus(
+      true
+    );
+
+    renderGoldPrice();
 
   } catch (error) {
 
     console.error(
-      "Gold loading failed:",
+      "Gold price load failed:",
       error
     );
 
-    state.gold = null;
-
-    showGoldError();
+    renderGoldError(
+      error.message
+    );
 
   } finally {
 
-    state.goldLoading = false;
+    state.loadingGold =
+      false;
 
+    setGoldLoading(
+      false
+    );
   }
-
-
-  renderGold();
-
 }
 
 
 /* =========================================================
-   NORMALIZE GOLD
-   ========================================================= */
+   GOLD PRICE EXTRACTION
+========================================================= */
 
-function normalizeGoldResponse(
-  data
+function getGoldRate(
+  purity
 ) {
 
+  const gold =
+    state.gold;
+
+  if (!gold) {
+    return 0;
+  }
+
+
+  /*
+   * Preferred source:
+   * indiaReference.rates
+   */
+
   const india =
-    data.indiaReference ||
-    null;
+    gold.indiaReference?.rates;
+
+  if (
+    india &&
+    india[purity]
+  ) {
+
+    return number(
+      india[purity].perGram
+    );
+
+  }
+
+
+  /*
+   * Fallback:
+   * internationalSpot.rates
+   */
 
   const international =
-    data.internationalSpot ||
-    null;
+    gold.internationalSpot?.rates;
+
+  if (
+    international &&
+    international[purity]
+  ) {
+
+    return number(
+      international[purity].perGram
+    );
+
+  }
+
+
+  return 0;
+}
+
+
+/* =========================================================
+   RENDER GOLD
+========================================================= */
+
+function renderGoldPrice() {
+
+  const rates = {
+    "24K":
+      getGoldRate("24K"),
+
+    "22K":
+      getGoldRate("22K"),
+
+    "18K":
+      getGoldRate("18K")
+  };
+
+
+  /*
+   * Support multiple possible
+   * index.html IDs.
+   */
+
+  setText(
+    "#gold24",
+    formatINR(
+      rates["24K"]
+    )
+  );
+
+  setText(
+    "#gold22",
+    formatINR(
+      rates["22K"]
+    )
+  );
+
+  setText(
+    "#gold18",
+    formatINR(
+      rates["18K"]
+    )
+  );
+
+
+  setText(
+    "#gold24Price",
+    formatINR(
+      rates["24K"]
+    )
+  );
+
+  setText(
+    "#gold22Price",
+    formatINR(
+      rates["22K"]
+    )
+  );
+
+  setText(
+    "#gold18Price",
+    formatINR(
+      rates["18K"]
+    )
+  );
+
+
+  setText(
+    "[data-gold-24]",
+    formatINR(
+      rates["24K"]
+    )
+  );
+
+  setText(
+    "[data-gold-22]",
+    formatINR(
+      rates["22K"]
+    )
+  );
+
+  setText(
+    "[data-gold-18]",
+    formatINR(
+      rates["18K"]
+    )
+  );
+
+
+  const source =
+    state.gold?.indiaReference?.source ||
+    state.gold?.internationalSpot?.source ||
+    "Gold reference";
+
+
+  setText(
+    "#goldSource",
+    source
+  );
+
+  setText(
+    "[data-gold-source]",
+    source
+  );
+
+
+  const date =
+    state.gold?.indiaReference?.date ||
+    state.gold?.timestamp ||
+    "";
+
+
+  if (date) {
+
+    const formatted =
+      formatDateTime(
+        date
+      );
+
+    setText(
+      "#goldUpdated",
+      formatted
+    );
+
+    setText(
+      "[data-gold-updated]",
+      formatted
+    );
+
+  }
+}
+
+
+/* =========================================================
+   GOLD ERROR
+========================================================= */
+
+function renderGoldError(
+  message
+) {
+
+  const fallback =
+    "Unavailable";
+
+  [
+    "#gold24",
+    "#gold22",
+    "#gold18",
+    "#gold24Price",
+    "#gold22Price",
+    "#gold18Price"
+  ].forEach(
+    selector =>
+      setText(
+        selector,
+        fallback
+      )
+  );
+
+
+  [
+    "[data-gold-24]",
+    "[data-gold-22]",
+    "[data-gold-18]"
+  ].forEach(
+    selector =>
+      setText(
+        selector,
+        fallback
+      )
+  );
+
+
+  setText(
+    "#goldSource",
+    "Price temporarily unavailable"
+  );
+
+  setText(
+    "[data-gold-source]",
+    "Price temporarily unavailable"
+  );
+}
+
+
+/* =========================================================
+   GOLD LOADING
+========================================================= */
+
+function setGoldLoading(
+  loading
+) {
+
+  if (!loading) {
+    return;
+  }
+
+  [
+    "#gold24",
+    "#gold22",
+    "#gold18",
+    "#gold24Price",
+    "#gold22Price",
+    "#gold18Price"
+  ].forEach(
+    selector => {
+
+      const element =
+        $(selector);
+
+      if (
+        element &&
+        (
+          element.textContent.trim() === "" ||
+          element.textContent.includes("Unavailable")
+        )
+      ) {
+
+        element.textContent =
+          "Loading...";
+
+      }
+
+    }
+  );
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+async function loadProducts() {
+
+  if (state.loadingProducts) {
+    return;
+  }
+
+  state.loadingProducts =
+    true;
+
+  renderProductsLoading();
+
+  try {
+
+    const data =
+      await apiFetch(
+        "/api/products"
+      );
+
+    if (!data?.ok) {
+      throw new Error(
+        data?.message ||
+        "Products unavailable"
+      );
+    }
+
+    const products =
+      Array.isArray(
+        data.products
+      )
+        ? data.products
+        : [];
+
+
+    state.products =
+      products
+        .map(
+          normaliseProduct
+        )
+        .filter(
+          product =>
+            product.productUrl ||
+            product.productName
+        )
+        .slice(
+          0,
+          CONFIG.MAX_PRODUCTS
+        );
+
+
+    state.lastProductUpdate =
+      data.updatedAt ||
+      new Date().toISOString();
+
+
+    state.apiOnline =
+      true;
+
+    setConnectionStatus(
+      true
+    );
+
+
+    populateSellerFilter();
+
+    populateWeightFilter();
+
+    renderComparison();
+
+  } catch (error) {
+
+    console.error(
+      "Product load failed:",
+      error
+    );
+
+    state.products =
+      [];
+
+    renderProductsError(
+      error.message
+    );
+
+  } finally {
+
+    state.loadingProducts =
+      false;
+  }
+}
+
+
+/* =========================================================
+   NORMALISE PRODUCT
+========================================================= */
+
+function normaliseProduct(
+  product
+) {
+
+  const purity =
+    normalisePurity(
+      product?.purity
+    );
+
+
+  const weight =
+    number(
+      product?.weight
+    );
+
+
+  const price =
+    number(
+      product?.listedPrice ??
+      product?.price
+    );
+
+
+  const mrp =
+    number(
+      product?.mrp
+    );
 
 
   return {
 
-    live:
-      Boolean(data.live),
+    ...product,
 
-    timestamp:
-      data.timestamp ||
-      null,
+    id:
+      String(
+        product?.id ||
+        ""
+      ),
 
-    source:
-      india?.source ||
-      international?.source ||
-      "Unknown",
+    sellerId:
+      String(
+        product?.sellerId ||
+        ""
+      )
+        .toLowerCase(),
 
-    resolution:
-      india?.resolution ||
-      null,
+    seller:
+      String(
+        product?.seller ||
+        product?.sellerName ||
+        product?.sellerId ||
+        "Seller"
+      ),
 
-    date:
-      india?.date ||
-      null,
+    productName:
+      cleanProductName(
+        product?.productName ||
+        product?.name ||
+        "Gold Coin"
+      ),
 
-    rates: {
+    purity,
 
-      "24K":
-        Number(
-          india?.rates?.["24K"]?.perGram ||
-          international?.rates?.["24K"]?.perGram ||
-          0
-        ),
+    weight,
 
-      "22K":
-        Number(
-          india?.rates?.["22K"]?.perGram ||
-          international?.rates?.["22K"]?.perGram ||
-          0
-        ),
+    listedPrice:
+      price,
 
-      "18K":
-        Number(
-          india?.rates?.["18K"]?.perGram ||
-          international?.rates?.["18K"]?.perGram ||
-          0
-        )
+    mrp,
 
+    coupon:
+      number(
+        product?.coupon
+      ),
+
+    cardOffer:
+      number(
+        product?.cardOffer
+      ),
+
+    upiOffer:
+      number(
+        product?.upiOffer
+      ),
+
+    cashback:
+      number(
+        product?.cashback
+      ),
+
+    voucher:
+      String(
+        product?.voucher ||
+        ""
+      ).trim(),
+
+    promoCode:
+      String(
+        product?.promoCode ||
+        ""
+      ).trim(),
+
+    offerText:
+      String(
+        product?.offerText ||
+        ""
+      ).trim(),
+
+    productUrl:
+      safeProductURL(
+        product?.productUrl ||
+        product?.url
+      )
+  };
+}
+
+
+/* =========================================================
+   PURITY
+========================================================= */
+
+function normalisePurity(
+  value
+) {
+
+  const text =
+    String(
+      value || ""
+    )
+      .toUpperCase()
+      .replace(/\s+/g, "");
+
+
+  if (
+    text.includes("24") ||
+    text.includes("999")
+  ) {
+    return "24K";
+  }
+
+
+  if (
+    text.includes("22") ||
+    text.includes("916")
+  ) {
+    return "22K";
+  }
+
+
+  if (
+    text.includes("18") ||
+    text.includes("750")
+  ) {
+    return "18K";
+  }
+
+
+  return "";
+}
+
+
+/* =========================================================
+   PRODUCT NAME
+========================================================= */
+
+function cleanProductName(
+  value
+) {
+
+  return String(
+    value || ""
+  )
+    .replace(
+      /\b(TRY AT HOME|TRY VIDEO CALL|VIEW SIMILAR|CHECK DELIVERY DATE)\b/gi,
+      ""
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim()
+    .slice(
+      0,
+      180
+    );
+}
+
+
+/* =========================================================
+   SAFE PRODUCT URL
+========================================================= */
+
+function safeProductURL(
+  value
+) {
+
+  if (!value) {
+    return "";
+  }
+
+  try {
+
+    const url =
+      new URL(
+        String(value),
+        window.location.href
+      );
+
+    if (
+      url.protocol !== "http:" &&
+      url.protocol !== "https:"
+    ) {
+      return "";
     }
 
-  };
+    /*
+     * IMPORTANT:
+     * Do NOT replace exact seller URL.
+     * Tracking parameters are deliberately
+     * preserved because some sellers use
+     * them for browse/product routing.
+     */
 
+    return url.href;
+
+  } catch {
+
+    return "";
+  }
 }
 
 
 /* =========================================================
    SELLERS
-   ========================================================= */
+========================================================= */
 
 async function loadSellers() {
 
@@ -582,667 +1025,333 @@ async function loadSellers() {
 
     const data =
       await apiFetch(
-        CONFIG.ENDPOINTS.sellers
+        "/api/sellers"
       );
 
+    if (
+      data?.ok &&
+      Array.isArray(
+        data.sellers
+      )
+    ) {
 
-    state.sellers =
-      Array.isArray(data?.sellers)
-        ? data.sellers
-        : [];
+      state.sellers =
+        data.sellers;
+
+      populateSellerFilter();
+
+    }
 
   } catch (error) {
 
-    console.error(
-      "Seller loading failed:",
+    console.warn(
+      "Seller list unavailable:",
       error
     );
 
-    state.sellers = [];
+    /*
+     * Build seller list from products
+     * as a fallback.
+     */
 
+    state.sellers =
+      buildSellerListFromProducts();
+
+    populateSellerFilter();
   }
-
-
-  renderSellerControls();
-
 }
 
 
 /* =========================================================
-   PRODUCTS
-   ========================================================= */
+   SELLER FALLBACK
+========================================================= */
 
-async function loadProducts() {
+function buildSellerListFromProducts() {
 
-  state.productsLoading = true;
+  const map =
+    new Map();
 
-  renderProductLoading();
-
-
-  try {
-
-    const data =
-      await apiFetch(
-        CONFIG.ENDPOINTS.products
-      );
-
+  for (
+    const product of state.products
+  ) {
 
     if (
-      !data ||
-      !data.ok
+      !product.sellerId
+    ) {
+      continue;
+    }
+
+    if (
+      !map.has(
+        product.sellerId
+      )
     ) {
 
-      throw new Error(
-        data?.message ||
-        "Products unavailable"
+      map.set(
+        product.sellerId,
+        {
+          id:
+            product.sellerId,
+
+          name:
+            product.seller,
+
+          enabled:
+            true
+        }
       );
 
     }
 
-
-    state.products =
-      Array.isArray(data.products)
-        ? data.products
-        : [];
-
-
-    state.lastProductsUpdate =
-      data.updatedAt ||
-      new Date().toISOString();
-
-
-    state.error = null;
-
-  } catch (error) {
-
-    console.error(
-      "Product loading failed:",
-      error
-    );
-
-    state.products = [];
-
-    state.error =
-      "Products could not be loaded.";
-
-  } finally {
-
-    state.productsLoading = false;
-
   }
 
-
-  renderProducts();
-
+  return Array.from(
+    map.values()
+  );
 }
 
 
 /* =========================================================
-   OFFERS
-   ========================================================= */
-
-async function loadOffers() {
-
-  try {
-
-    const data =
-      await apiFetch(
-        CONFIG.ENDPOINTS.offers
-      );
-
-
-    state.offers =
-      Array.isArray(data?.offers)
-        ? data.offers
-        : [];
-
-  } catch (error) {
-
-    console.error(
-      "Offers loading failed:",
-      error
-    );
-
-    state.offers = [];
-
-  }
-
-
-  renderOffers();
-
-}
-
-
-/* =========================================================
-   HISTORY
-   ========================================================= */
-
-async function loadHistory() {
-
-  try {
-
-    const data =
-      await apiFetch(
-        CONFIG.ENDPOINTS.history
-      );
-
-
-    state.history =
-      Array.isArray(data?.history)
-        ? data.history
-        : [];
-
-  } catch (error) {
-
-    console.error(
-      "History loading failed:",
-      error
-    );
-
-    state.history = [];
-
-  }
-
-}
-
-
-/* =========================================================
-   RENDER ALL
-   ========================================================= */
-
-function renderAll() {
-
-  renderGold();
-
-  renderSellerControls();
-
-  renderWeightControls();
-
-  renderProducts();
-
-  renderOffers();
-
-  renderStatus();
-
-  updateActiveControls();
-
-}
-
-
-/* =========================================================
-   INITIAL UI
-   ========================================================= */
-
-function renderInitialUI() {
-
-  renderGoldLoading();
-
-  renderProductLoading();
-
-}
-
-
-/* =========================================================
-   GOLD RENDER
-   ========================================================= */
-
-function renderGold() {
-
-  const container =
-    byId("goldRates") ||
-    byId("goldPriceGrid") ||
-    $(".gold-rates") ||
-    $(".gold-price-grid");
-
-
-  if (!container) {
-    return;
-  }
-
-
-  if (
-    !state.gold ||
-    !state.gold.rates
-  ) {
-
-    showGoldError();
-
-    return;
-
-  }
-
-
-  const rates =
-    state.gold.rates;
-
-
-  container.innerHTML = `
-
-    ${goldRateCard(
-      "24K",
-      rates["24K"]
-    )}
-
-    ${goldRateCard(
-      "22K",
-      rates["22K"]
-    )}
-
-    ${goldRateCard(
-      "18K",
-      rates["18K"]
-    )}
-
-  `;
-
-
-  const source =
-    byId("goldSource") ||
-    $(".gold-source");
-
-
-  if (source) {
-
-    source.textContent =
-      state.gold.source
-        ? `Source: ${state.gold.source}`
-        : "";
-
-  }
-
-
-  const updated =
-    byId("goldUpdated") ||
-    $(".gold-updated");
-
-
-  if (updated) {
-
-    updated.textContent =
-      formatGoldDate(
-        state.gold.timestamp
-      );
-
-  }
-
-}
-
-
-function goldRateCard(
-  purity,
-  price
-) {
-
-  const valid =
-    Number.isFinite(
-      Number(price)
-    ) &&
-    Number(price) > 0;
-
-
-  return `
-
-    <article class="gold-rate-card">
-
-      <div class="gold-rate-purity">
-        ${escapeHTML(purity)}
-      </div>
-
-      <div class="gold-rate-price">
-        ${
-          valid
-            ? formatINR(price)
-            : "Unavailable"
-        }
-      </div>
-
-      <div class="gold-rate-unit">
-        per gram
-      </div>
-
-    </article>
-
-  `;
-
-}
-
-
-/* =========================================================
-   GOLD LOADING
-   ========================================================= */
-
-function renderGoldLoading() {
-
-  const container =
-    byId("goldRates") ||
-    byId("goldPriceGrid") ||
-    $(".gold-rates") ||
-    $(".gold-price-grid");
-
-
-  if (!container) {
-    return;
-  }
-
-
-  if (!state.goldLoading) {
-    return;
-  }
-
-
-  container.innerHTML = `
-
-    <article class="gold-rate-card loading-card">
-      <div class="skeleton"></div>
-      <div class="skeleton small"></div>
-    </article>
-
-    <article class="gold-rate-card loading-card">
-      <div class="skeleton"></div>
-      <div class="skeleton small"></div>
-    </article>
-
-    <article class="gold-rate-card loading-card">
-      <div class="skeleton"></div>
-      <div class="skeleton small"></div>
-    </article>
-
-  `;
-
-}
-
-
-/* =========================================================
-   GOLD ERROR
-   ========================================================= */
-
-function showGoldError() {
-
-  const container =
-    byId("goldRates") ||
-    byId("goldPriceGrid") ||
-    $(".gold-rates") ||
-    $(".gold-price-grid");
-
-
-  if (!container) {
-    return;
-  }
-
-
-  container.innerHTML = `
-
-    <div class="data-error">
-
-      <strong>
-        Gold price unavailable
-      </strong>
-
-      <span>
-        Please try refreshing the page.
-      </span>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =========================================================
-   SELLER CONTROLS
-   ========================================================= */
-
-function renderSellerControls() {
-
-  const containers = [
-    byId("sellerFilters"),
-    byId("sellerSelect"),
-    $(".seller-filters")
-  ].filter(Boolean);
+   FILTER SELLER
+========================================================= */
+
+function populateSellerFilter() {
+
+  const selects =
+    [
+      "#sellerFilter",
+      "#sellerSelect"
+    ];
 
 
   const sellers =
-    getAvailableSellers();
+    state.sellers.length
+      ? state.sellers
+      : buildSellerListFromProducts();
 
 
-  const select =
-    byId("sellerSelect");
+  for (
+    const selector of selects
+  ) {
+
+    const select =
+      $(selector);
+
+    if (!select) {
+      continue;
+    }
 
 
-  if (select) {
-
-    select.innerHTML = `
-
-      <option value="ALL">
-        All sellers
-      </option>
-
-      ${sellers.map(
-        seller => `
-          <option
-            value="${escapeAttribute(seller.id)}"
-          >
-            ${escapeHTML(seller.name)}
-          </option>
-        `
-      ).join("")}
-
-    `;
-
-    select.value =
+    const current =
       state.selectedSeller;
 
-  }
+
+    select.innerHTML =
+      `<option value="ALL">All Sellers</option>`;
 
 
-  containers.forEach(
-    container => {
+    sellers
+      .filter(
+        seller =>
+          seller.enabled !== false
+      )
+      .sort(
+        (a, b) =>
+          String(a.name)
+            .localeCompare(
+              String(b.name)
+            )
+      )
+      .forEach(
+        seller => {
 
-      if (
-        container === select
-      ) {
-        return;
-      }
+          const option =
+            document.createElement(
+              "option"
+            );
 
+          option.value =
+            seller.id;
 
-      container.innerHTML = `
+          option.textContent =
+            seller.name;
 
-        <button
-          type="button"
-          class="filter-chip ${
-            state.selectedSeller === "ALL"
-              ? "active"
-              : ""
-          }"
-          data-seller="ALL"
-        >
-          All sellers
-        </button>
-
-        ${sellers.map(
-          seller => `
-
-            <button
-              type="button"
-              class="filter-chip ${
-                state.selectedSeller === seller.id
-                  ? "active"
-                  : ""
-              }"
-              data-seller="${escapeAttribute(seller.id)}"
-            >
-              ${escapeHTML(seller.name)}
-            </button>
-
-          `
-        ).join("")}
-
-      `;
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   AVAILABLE SELLERS
-   ========================================================= */
-
-function getAvailableSellers() {
-
-  const sellerMap =
-    new Map();
-
-
-  state.sellers.forEach(
-    seller => {
-
-      if (
-        seller?.id &&
-        seller?.name
-      ) {
-
-        sellerMap.set(
-          seller.id,
-          {
-            id:
-              seller.id,
-
-            name:
-              seller.name
-          }
-        );
-
-      }
-
-    }
-  );
-
-
-  state.products.forEach(
-    product => {
-
-      if (
-        product?.sellerId
-      ) {
-
-        if (
-          !sellerMap.has(
-            product.sellerId
-          )
-        ) {
-
-          sellerMap.set(
-            product.sellerId,
-            {
-              id:
-                product.sellerId,
-
-              name:
-                product.seller ||
-                product.sellerId
-            }
+          select.appendChild(
+            option
           );
 
         }
-
-      }
-
-    }
-  );
-
-
-  return Array.from(
-    sellerMap.values()
-  ).sort(
-    (a, b) =>
-      a.name.localeCompare(
-        b.name
-      )
-  );
-
-}
-
-
-/* =========================================================
-   WEIGHT CONTROLS
-   ========================================================= */
-
-function renderWeightControls() {
-
-  const select =
-    byId("weightSelect");
-
-
-  const weights =
-    getAvailableWeights();
-
-
-  if (!select) {
-    return;
-  }
-
-
-  select.innerHTML = `
-
-    <option value="ALL">
-      All weights
-    </option>
-
-    ${weights.map(
-      weight => `
-
-        <option
-          value="${escapeAttribute(String(weight))}"
-        >
-          ${escapeHTML(formatWeight(weight))}
-        </option>
-
-      `
-    ).join("")}
-
-  `;
-
-
-  select.value =
-    state.selectedWeight;
-
-}
-
-
-/* =========================================================
-   AVAILABLE WEIGHTS
-   ========================================================= */
-
-function getAvailableWeights() {
-
-  const values =
-    state.products
-      .map(
-        product =>
-          Number(product.weight)
-      )
-      .filter(
-        value =>
-          Number.isFinite(value) &&
-          value > 0
       );
 
 
-  return Array.from(
-    new Set(values)
-  ).sort(
-    (a, b) => a - b
-  );
-
+    select.value =
+      current;
+  }
 }
 
 
 /* =========================================================
-   PRODUCTS
-   ========================================================= */
+   WEIGHT FILTER
+========================================================= */
+
+function populateWeightFilter() {
+
+  const weights =
+    Array.from(
+      new Set(
+        state.products
+          .map(
+            product =>
+              number(
+                product.weight
+              )
+          )
+          .filter(
+            weight =>
+              weight > 0
+          )
+      )
+    )
+      .sort(
+        (a, b) =>
+          a - b
+      );
+
+
+  const selectors =
+    [
+      "#weightFilter",
+      "#weightSelect"
+    ];
+
+
+  for (
+    const selector of selectors
+  ) {
+
+    const select =
+      $(selector);
+
+    if (!select) {
+      continue;
+    }
+
+
+    select.innerHTML =
+      `<option value="ALL">All Weights</option>`;
+
+
+    for (
+      const weight of weights
+    ) {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        String(weight);
+
+      option.textContent =
+        `${formatNumber(weight)} g`;
+
+      select.appendChild(
+        option
+      );
+
+    }
+
+
+    select.value =
+      state.selectedWeight;
+  }
+}
+
+
+/* =========================================================
+   PURITY FILTER
+========================================================= */
+
+function setPurity(
+  purity
+) {
+
+  state.selectedPurity =
+    normaliseFilterValue(
+      purity
+    );
+
+  updatePurityButtons();
+
+  renderComparison();
+}
+
+
+function normaliseFilterValue(
+  value
+) {
+
+  const text =
+    String(
+      value || ""
+    ).toUpperCase();
+
+  if (
+    text === "24K" ||
+    text === "22K" ||
+    text === "18K"
+  ) {
+    return text;
+  }
+
+  return "ALL";
+}
+
+
+/* =========================================================
+   PURITY BUTTONS
+========================================================= */
+
+function updatePurityButtons() {
+
+  const buttons =
+    $all(
+      "[data-purity]"
+    );
+
+
+  for (
+    const button of buttons
+  ) {
+
+    const value =
+      normaliseFilterValue(
+        button.dataset.purity
+      );
+
+    const active =
+      value ===
+      state.selectedPurity;
+
+
+    button.classList.toggle(
+      "active",
+      active
+    );
+
+    button.setAttribute(
+      "aria-pressed",
+      String(active)
+    );
+
+  }
+}
+
+
+/* =========================================================
+   FILTERED PRODUCTS
+========================================================= */
 
 function getFilteredProducts() {
 
@@ -1251,15 +1360,14 @@ function getFilteredProducts() {
 
 
   if (
-    state.selectedPurity !== "ALL"
+    state.selectedPurity !==
+    "ALL"
   ) {
 
     products =
       products.filter(
         product =>
-          normalizePurity(
-            product.purity
-          ) ===
+          product.purity ===
           state.selectedPurity
       );
 
@@ -1267,149 +1375,121 @@ function getFilteredProducts() {
 
 
   if (
-    state.selectedWeight !== "ALL"
+    state.selectedSeller !==
+    "ALL"
   ) {
-
-    const requested =
-      Number(
-        state.selectedWeight
-      );
-
 
     products =
       products.filter(
         product =>
-          Number(product.weight) ===
-          requested
+          product.sellerId ===
+          state.selectedSeller
       );
 
   }
 
 
   if (
-    state.selectedSeller !== "ALL"
+    state.selectedWeight !==
+    "ALL"
   ) {
+
+    const target =
+      number(
+        state.selectedWeight
+      );
 
     products =
       products.filter(
         product =>
-          String(
-            product.sellerId || ""
-          ).toLowerCase() ===
-          String(
-            state.selectedSeller
-          ).toLowerCase()
+          number(
+            product.weight
+          ) === target
       );
 
   }
-
-
-  products =
-    products.filter(
-      product =>
-        isValidProduct(product)
-    );
 
 
   return sortProducts(
     products
   );
-
 }
 
 
 /* =========================================================
    SORT
-   ========================================================= */
+========================================================= */
 
 function sortProducts(
   products
 ) {
 
+  const list =
+    [...products];
+
+
   switch (
-    state.sort
+    state.sortBy
   ) {
 
-    case "PRICE_DESC":
+    case "price-desc":
 
-      return products.sort(
+      list.sort(
         (a, b) =>
-          Number(b.listedPrice) -
-          Number(a.listedPrice)
+          number(b.listedPrice) -
+          number(a.listedPrice)
       );
 
+      break;
 
-    case "WEIGHT_ASC":
 
-      return products.sort(
+    case "seller":
+
+      list.sort(
         (a, b) =>
-          Number(a.weight) -
-          Number(b.weight)
+          a.seller.localeCompare(
+            b.seller
+          )
       );
 
+      break;
 
-    case "WEIGHT_DESC":
 
-      return products.sort(
+    case "weight":
+
+      list.sort(
         (a, b) =>
-          Number(b.weight) -
-          Number(a.weight)
+          number(a.weight) -
+          number(b.weight)
       );
 
-
-    case "SELLER":
-
-      return products.sort(
-        (a, b) =>
-          String(a.seller || "")
-            .localeCompare(
-              String(b.seller || "")
-            )
-      );
+      break;
 
 
-    case "PRICE_ASC":
+    case "price-asc":
+
     default:
 
-      return products.sort(
+      list.sort(
         (a, b) =>
-          Number(a.listedPrice) -
-          Number(b.listedPrice)
+          number(a.listedPrice) -
+          number(b.listedPrice)
       );
+
+      break;
 
   }
 
+
+  return list;
 }
 
 
 /* =========================================================
-   PRODUCT RENDER
-   ========================================================= */
+   COMPARISON
+========================================================= */
 
-function renderProducts() {
-
-  const container =
-    byId("productsGrid") ||
-    byId("productGrid") ||
-    $(".products-grid") ||
-    $(".product-grid");
-
-
-  if (!container) {
-    return;
-  }
-
-
-  if (
-    state.productsLoading
-  ) {
-
-    renderProductLoading();
-
-    return;
-
-  }
-
+function renderComparison() {
 
   const products =
     getFilteredProducts();
@@ -1420,157 +1500,184 @@ function renderProducts() {
   );
 
 
-  if (!products.length) {
+  /*
+   * Main containers used by common
+   * versions of index.html.
+   */
 
-    container.innerHTML = `
+  const containers =
+    [
+      "#productsGrid",
+      "#comparisonGrid",
+      "#productGrid",
+      "#products",
+      "#comparison"
+    ];
 
-      <div class="empty-state">
 
-        <div class="empty-icon">
-          🪙
-        </div>
+  let container = null;
 
-        <h3>
-          No gold coins found
-        </h3>
 
-        <p>
-          Try another purity, weight or seller.
-        </p>
+  for (
+    const selector of containers
+  ) {
 
-      </div>
+    const element =
+      $(selector);
 
-    `;
-
-    return;
+    if (element) {
+      container =
+        element;
+      break;
+    }
 
   }
 
 
-  const lowestMap =
-    createLowestPriceMap(
-      products
+  if (!container) {
+
+    console.warn(
+      "Product container not found."
     );
+
+    return;
+  }
+
+
+  if (!products.length) {
+
+    container.innerHTML =
+      renderEmptyProducts();
+
+    return;
+  }
+
+
+  /*
+   * Determine cheapest product.
+   */
+
+  const validPrices =
+    products
+      .map(
+        product =>
+          number(
+            product.listedPrice
+          )
+      )
+      .filter(
+        price =>
+          price > 0
+      );
+
+
+  const lowestPrice =
+    validPrices.length
+      ? Math.min(
+          ...validPrices
+        )
+      : 0;
 
 
   container.innerHTML =
     products
       .map(
         product =>
-          productCard(
+          renderProductCard(
             product,
-            lowestMap
+            lowestPrice
           )
       )
       .join("");
 
+
+  attachProductActions(
+    container
+  );
 }
 
 
 /* =========================================================
    PRODUCT CARD
-   ========================================================= */
+========================================================= */
 
-function productCard(
+function renderProductCard(
   product,
-  lowestMap
+  lowestPrice
 ) {
 
-  const comparisonKey =
-    makeComparisonKey(
-      product
-    );
-
-
-  const lowest =
-    lowestMap.get(
-      comparisonKey
+  const price =
+    number(
+      product.listedPrice
     );
 
 
   const isLowest =
-    lowest &&
-    String(lowest.id) ===
-    String(product.id);
+    price > 0 &&
+    price === lowestPrice;
 
 
-  const offers =
-    getProductOffers(
+  const offerCount =
+    countOffers(
       product
     );
 
 
-  const exactUrl =
-    getExactProductUrl(
+  const saving =
+    calculateSaving(
       product
     );
 
 
   return `
-
     <article
-      class="product-card ${
-        isLowest
-          ? "lowest-price-card"
-          : ""
-      }"
-      data-product-id="${escapeAttribute(
-        String(product.id || "")
-      )}"
+      class="product-card ${isLowest ? "lowest-price" : ""}"
+      data-product-id="${escapeHTML(product.id)}"
     >
 
-      ${
-        isLowest
-          ? `
-            <div class="lowest-badge">
-              LOWEST PRICE
-            </div>
-          `
-          : ""
-      }
+      <div class="product-card-top">
+
+        <div class="seller-badge">
+          ${escapeHTML(product.seller)}
+        </div>
+
+        ${
+          isLowest
+            ? `
+              <span class="lowest-badge">
+                Lowest Price
+              </span>
+            `
+            : ""
+        }
+
+      </div>
+
 
       <div class="product-card-body">
 
-        <div class="product-seller">
-          ${escapeHTML(
-            product.seller ||
-            product.sellerId ||
-            "Seller"
-          )}
-        </div>
-
         <h3 class="product-name">
-          ${escapeHTML(
-            product.productName ||
-            "Gold Coin"
-          )}
+          ${escapeHTML(product.productName)}
         </h3>
 
-        <div class="product-specs">
 
-          <span>
-            ${escapeHTML(
-              normalizePurity(
-                product.purity
-              ) || "Gold"
-            )}
-          </span>
-
-          <span>
-            ${escapeHTML(
-              formatWeight(
-                product.weight
-              )
-            )}
-          </span>
+        <div class="product-meta">
 
           ${
-            product.fineness
+            product.purity
               ? `
                 <span>
-                  ${escapeHTML(
-                    product.fineness
-                  )}
+                  ${escapeHTML(product.purity)}
+                </span>
+              `
+              : ""
+          }
+
+          ${
+            product.weight
+              ? `
+                <span>
+                  ${formatNumber(product.weight)} g
                 </span>
               `
               : ""
@@ -1584,19 +1691,19 @@ function productCard(
           <div>
 
             <div class="product-price">
-              ${formatINR(
-                product.listedPrice
-              )}
+              ${
+                price
+                  ? formatINR(price)
+                  : "Price unavailable"
+              }
             </div>
 
             ${
-              Number(product.mrp) >
-              Number(product.listedPrice)
+              product.mrp &&
+              product.mrp > price
                 ? `
                   <div class="product-mrp">
-                    ${formatINR(
-                      product.mrp
-                    )}
+                    ${formatINR(product.mrp)}
                   </div>
                 `
                 : ""
@@ -1606,11 +1713,11 @@ function productCard(
 
 
           ${
-            isLowest
+            saving > 0
               ? `
-                <div class="price-note">
-                  Lowest
-                </div>
+                <span class="saving-badge">
+                  Save ${formatINR(saving)}
+                </span>
               `
               : ""
           }
@@ -1618,652 +1725,63 @@ function productCard(
         </div>
 
 
-        ${
-          offers
-            ? `
-              <div class="offer-box">
-                ${offers}
-              </div>
-            `
-            : ""
-        }
-
-
-        <div class="product-actions">
+        <div class="offer-summary">
 
           ${
-            exactUrl
+            offerCount > 0
               ? `
-                <a
-                  class="product-link"
-                  href="${escapeAttribute(
-                    exactUrl
-                  )}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View exact product
-                </a>
+                <span class="offer-count">
+                  ${offerCount} offer${offerCount > 1 ? "s" : ""}
+                </span>
               `
               : `
-                <span class="product-link disabled">
-                  Product link unavailable
+                <span class="no-offer">
+                  No extra offer listed
                 </span>
               `
           }
 
-
-          <button
-            type="button"
-            class="compare-button"
-            data-compare="${escapeAttribute(
-              String(product.id || "")
-            )}"
-          >
-            Compare
-          </button>
-
         </div>
+
+
+        ${renderOfferDetails(product)}
+
+      </div>
+
+
+      <div class="product-card-actions">
+
+        ${
+          product.productUrl
+            ? `
+              <a
+                class="product-link"
+                href="${escapeHTML(product.productUrl)}"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View Exact Product
+              </a>
+            `
+            : `
+              <span class="product-link disabled">
+                Product link unavailable
+              </span>
+            `
+        }
 
       </div>
 
     </article>
-
   `;
-
 }
 
 
 /* =========================================================
-   EXACT PRODUCT URL
-   ========================================================= */
+   OFFER DETAILS
+========================================================= */
 
-function getExactProductUrl(
-  product
-) {
-
-  const url =
-    String(
-      product.productUrl ||
-      ""
-    ).trim();
-
-
-  if (
-    !/^https?:\/\//i.test(url)
-  ) {
-
-    return "";
-
-  }
-
-
-  if (
-    isCategoryUrl(
-      url
-    )
-  ) {
-
-    return "";
-
-  }
-
-
-  return url;
-
-}
-
-
-/* =========================================================
-   CATEGORY URL PROTECTION
-   ========================================================= */
-
-function isCategoryUrl(
-  url
-) {
-
-  const value =
-    String(url)
-      .toLowerCase();
-
-
-  const badPatterns = [
-
-    "gold-coins.html",
-
-    "/gold-coins/",
-
-    "/goldcoins/",
-
-    "/collections/",
-
-    "/category/",
-
-    "/products?",
-
-    "?category=",
-
-    "/search",
-
-    "/search?",
-
-    "/shop/gold-coins"
-
-  ];
-
-
-  return badPatterns.some(
-    pattern =>
-      value.includes(pattern)
-  );
-
-}
-
-
-/* =========================================================
-   PRODUCT OFFERS
-   ========================================================= */
-
-function getProductOffers(
-  product
-) {
-
-  const parts = [];
-
-
-  if (
-    Number(product.coupon) > 0
-  ) {
-
-    parts.push(
-      `<span>Coupon: ${formatINR(
-        product.coupon
-      )}</span>`
-    );
-
-  }
-
-
-  if (
-    Number(product.cardOffer) > 0
-  ) {
-
-    parts.push(
-      `<span>Card offer: ${formatINR(
-        product.cardOffer
-      )}</span>`
-    );
-
-  }
-
-
-  if (
-    Number(product.upiOffer) > 0
-  ) {
-
-    parts.push(
-      `<span>UPI offer: ${formatINR(
-        product.upiOffer
-      )}</span>`
-    );
-
-  }
-
-
-  if (
-    Number(product.cashback) > 0
-  ) {
-
-    parts.push(
-      `<span>Cashback: ${formatINR(
-        product.cashback
-      )}</span>`
-    );
-
-  }
-
-
-  if (
-    product.voucher
-  ) {
-
-    parts.push(
-      `<span>Voucher: ${escapeHTML(
-        product.voucher
-      )}</span>`
-    );
-
-  }
-
-
-  if (
-    product.promoCode
-  ) {
-
-    parts.push(
-      `<span>Promo: <strong>${escapeHTML(
-        product.promoCode
-      )}</strong></span>`
-    );
-
-  }
-
-
-  if (
-    product.offerText
-  ) {
-
-    parts.push(
-      `<span>${escapeHTML(
-        product.offerText
-      )}</span>`
-    );
-
-  }
-
-
-  if (!parts.length) {
-    return "";
-  }
-
-
-  return `
-    <div class="offer-list">
-      ${parts.join("")}
-    </div>
-  `;
-
-}
-
-
-/* =========================================================
-   LOWEST PRICE MAP
-   ========================================================= */
-
-function createLowestPriceMap(
-  products
-) {
-
-  const map =
-    new Map();
-
-
-  for (
-    const product of products
-  ) {
-
-    const price =
-      Number(
-        product.listedPrice
-      );
-
-
-    if (
-      !Number.isFinite(price) ||
-      price <= 0
-    ) {
-      continue;
-    }
-
-
-    const key =
-      makeComparisonKey(
-        product
-      );
-
-
-    const current =
-      map.get(key);
-
-
-    if (
-      !current ||
-      price <
-      Number(
-        current.listedPrice
-      )
-    ) {
-
-      map.set(
-        key,
-        product
-      );
-
-    }
-
-  }
-
-
-  return map;
-
-}
-
-
-/* =========================================================
-   COMPARISON KEY
-   ========================================================= */
-
-function makeComparisonKey(
-  product
-) {
-
-  const purity =
-    normalizePurity(
-      product.purity
-    );
-
-
-  const weight =
-    normalizeWeight(
-      product.weight
-    );
-
-
-  return [
-    purity,
-    weight
-  ].join("|");
-
-}
-
-
-/* =========================================================
-   OPEN COMPARISON
-   ========================================================= */
-
-function openComparison(
-  productId
-) {
-
-  const selected =
-    state.products.find(
-      product =>
-        String(product.id) ===
-        String(productId)
-    );
-
-
-  if (!selected) {
-    return;
-  }
-
-
-  const key =
-    makeComparisonKey(
-      selected
-    );
-
-
-  const comparison =
-    state.products
-      .filter(
-        product =>
-          makeComparisonKey(
-            product
-          ) === key &&
-          isValidProduct(
-            product
-          )
-      )
-      .sort(
-        (a, b) =>
-          Number(a.listedPrice) -
-          Number(b.listedPrice)
-      );
-
-
-  renderComparisonModal(
-    selected,
-    comparison
-  );
-
-}
-
-
-/* =========================================================
-   COMPARISON MODAL
-   ========================================================= */
-
-function renderComparisonModal(
-  selected,
-  products
-) {
-
-  let modal =
-    byId("comparisonModal");
-
-
-  if (!modal) {
-
-    modal =
-      document.createElement(
-        "div"
-      );
-
-    modal.id =
-      "comparisonModal";
-
-    modal.className =
-      "comparison-modal";
-
-    document.body.appendChild(
-      modal
-    );
-
-  }
-
-
-  const lowest =
-    products.length
-      ? products[0]
-      : null;
-
-
-  modal.innerHTML = `
-
-    <div
-      class="comparison-backdrop"
-      data-close-modal
-    ></div>
-
-    <div class="comparison-dialog">
-
-      <button
-        type="button"
-        class="comparison-close"
-        data-close-modal
-        aria-label="Close"
-      >
-        ×
-      </button>
-
-      <div class="comparison-header">
-
-        <div class="comparison-title">
-          Price comparison
-        </div>
-
-        <div class="comparison-product">
-          ${escapeHTML(
-            selected.productName ||
-            "Gold Coin"
-          )}
-        </div>
-
-        <div class="comparison-spec">
-          ${escapeHTML(
-            normalizePurity(
-              selected.purity
-            )
-          )}
-          ·
-          ${escapeHTML(
-            formatWeight(
-              selected.weight
-            )
-          )}
-        </div>
-
-      </div>
-
-
-      <div class="comparison-table-wrap">
-
-        <table class="comparison-table">
-
-          <thead>
-            <tr>
-              <th>Seller</th>
-              <th>Price</th>
-              <th>Offers</th>
-              <th></th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            ${
-              products.map(
-                product => {
-
-                  const isLowestProduct =
-                    lowest &&
-                    String(
-                      lowest.id
-                    ) ===
-                    String(
-                      product.id
-                    );
-
-
-                  return `
-
-                    <tr
-                      class="${
-                        isLowestProduct
-                          ? "comparison-lowest"
-                          : ""
-                      }"
-                    >
-
-                      <td>
-                        <strong>
-                          ${escapeHTML(
-                            product.seller ||
-                            product.sellerId
-                          )}
-                        </strong>
-                      </td>
-
-                      <td>
-                        <strong>
-                          ${formatINR(
-                            product.listedPrice
-                          )}
-                        </strong>
-
-                        ${
-                          isLowestProduct
-                            ? `
-                              <span class="mini-lowest">
-                                LOWEST
-                              </span>
-                            `
-                            : ""
-                        }
-                      </td>
-
-                      <td>
-                        ${getOfferSummary(
-                          product
-                        )}
-                      </td>
-
-                      <td>
-                        ${
-                          getExactProductUrl(
-                            product
-                          )
-                            ? `
-                              <a
-                                href="${escapeAttribute(
-                                  getExactProductUrl(
-                                    product
-                                  )
-                                )}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="comparison-link"
-                              >
-                                Open product
-                              </a>
-                            `
-                            : ""
-                        }
-                      </td>
-
-                    </tr>
-
-                  `;
-
-                }
-              ).join("")
-            }
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  modal.classList.add(
-    "open"
-  );
-
-
-  document.body.classList.add(
-    "modal-open"
-  );
-
-}
-
-
-/* =========================================================
-   CLOSE COMPARISON
-   ========================================================= */
-
-function closeComparison() {
-
-  const modal =
-    byId("comparisonModal");
-
-
-  if (modal) {
-
-    modal.classList.remove(
-      "open"
-    );
-
-  }
-
-
-  document.body.classList.remove(
-    "modal-open"
-  );
-
-}
-
-
-/* =========================================================
-   OFFER SUMMARY
-   ========================================================= */
-
-function getOfferSummary(
+function renderOfferDetails(
   product
 ) {
 
@@ -2271,52 +1789,72 @@ function getOfferSummary(
 
 
   if (
-    Number(product.coupon) > 0
+    product.coupon > 0
   ) {
 
     offers.push(
-      `Coupon ${formatINR(
-        product.coupon
-      )}`
+      `
+      <div class="offer-item">
+        <span>Coupon</span>
+        <strong>
+          ${formatINR(product.coupon)}
+        </strong>
+      </div>
+      `
     );
 
   }
 
 
   if (
-    Number(product.cardOffer) > 0
+    product.cardOffer > 0
   ) {
 
     offers.push(
-      `Card ${formatINR(
-        product.cardOffer
-      )}`
+      `
+      <div class="offer-item">
+        <span>Card Offer</span>
+        <strong>
+          ${formatINR(product.cardOffer)}
+        </strong>
+      </div>
+      `
     );
 
   }
 
 
   if (
-    Number(product.upiOffer) > 0
+    product.upiOffer > 0
   ) {
 
     offers.push(
-      `UPI ${formatINR(
-        product.upiOffer
-      )}`
+      `
+      <div class="offer-item">
+        <span>UPI Offer</span>
+        <strong>
+          ${formatINR(product.upiOffer)}
+        </strong>
+      </div>
+      `
     );
 
   }
 
 
   if (
-    Number(product.cashback) > 0
+    product.cashback > 0
   ) {
 
     offers.push(
-      `Cashback ${formatINR(
-        product.cashback
-      )}`
+      `
+      <div class="offer-item">
+        <span>Cashback</span>
+        <strong>
+          ${formatINR(product.cashback)}
+        </strong>
+      </div>
+      `
     );
 
   }
@@ -2327,7 +1865,14 @@ function getOfferSummary(
   ) {
 
     offers.push(
-      `Voucher ${product.voucher}`
+      `
+      <div class="offer-item offer-text">
+        <span>Voucher</span>
+        <strong>
+          ${escapeHTML(product.voucher)}
+        </strong>
+      </div>
+      `
     );
 
   }
@@ -2338,7 +1883,14 @@ function getOfferSummary(
   ) {
 
     offers.push(
-      `Promo ${product.promoCode}`
+      `
+      <div class="offer-item offer-text">
+        <span>Promo Code</span>
+        <strong>
+          ${escapeHTML(product.promoCode)}
+        </strong>
+      </div>
+      `
     );
 
   }
@@ -2349,32 +1901,376 @@ function getOfferSummary(
   ) {
 
     offers.push(
-      product.offerText
+      `
+      <div class="offer-item offer-text">
+        <span>Offer</span>
+        <strong>
+          ${escapeHTML(product.offerText)}
+        </strong>
+      </div>
+      `
     );
 
   }
 
 
-  return offers.length
-    ? escapeHTML(
-        offers.join(" · ")
-      )
-    : "—";
+  if (!offers.length) {
+    return "";
+  }
 
+
+  return `
+    <div class="offer-list">
+      ${offers.join("")}
+    </div>
+  `;
 }
 
 
 /* =========================================================
-   OFFERS SECTION
-   ========================================================= */
+   SAVING
+========================================================= */
+
+function calculateSaving(
+  product
+) {
+
+  const mrp =
+    number(
+      product.mrp
+    );
+
+  const price =
+    number(
+      product.listedPrice
+    );
+
+
+  if (
+    mrp > price &&
+    price > 0
+  ) {
+
+    return mrp - price;
+
+  }
+
+
+  return 0;
+}
+
+
+/* =========================================================
+   COUNT OFFERS
+========================================================= */
+
+function countOffers(
+  product
+) {
+
+  let count = 0;
+
+
+  if (
+    number(product.coupon) > 0
+  ) {
+    count++;
+  }
+
+
+  if (
+    number(product.cardOffer) > 0
+  ) {
+    count++;
+  }
+
+
+  if (
+    number(product.upiOffer) > 0
+  ) {
+    count++;
+  }
+
+
+  if (
+    number(product.cashback) > 0
+  ) {
+    count++;
+  }
+
+
+  if (
+    product.voucher
+  ) {
+    count++;
+  }
+
+
+  if (
+    product.promoCode
+  ) {
+    count++;
+  }
+
+
+  if (
+    product.offerText
+  ) {
+    count++;
+  }
+
+
+  return count;
+}
+
+
+/* =========================================================
+   PRODUCTS LOADING
+========================================================= */
+
+function renderProductsLoading() {
+
+  const container =
+    getProductContainer();
+
+  if (!container) {
+    return;
+  }
+
+
+  container.innerHTML = `
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>
+        Loading gold coins from sellers...
+      </p>
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   PRODUCTS ERROR
+========================================================= */
+
+function renderProductsError(
+  message
+) {
+
+  const container =
+    getProductContainer();
+
+  if (!container) {
+    return;
+  }
+
+
+  container.innerHTML = `
+    <div class="error-state">
+
+      <h3>
+        Products could not be loaded
+      </h3>
+
+      <p>
+        ${
+          escapeHTML(
+            message ||
+            "Please try again."
+          )
+        }
+      </p>
+
+      <button
+        type="button"
+        class="retry-button"
+        data-action="retry-products"
+      >
+        Retry
+      </button>
+
+    </div>
+  `;
+
+
+  const retry =
+    container.querySelector(
+      '[data-action="retry-products"]'
+    );
+
+
+  if (retry) {
+
+    retry.addEventListener(
+      "click",
+      () =>
+        loadProducts()
+    );
+
+  }
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+function renderEmptyProducts() {
+
+  return `
+    <div class="empty-state">
+
+      <h3>
+        No matching gold coins
+      </h3>
+
+      <p>
+        Try another purity, seller or weight.
+      </p>
+
+      <button
+        type="button"
+        data-action="clear-filters"
+      >
+        Clear Filters
+      </button>
+
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+function getProductContainer() {
+
+  const selectors =
+    [
+      "#productsGrid",
+      "#comparisonGrid",
+      "#productGrid",
+      "#products",
+      "#comparison"
+    ];
+
+
+  for (
+    const selector of selectors
+  ) {
+
+    const element =
+      $(selector);
+
+    if (element) {
+      return element;
+    }
+
+  }
+
+
+  return null;
+}
+
+
+/* =========================================================
+   PRODUCT ACTIONS
+========================================================= */
+
+function attachProductActions(
+  container
+) {
+
+  const clear =
+    container.querySelector(
+      '[data-action="clear-filters"]'
+    );
+
+
+  if (clear) {
+
+    clear.addEventListener(
+      "click",
+      clearFilters
+    );
+
+  }
+}
+
+
+/* =========================================================
+   OFFERS ENDPOINT
+========================================================= */
+
+async function loadOffers() {
+
+  if (state.loadingOffers) {
+    return;
+  }
+
+  state.loadingOffers =
+    true;
+
+  try {
+
+    const data =
+      await apiFetch(
+        "/api/offers"
+      );
+
+    if (
+      data?.ok &&
+      Array.isArray(
+        data.offers
+      )
+    ) {
+
+      state.offers =
+        data.offers;
+
+      renderOffers();
+
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "Offers endpoint failed:",
+      error
+    );
+
+    /*
+     * Product-level offers are still
+     * rendered from /api/products.
+     */
+
+    renderOffers();
+
+  } finally {
+
+    state.loadingOffers =
+      false;
+  }
+}
+
+
+/* =========================================================
+   OFFERS UI
+========================================================= */
 
 function renderOffers() {
 
   const container =
-    byId("offersGrid") ||
-    byId("offersList") ||
-    $(".offers-grid") ||
-    $(".offers-list");
+    $(
+      "#offersContainer"
+    ) ||
+    $(
+      "#offersGrid"
+    ) ||
+    $(
+      "#offers"
+    );
 
 
   if (!container) {
@@ -2382,32 +2278,79 @@ function renderOffers() {
   }
 
 
-  if (!state.offers.length) {
+  /*
+   * If dedicated offers endpoint
+   * has no results, derive from products.
+   */
 
-    container.innerHTML = `
+  let offers =
+    [...state.offers];
 
-      <div class="empty-state">
-        <h3>No offers found</h3>
-        <p>
-          Seller offers will appear here when available.
-        </p>
-      </div>
 
-    `;
+  if (!offers.length) {
 
-    return;
+    offers =
+      state.products
+        .filter(
+          product =>
+            countOffers(product) > 0
+        )
+        .map(
+          product => ({
+            seller:
+              product.seller,
+
+            productName:
+              product.productName,
+
+            coupon:
+              product.coupon,
+
+            cardOffer:
+              product.cardOffer,
+
+            upiOffer:
+              product.upiOffer,
+
+            cashback:
+              product.cashback,
+
+            voucher:
+              product.voucher,
+
+            promoCode:
+              product.promoCode,
+
+            offerText:
+              product.offerText,
+
+            productUrl:
+              product.productUrl
+          })
+        );
 
   }
 
 
+  if (!offers.length) {
+
+    container.innerHTML = `
+      <div class="empty-state">
+        No seller offers available right now.
+      </div>
+    `;
+
+    return;
+  }
+
+
   container.innerHTML =
-    state.offers
+    offers
       .map(
         offer => `
-
           <article class="offer-card">
 
-            <div class="offer-seller">
+            <div class="offer-card-seller">
               ${escapeHTML(
                 offer.seller ||
                 "Seller"
@@ -2417,47 +2360,74 @@ function renderOffers() {
             <h3>
               ${escapeHTML(
                 offer.productName ||
-                "Gold Product"
+                "Gold Coin"
               )}
             </h3>
 
             ${
-              offer.coupon
-                ? `<div>Coupon: ${formatINR(
-                    offer.coupon
-                  )}</div>`
+              offer.coupon > 0
+                ? `
+                  <div>
+                    Coupon:
+                    <strong>
+                      ${formatINR(offer.coupon)}
+                    </strong>
+                  </div>
+                `
                 : ""
             }
 
             ${
-              offer.cardOffer
-                ? `<div>Card offer: ${formatINR(
-                    offer.cardOffer
-                  )}</div>`
+              offer.cardOffer > 0
+                ? `
+                  <div>
+                    Card Offer:
+                    <strong>
+                      ${formatINR(offer.cardOffer)}
+                    </strong>
+                  </div>
+                `
                 : ""
             }
 
             ${
-              offer.upiOffer
-                ? `<div>UPI offer: ${formatINR(
-                    offer.upiOffer
-                  )}</div>`
+              offer.upiOffer > 0
+                ? `
+                  <div>
+                    UPI Offer:
+                    <strong>
+                      ${formatINR(offer.upiOffer)}
+                    </strong>
+                  </div>
+                `
                 : ""
             }
 
             ${
-              offer.cashback
-                ? `<div>Cashback: ${formatINR(
-                    offer.cashback
-                  )}</div>`
+              offer.cashback > 0
+                ? `
+                  <div>
+                    Cashback:
+                    <strong>
+                      ${formatINR(offer.cashback)}
+                    </strong>
+                  </div>
+                `
                 : ""
             }
 
             ${
               offer.voucher
-                ? `<div>Voucher: ${escapeHTML(
-                    offer.voucher
-                  )}</div>`
+                ? `
+                  <div>
+                    Voucher:
+                    <strong>
+                      ${escapeHTML(
+                        offer.voucher
+                      )}
+                    </strong>
+                  </div>
+                `
                 : ""
             }
 
@@ -2465,7 +2435,7 @@ function renderOffers() {
               offer.promoCode
                 ? `
                   <div>
-                    Promo:
+                    Promo Code:
                     <strong>
                       ${escapeHTML(
                         offer.promoCode
@@ -2479,697 +2449,738 @@ function renderOffers() {
             ${
               offer.offerText
                 ? `
-                  <div class="offer-text">
-                    ${escapeHTML(
-                      offer.offerText
-                    )}
+                  <div>
+                    Offer:
+                    <strong>
+                      ${escapeHTML(
+                        offer.offerText
+                      )}
+                    </strong>
                   </div>
                 `
                 : ""
             }
 
             ${
-              getExactProductUrl(
-                offer
-              )
+              offer.productUrl
                 ? `
                   <a
-                    href="${escapeAttribute(
-                      getExactProductUrl(
-                        offer
-                      )
+                    href="${escapeHTML(
+                      offer.productUrl
                     )}"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    View exact product
+                    View Product
                   </a>
                 `
                 : ""
             }
 
           </article>
-
         `
       )
       .join("");
-
 }
 
 
 /* =========================================================
-   PRODUCT LOADING
-   ========================================================= */
+   COMPARISON SUMMARY
+========================================================= */
 
-function renderProductLoading() {
+function renderComparisonSummary() {
 
-  const container =
-    byId("productsGrid") ||
-    byId("productGrid") ||
-    $(".products-grid") ||
-    $(".product-grid");
+  const products =
+    getFilteredProducts();
 
 
-  if (!container) {
+  const valid =
+    products.filter(
+      product =>
+        number(
+          product.listedPrice
+        ) > 0
+    );
+
+
+  if (!valid.length) {
     return;
   }
 
 
-  if (!state.productsLoading) {
-    return;
-  }
+  const cheapest =
+    valid.reduce(
+      (current, product) =>
+        number(
+          product.listedPrice
+        ) <
+        number(
+          current.listedPrice
+        )
+          ? product
+          : current
+    );
 
 
-  container.innerHTML =
-    Array.from(
-      { length: 6 },
-      () => `
+  setText(
+    "#lowestPrice",
+    formatINR(
+      cheapest.listedPrice
+    )
+  );
 
-        <article class="product-card loading-card">
 
-          <div class="skeleton large"></div>
+  setText(
+    "#lowestSeller",
+    cheapest.seller
+  );
 
-          <div class="skeleton"></div>
 
-          <div class="skeleton medium"></div>
+  setText(
+    "#comparisonLowestPrice",
+    formatINR(
+      cheapest.listedPrice
+    )
+  );
 
-          <div class="skeleton small"></div>
 
-        </article>
-
-      `
-    ).join("");
-
+  setText(
+    "#comparisonLowestSeller",
+    cheapest.seller
+  );
 }
 
 
 /* =========================================================
    PRODUCT COUNT
-   ========================================================= */
+========================================================= */
 
 function updateProductCount(
   count
 ) {
 
-  const elements = [
-    byId("productCount"),
-    $(".product-count"),
-    byId("resultsCount")
-  ].filter(Boolean);
+  [
+    "#productCount",
+    "#productsCount",
+    "[data-product-count]"
+  ].forEach(
+    selector =>
+      setText(
+        selector,
+        `${count} product${count === 1 ? "" : "s"}`
+      )
+  );
 
 
-  elements.forEach(
-    element => {
+  renderComparisonSummary();
+}
 
-      element.textContent =
-        `${count} product${
-          count === 1
-            ? ""
-            : "s"
-        }`;
+
+/* =========================================================
+   CLEAR FILTERS
+========================================================= */
+
+function clearFilters() {
+
+  state.selectedPurity =
+    "ALL";
+
+  state.selectedSeller =
+    "ALL";
+
+  state.selectedWeight =
+    "ALL";
+
+  state.sortBy =
+    "price-asc";
+
+
+  const selectors =
+    [
+      "#sellerFilter",
+      "#sellerSelect",
+      "#weightFilter",
+      "#weightSelect",
+      "#sortSelect",
+      "#sortBy"
+    ];
+
+
+  selectors.forEach(
+    selector => {
+
+      const element =
+        $(selector);
+
+      if (!element) {
+        return;
+      }
+
+      if (
+        selector.includes("seller")
+      ) {
+        element.value =
+          "ALL";
+      } else if (
+        selector.includes("weight")
+      ) {
+        element.value =
+          "ALL";
+      } else {
+        element.value =
+          "price-asc";
+      }
 
     }
   );
 
+
+  updatePurityButtons();
+
+  renderComparison();
 }
 
 
 /* =========================================================
-   ACTIVE CONTROLS
-   ========================================================= */
+   EVENTS
+========================================================= */
 
-function updateActiveControls() {
+function setupEvents() {
 
-  $$("[data-purity]")
-    .forEach(
-      element => {
+  /*
+   * Purity buttons
+   */
 
-        element.classList.toggle(
-          "active",
-          (
-            element.dataset.purity ||
-            "ALL"
-          ) ===
-          state.selectedPurity
-        );
+  $all(
+    "[data-purity]"
+  ).forEach(
+    button => {
 
-      }
-    );
+      button.addEventListener(
+        "click",
+        () =>
+          setPurity(
+            button.dataset.purity
+          )
+      );
 
-
-  $$("[data-seller]")
-    .forEach(
-      element => {
-
-        element.classList.toggle(
-          "active",
-          (
-            element.dataset.seller ||
-            "ALL"
-          ) ===
-          state.selectedSeller
-        );
-
-      }
-    );
-
-
-  $$("[data-weight]")
-    .forEach(
-      element => {
-
-        element.classList.toggle(
-          "active",
-          (
-            element.dataset.weight ||
-            "ALL"
-          ) ===
-          state.selectedWeight
-        );
-
-      }
-    );
-
-
-  const puritySelect =
-    byId("puritySelect");
-
-
-  if (puritySelect) {
-
-    puritySelect.value =
-      state.selectedPurity;
-
-  }
-
-
-  const sellerSelect =
-    byId("sellerSelect");
-
-
-  if (sellerSelect) {
-
-    sellerSelect.value =
-      state.selectedSeller;
-
-  }
-
-
-  const weightSelect =
-    byId("weightSelect");
-
-
-  if (weightSelect) {
-
-    weightSelect.value =
-      state.selectedWeight;
-
-  }
-
-
-  const sortSelect =
-    byId("sortSelect");
-
-
-  if (sortSelect) {
-
-    sortSelect.value =
-      state.sort;
-
-  }
-
-}
-
-
-/* =========================================================
-   STATUS
-   ========================================================= */
-
-function renderStatus() {
-
-  const status =
-    byId("apiStatus") ||
-    $(".api-status");
-
-
-  if (!status) {
-    return;
-  }
-
-
-  if (state.apiOnline) {
-
-    status.textContent =
-      "Live data connected";
-
-    status.classList.remove(
-      "offline"
-    );
-
-    status.classList.add(
-      "online"
-    );
-
-  } else {
-
-    status.textContent =
-      "Data connection unavailable";
-
-    status.classList.remove(
-      "online"
-    );
-
-    status.classList.add(
-      "offline"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   GLOBAL LOADING
-   ========================================================= */
-
-function setGlobalLoading(
-  loading
-) {
-
-  document.body.classList.toggle(
-    "app-loading",
-    loading
+    }
   );
 
+
+  /*
+   * Seller filter
+   */
+
+  [
+    "#sellerFilter",
+    "#sellerSelect"
+  ].forEach(
+    selector => {
+
+      const element =
+        $(selector);
+
+      if (!element) {
+        return;
+      }
+
+      element.addEventListener(
+        "change",
+        event => {
+
+          state.selectedSeller =
+            event.target.value ||
+            "ALL";
+
+          renderComparison();
+
+        }
+      );
+
+    }
+  );
+
+
+  /*
+   * Weight filter
+   */
+
+  [
+    "#weightFilter",
+    "#weightSelect"
+  ].forEach(
+    selector => {
+
+      const element =
+        $(selector);
+
+      if (!element) {
+        return;
+      }
+
+      element.addEventListener(
+        "change",
+        event => {
+
+          state.selectedWeight =
+            event.target.value ||
+            "ALL";
+
+          renderComparison();
+
+        }
+      );
+
+    }
+  );
+
+
+  /*
+   * Sort
+   */
+
+  [
+    "#sortSelect",
+    "#sortBy"
+  ].forEach(
+    selector => {
+
+      const element =
+        $(selector);
+
+      if (!element) {
+        return;
+      }
+
+      element.addEventListener(
+        "change",
+        event => {
+
+          state.sortBy =
+            event.target.value ||
+            "price-asc";
+
+          renderComparison();
+
+        }
+      );
+
+    }
+  );
+
+
+  /*
+   * Global retry buttons
+   */
+
+  $all(
+    '[data-action="retry-products"]'
+  ).forEach(
+    button =>
+      button.addEventListener(
+        "click",
+        loadProducts
+      )
+  );
+
+
+  /*
+   * Refresh buttons
+   */
+
+  $all(
+    '[data-action="refresh"]'
+  ).forEach(
+    button =>
+      button.addEventListener(
+        "click",
+        refreshAll
+      )
+  );
+
+
+  $all(
+    '[data-action="refresh-gold"]'
+  ).forEach(
+    button =>
+      button.addEventListener(
+        "click",
+        loadGoldPrice
+      )
+  );
+
+
+  $all(
+    '[data-action="refresh-products"]'
+  ).forEach(
+    button =>
+      button.addEventListener(
+        "click",
+        loadProducts
+      )
+  );
+
+
+  /*
+   * Clear filters
+   */
+
+  $all(
+    '[data-action="clear-filters"]'
+  ).forEach(
+    button =>
+      button.addEventListener(
+        "click",
+        clearFilters
+      )
+  );
+
+
+  /*
+   * Escape key closes any modal
+   * implemented by index.html.
+   */
+
+  document.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Escape"
+      ) {
+
+        closeModals();
+
+      }
+
+    }
+  );
+}
+
+
+/* =========================================================
+   CLOSE MODALS
+========================================================= */
+
+function closeModals() {
+
+  $all(
+    ".modal.open, .modal.active, [role='dialog'].open"
+  ).forEach(
+    modal => {
+
+      modal.classList.remove(
+        "open",
+        "active"
+      );
+
+      modal.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+    }
+  );
+}
+
+
+/* =========================================================
+   REFRESH ALL
+========================================================= */
+
+async function refreshAll() {
+
+  await Promise.allSettled([
+    loadGoldPrice(),
+    loadProducts(),
+    loadSellers(),
+    loadOffers()
+  ]);
 }
 
 
 /* =========================================================
    AUTO REFRESH
-   ========================================================= */
+========================================================= */
 
-function startAutoRefresh() {
+function setupAutoRefresh() {
 
   setInterval(
-    async () => {
+    () => {
 
-      await Promise.allSettled([
-        loadGold(),
-        loadProducts(),
-        loadOffers()
-      ]);
-
-      renderStatus();
+      loadGoldPrice();
 
     },
-    CONFIG.REFRESH_MS
+    CONFIG.GOLD_REFRESH_MS
   );
 
-}
 
+  setInterval(
+    () => {
 
-/* =========================================================
-   VALID PRODUCT
-   ========================================================= */
+      loadProducts();
+      loadOffers();
 
-function isValidProduct(
-  product
-) {
-
-  if (
-    !product ||
-    typeof product !== "object"
-  ) {
-
-    return false;
-
-  }
-
-
-  const price =
-    Number(
-      product.listedPrice
-    );
-
-
-  const weight =
-    Number(
-      product.weight
-    );
-
-
-  const name =
-    String(
-      product.productName ||
-      ""
-    ).trim();
-
-
-  const url =
-    getExactProductUrl(
-      product
-    );
-
-
-  if (
-    !name ||
-    price <= 0 ||
-    weight <= 0 ||
-    !url
-  ) {
-
-    return false;
-
-  }
-
-
-  if (
-    name.length > 180
-  ) {
-
-    return false;
-
-  }
-
-
-  return true;
-
-}
-
-
-/* =========================================================
-   PURITY
-   ========================================================= */
-
-function normalizePurity(
-  value
-) {
-
-  const text =
-    String(
-      value || ""
-    )
-      .toUpperCase()
-      .replace(
-        /\s+/g,
-        ""
-      );
-
-
-  if (
-    text.includes("24") ||
-    text.includes("999") ||
-    text.includes("995")
-  ) {
-
-    return "24K";
-
-  }
-
-
-  if (
-    text.includes("22") ||
-    text.includes("916")
-  ) {
-
-    return "22K";
-
-  }
-
-
-  if (
-    text.includes("18") ||
-    text.includes("750")
-  ) {
-
-    return "18K";
-
-  }
-
-
-  return "";
-
-}
-
-
-/* =========================================================
-   WEIGHT
-   ========================================================= */
-
-function normalizeWeight(
-  value
-) {
-
-  const number =
-    Number(
-      value
-    );
-
-
-  return Number.isFinite(number)
-    ? number
-    : 0;
-
-}
-
-
-/* =========================================================
-   FORMAT WEIGHT
-   ========================================================= */
-
-function formatWeight(
-  value
-) {
-
-  const number =
-    Number(
-      value
-    );
-
-
-  if (
-    !Number.isFinite(number) ||
-    number <= 0
-  ) {
-
-    return "Weight unavailable";
-
-  }
-
-
-  return `${formatNumber(
-    number
-  )} g`;
-
-}
-
-
-/* =========================================================
-   INR
-   ========================================================= */
-
-function formatINR(
-  value
-) {
-
-  const number =
-    Number(
-      value
-    );
-
-
-  if (
-    !Number.isFinite(number) ||
-    number <= 0
-  ) {
-
-    return "₹—";
-
-  }
-
-
-  return new Intl.NumberFormat(
-    "en-IN",
-    {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0
-    }
-  ).format(number);
-
-}
-
-
-/* =========================================================
-   NUMBER
-   ========================================================= */
-
-function formatNumber(
-  value
-) {
-
-  const number =
-    Number(value);
-
-
-  if (
-    !Number.isFinite(number)
-  ) {
-
-    return "0";
-
-  }
-
-
-  return new Intl.NumberFormat(
-    "en-IN",
-    {
-      maximumFractionDigits: 3
-    }
-  ).format(number);
-
-}
-
-
-/* =========================================================
-   GOLD DATE
-   ========================================================= */
-
-function formatGoldDate(
-  value
-) {
-
-  if (!value) {
-    return "";
-  }
-
-
-  const date =
-    new Date(value);
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return "";
-
-  }
-
-
-  return `Updated ${date.toLocaleString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    }
-  )}`;
-
-}
-
-
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
-
-function escapeHTML(
-  value
-) {
-
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-
-}
-
-
-/* =========================================================
-   ATTRIBUTE ESCAPE
-   ========================================================= */
-
-function escapeAttribute(
-  value
-) {
-
-  return escapeHTML(
-    value
+    },
+    CONFIG.PRODUCT_REFRESH_MS
   );
 
+
+  /*
+   * Refresh when browser tab becomes
+   * visible again.
+   */
+
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+
+        const now =
+          Date.now();
+
+
+        const goldAge =
+          state.lastGoldUpdate
+            ? now -
+              new Date(
+                state.lastGoldUpdate
+              ).getTime()
+            : Infinity;
+
+
+        const productAge =
+          state.lastProductUpdate
+            ? now -
+              new Date(
+                state.lastProductUpdate
+              ).getTime()
+            : Infinity;
+
+
+        if (
+          goldAge >
+          CONFIG.GOLD_REFRESH_MS
+        ) {
+
+          loadGoldPrice();
+
+        }
+
+
+        if (
+          productAge >
+          CONFIG.PRODUCT_REFRESH_MS
+        ) {
+
+          loadProducts();
+
+        }
+
+      }
+
+    }
+  );
 }
 
 
 /* =========================================================
-   GLOBAL ERROR HANDLER
-   ========================================================= */
+   UTIL
+========================================================= */
 
-window.addEventListener(
-  "unhandledrejection",
-  event => {
+function setText(
+  selector,
+  value
+) {
 
-    console.error(
-      "Unhandled promise:",
-      event.reason
-    );
+  const elements =
+    $all(selector);
 
+  elements.forEach(
+    element => {
+
+      element.textContent =
+        String(
+          value ?? ""
+        );
+
+    }
+  );
+}
+
+
+function formatDateTime(
+  value
+) {
+
+  try {
+
+    const date =
+      new Date(value);
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return String(value);
+    }
+
+
+    return new Intl.DateTimeFormat(
+      "en-IN",
+      {
+        dateStyle:
+          "medium",
+
+        timeStyle:
+          "short"
+      }
+    ).format(date);
+
+  } catch {
+
+    return String(value);
   }
-);
-
-
-window.addEventListener(
-  "error",
-  event => {
-
-    console.error(
-      "Application error:",
-      event.error
-    );
-
-  }
-);
+}
 
 
 /* =========================================================
-   OPTIONAL GLOBAL API
-   ========================================================= */
+   INITIALISE
+========================================================= */
+
+async function init() {
+
+  console.log(
+    "GoldManiaSavings starting..."
+  );
+
+
+  /*
+   * Bind UI events first so the page
+   * remains interactive even while data
+   * is loading.
+   */
+
+  setupEvents();
+
+  updatePurityButtons();
+
+
+  /*
+   * Run independent requests in parallel.
+   */
+
+  await Promise.allSettled([
+
+    checkAPI(),
+
+    loadGoldPrice(),
+
+    loadProducts(),
+
+    loadSellers(),
+
+    loadOffers()
+
+  ]);
+
+
+  /*
+   * Render once more after all data
+   * sources have settled.
+   */
+
+  renderGoldPrice();
+
+  populateSellerFilter();
+
+  populateWeightFilter();
+
+  updatePurityButtons();
+
+  renderComparison();
+
+  renderOffers();
+
+
+  /*
+   * Background refresh.
+   */
+
+  setupAutoRefresh();
+
+
+  console.log(
+    "GoldManiaSavings ready",
+    {
+      products:
+        state.products.length,
+
+      sellers:
+        state.sellers.length,
+
+      apiOnline:
+        state.apiOnline
+    }
+  );
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+if (
+  document.readyState ===
+  "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    init,
+    {
+      once: true
+    }
+  );
+
+} else {
+
+  init();
+
+}
+
+
+/* =========================================================
+   OPTIONAL DEBUG ACCESS
+   Browser console:
+   window.GoldManiaSavings
+========================================================= */
 
 window.GoldManiaSavings = {
-
   state,
 
-  reload: loadApplicationData,
+  refresh:
+    refreshAll,
 
-  refreshGold: loadGold,
+  refreshGold:
+    loadGoldPrice,
 
-  refreshProducts: loadProducts,
+  refreshProducts:
+    loadProducts,
 
-  refreshOffers: loadOffers,
+  clearFilters,
 
-  compare:
-    openComparison
+  getProducts:
+    () =>
+      [...state.products],
 
+  getGold:
+    () =>
+      state.gold
 };
