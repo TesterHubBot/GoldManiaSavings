@@ -8,12 +8,12 @@
     content="width=device-width, initial-scale=1.0"
   >
 
+  <title>GoldManiaSavings — Gold Coin Price Comparison</title>
+
   <meta
     name="description"
-    content="GoldManiaSavings - Compare gold coins across major Indian sellers."
+    content="Compare gold coin prices, purity, offers and discounts across major Indian gold sellers."
   >
-
-  <title>GoldManiaSavings — Gold Coin Comparison</title>
 
   <link
     rel="stylesheet"
@@ -26,194 +26,153 @@
 <header class="topbar">
 
   <div class="brand">
-    <div class="logo">₹</div>
+    <div class="brand-icon">G</div>
 
     <div>
       <h1>GoldManiaSavings</h1>
-      <span>Gold Coin Price Comparison</span>
+      <p>Gold Coin Price Comparison</p>
     </div>
   </div>
 
-  <button
-    id="refreshBtn"
-    class="refresh-btn"
-  >
-    ↻ Refresh
-  </button>
+  <div class="status">
+    <span id="statusDot"></span>
+    <span id="statusText">Connecting...</span>
+  </div>
 
 </header>
 
 
 <main class="container">
 
+  <!-- GOLD PRICE -->
+
   <section class="gold-panel">
 
-    <div class="gold-heading">
+    <div class="section-title-row">
+
       <div>
-        <p class="eyebrow">TODAY'S GOLD REFERENCE</p>
         <h2>Gold Price</h2>
+        <p id="goldSource">
+          Updating reference rate...
+        </p>
       </div>
 
-      <span
-        id="goldStatus"
-        class="status loading"
+      <div
+        id="goldUpdated"
+        class="updated"
       >
-        Updating...
-      </span>
+        --
+      </div>
+
     </div>
+
 
     <div class="gold-grid">
 
-      <div class="gold-rate">
+      <div class="gold-card gold24">
         <span>24K</span>
-        <strong id="gold24">—</strong>
+        <strong id="gold24">--</strong>
         <small>per gram</small>
       </div>
 
-      <div class="gold-rate">
+      <div class="gold-card">
         <span>22K</span>
-        <strong id="gold22">—</strong>
+        <strong id="gold22">--</strong>
         <small>per gram</small>
       </div>
 
-      <div class="gold-rate">
+      <div class="gold-card">
         <span>18K</span>
-        <strong id="gold18">—</strong>
+        <strong id="gold18">--</strong>
         <small>per gram</small>
       </div>
 
     </div>
-
-    <p
-      id="goldSource"
-      class="source-text"
-    ></p>
 
   </section>
 
 
+  <!-- FILTERS -->
+
   <section class="filters">
 
-    <div class="filter-group">
-
+    <div>
       <label>Purity</label>
 
-      <div class="chips">
+      <select id="purityFilter">
 
-        <button
-          class="chip active"
-          data-purity="all"
-        >
-          All
-        </button>
+        <option value="">All Purities</option>
 
-        <button
-          class="chip"
-          data-purity="24K"
-        >
+        <option value="24K">
           24K
-        </button>
+        </option>
 
-        <button
-          class="chip"
-          data-purity="22K"
-        >
+        <option value="22K">
           22K
-        </button>
+        </option>
 
-        <button
-          class="chip"
-          data-purity="18K"
-        >
+        <option value="18K">
           18K
-        </button>
+        </option>
 
-      </div>
-
+      </select>
     </div>
 
 
-    <div class="filter-group">
-
+    <div>
       <label>Weight</label>
 
       <select id="weightFilter">
 
-        <option value="all">
-          All weights
-        </option>
+        <option value="">All Weights</option>
 
-        <option value="0.05">
-          50 mg
-        </option>
-
-        <option value="0.1">
-          100 mg
-        </option>
-
-        <option value="0.2">
-          200 mg
-        </option>
-
-        <option value="0.5">
-          0.5 g
-        </option>
-
-        <option value="1">
-          1 g
-        </option>
-
-        <option value="2">
-          2 g
-        </option>
-
-        <option value="5">
-          5 g
-        </option>
-
-        <option value="8">
-          8 g
-        </option>
-
-        <option value="10">
-          10 g
-        </option>
-
-        <option value="20">
-          20 g
-        </option>
-
-        <option value="50">
-          50 g
-        </option>
+        <option value="0.05">50 mg</option>
+        <option value="0.1">100 mg</option>
+        <option value="0.25">250 mg</option>
+        <option value="0.5">0.5 g</option>
+        <option value="0.75">0.75 g</option>
+        <option value="1">1 g</option>
+        <option value="2">2 g</option>
+        <option value="5">5 g</option>
+        <option value="8">8 g</option>
+        <option value="10">10 g</option>
+        <option value="20">20 g</option>
+        <option value="50">50 g</option>
 
       </select>
-
     </div>
 
 
-    <div class="filter-group">
-
+    <div>
       <label>Seller</label>
 
       <select id="sellerFilter">
 
-        <option value="all">
-          All sellers
+        <option value="">
+          All Sellers
         </option>
 
       </select>
-
     </div>
+
+
+    <button
+      id="compareButton"
+      class="compare-button"
+    >
+      Compare Prices
+    </button>
 
   </section>
 
+
+  <!-- SUMMARY -->
 
   <section class="summary">
 
     <div>
       <strong id="productCount">0</strong>
-      <span>products found</span>
+      <span>products</span>
     </div>
 
     <div>
@@ -229,32 +188,50 @@
   </section>
 
 
+  <!-- PRODUCTS -->
+
   <section>
 
     <div class="section-heading">
 
       <div>
-        <p class="eyebrow">LIVE COMPARISON</p>
         <h2>Gold Coins</h2>
+        <p>
+          Exact product pages from official sellers
+        </p>
       </div>
 
-      <span id="updatedAt">
-        —
-      </span>
+      <button
+        id="refreshButton"
+        class="refresh-button"
+      >
+        ↻ Refresh
+      </button>
 
     </div>
 
 
     <div
+      id="loading"
+      class="loading"
+    >
+      <div class="spinner"></div>
+      <p>
+        Checking official seller pages...
+      </p>
+    </div>
+
+
+    <div
+      id="errorBox"
+      class="error-box hidden"
+    ></div>
+
+
+    <div
       id="products"
       class="products"
-    >
-
-      <div class="loading-card">
-        Loading gold coins...
-      </div>
-
-    </div>
+    ></div>
 
   </section>
 
@@ -262,8 +239,13 @@
 
 
 <footer>
-  GoldManiaSavings compares publicly available product information.
-  Prices and offers can change on seller websites.
+
+  <p>
+    Prices are collected from official seller pages.
+    Always verify the final price, availability,
+    delivery charges and applicable offers on the seller website.
+  </p>
+
 </footer>
 
 
