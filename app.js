@@ -21,13 +21,9 @@ let productDatabase = [];
 let currentProducts = [];
 
 let currentGoldRates = {
-
     "24K": 0,
-
     "22K": 0,
-
     "18K": 0
-
 };
 
 
@@ -42,7 +38,6 @@ document.addEventListener(
         console.log(
             "GoldManiaSavings starting..."
         );
-
 
         setupWeightOptions();
 
@@ -65,29 +60,15 @@ document.addEventListener(
 function setupWeightOptions() {
 
     const weightSelect =
-        document.getElementById(
-            "weight"
-        );
-
+        document.getElementById("weight");
 
     if (!weightSelect) {
         return;
     }
 
-
-    /*
-     * Keep existing HTML options.
-     *
-     * If options already exist,
-     * don't recreate them.
-     */
-
-    if (
-        weightSelect.options.length === 0
-    ) {
+    if (weightSelect.options.length === 0) {
 
         const weights = [
-
             0.05,
             0.1,
             0.25,
@@ -99,27 +80,20 @@ function setupWeightOptions() {
             20,
             50,
             100
-
         ];
-
 
         weights.forEach(
             weight => {
 
                 const option =
-                    document.createElement(
-                        "option"
-                    );
+                    document.createElement("option");
 
-                option.value =
-                    weight;
+                option.value = weight;
 
                 option.textContent =
                     `${weight} g`;
 
-                weightSelect.appendChild(
-                    option
-                );
+                weightSelect.appendChild(option);
 
             }
         );
@@ -135,113 +109,223 @@ function setupWeightOptions() {
 
 async function loadGoldRates() {
 
-    setLiveStatus("🟡 Loading...");
+    setLiveStatus("🟡 Connecting...");
+
+    updateLastUpdated(null);
+
+    console.log(
+        "Connecting to:",
+        `${LIVE_API_URL}/api/gold`
+    );
+
 
     try {
 
-        const response = await fetch(
-            `${LIVE_API_URL}/api/gold?t=${Date.now()}`,
-            {
-                method: "GET",
-                cache: "no-store",
-                headers: {
-                    "Accept": "application/json"
+        const controller =
+            new AbortController();
+
+        const timeout =
+            setTimeout(
+                () => controller.abort(),
+                15000
+            );
+
+
+        const response =
+            await fetch(
+                `${LIVE_API_URL}/api/gold?t=${Date.now()}`,
+                {
+                    method: "GET",
+
+                    mode: "cors",
+
+                    cache: "no-store",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    },
+
+                    signal:
+                        controller.signal
                 }
-            }
+            );
+
+
+        clearTimeout(timeout);
+
+
+        console.log(
+            "Gold API HTTP status:",
+            response.status
         );
 
-        if (!response.ok) {
-            throw new Error(
-                `Gold API HTTP ${response.status}`
-            );
-        }
 
-        const data = await response.json();
+        const rawText =
+            await response.text();
+
 
         console.log(
             "Gold API response:",
-            data
+            rawText
         );
 
-        if (!data || data.ok !== true) {
+
+        if (!response.ok) {
+
             throw new Error(
-                data?.message ||
-                "Gold API returned invalid response"
+                `HTTP ${response.status}: ${rawText}`
             );
+
         }
 
-        const rates = data.rates || {};
+
+        let data;
+
+
+        try {
+
+            data =
+                JSON.parse(rawText);
+
+        } catch {
+
+            throw new Error(
+                "Worker returned invalid JSON"
+            );
+
+        }
+
+
+        if (
+            !data ||
+            !data.ok ||
+            !data.rates
+        ) {
+
+            throw new Error(
+                data?.message ||
+                "Invalid gold API response"
+            );
+
+        }
+
 
         const rate24 =
             Number(
-                rates["24K"]?.perGram ??
-                rates["24K"] ??
-                0
+                data.rates["24K"]?.perGram
             );
+
 
         const rate22 =
             Number(
-                rates["22K"]?.perGram ??
-                rates["22K"] ??
-                0
+                data.rates["22K"]?.perGram
             );
+
 
         const rate18 =
             Number(
-                rates["18K"]?.perGram ??
-                rates["18K"] ??
-                0
+                data.rates["18K"]?.perGram
             );
 
+
         if (
-            rate24 <= 0 ||
-            rate22 <= 0 ||
-            rate18 <= 0
+            !Number.isFinite(rate24) ||
+            rate24 <= 0
         ) {
+
             throw new Error(
-                "Gold API returned zero/invalid rates"
+                "24K gold rate is invalid"
             );
+
         }
+
 
         currentGoldRates["24K"] =
             rate24;
 
+
         currentGoldRates["22K"] =
-            rate22;
+            Number.isFinite(rate22)
+                ? rate22
+                : rate24 * 0.916;
+
 
         currentGoldRates["18K"] =
-            rate18;
+            Number.isFinite(rate18)
+                ? rate18
+                : rate24 * 0.750;
+
 
         updateGoldRateUI();
 
         updateCalculatorRates();
 
+
         setLiveStatus(
             "🟢 LIVE"
         );
+
 
         updateLastUpdated(
             data.timestamp
         );
 
+
         console.log(
-            "GoldManiaSavings live rates:",
+            "Gold rates loaded successfully:",
             currentGoldRates
         );
+
 
     } catch (error) {
 
         console.error(
-            "Gold rate loading failed:",
+            "Gold rate connection failed:",
             error
         );
 
-        setLiveStatus(
-            "🔴 Offline"
-        );
+
+        /*
+         * Don't immediately show "Offline".
+         * Show a useful error status.
+         */
+
+        if (
+            error.name === "AbortError"
+        ) {
+
+            setLiveStatus(
+                "🔴 Timeout"
+            );
+
+        } else {
+
+            setLiveStatus(
+                "🔴 API Error"
+            );
+
+        }
+
 
         updateLastUpdated(null);
+
+
+        /*
+         * Try one more time after 3 seconds.
+         */
+
+        setTimeout(
+            () => {
+
+                loadGoldRates();
+
+            },
+            3000
+        );
+
     }
+
 }
 
 
@@ -256,12 +340,10 @@ function updateGoldRateUI() {
             "live24Rate"
         );
 
-
     const rate22 =
         document.getElementById(
             "live22Rate"
         );
-
 
     const rate18 =
         document.getElementById(
@@ -311,7 +393,6 @@ function updateCalculatorRates() {
         document.getElementById(
             "rate24"
         );
-
 
     const rate22 =
         document.getElementById(
@@ -383,7 +464,7 @@ function updateLastUpdated(
     if (!timestamp) {
 
         element.textContent =
-            "Live rate unavailable";
+            "Connecting to live rate...";
 
         return;
 
@@ -392,6 +473,20 @@ function updateLastUpdated(
 
     const date =
         new Date(timestamp);
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        element.textContent =
+            "Live rate connected";
+
+        return;
+
+    }
 
 
     element.textContent =
@@ -408,18 +503,35 @@ function updateLastUpdated(
 
 async function loadProducts() {
 
+    productDatabase = [];
+
+
     /*
-     * First attempt:
-     * Cloudflare Worker live seller API
+     * First:
+     * Cloudflare Worker
      */
 
     try {
 
+        console.log(
+            "Loading products from Worker..."
+        );
+
+
         const response =
             await fetch(
-                `${LIVE_API_URL}/api/products`,
+                `${LIVE_API_URL}/api/products?t=${Date.now()}`,
                 {
-                    cache: "no-store"
+                    method: "GET",
+
+                    mode: "cors",
+
+                    cache: "no-store",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
                 }
             );
 
@@ -430,12 +542,17 @@ async function loadProducts() {
                 await response.json();
 
 
+            console.log(
+                "Products API response:",
+                data
+            );
+
+
             if (
                 data.ok &&
                 Array.isArray(
                     data.products
-                ) &&
-                data.products.length > 0
+                )
             ) {
 
                 productDatabase =
@@ -443,10 +560,12 @@ async function loadProducts() {
 
 
                 console.log(
-                    "Live seller products loaded:",
+                    "Worker products loaded:",
                     productDatabase.length
                 );
 
+
+                setupSellerFilter();
 
                 return;
 
@@ -457,7 +576,7 @@ async function loadProducts() {
     } catch (error) {
 
         console.warn(
-            "Live seller API unavailable:",
+            "Worker products unavailable:",
             error
         );
 
@@ -465,15 +584,20 @@ async function loadProducts() {
 
 
     /*
-     * Second attempt:
+     * Second:
      * Local products.json
      */
 
     try {
 
+        console.log(
+            "Trying local products.json..."
+        );
+
+
         const response =
             await fetch(
-                "./products.json",
+                `./products.json?t=${Date.now()}`,
                 {
                     cache: "no-store"
                 }
@@ -518,21 +642,20 @@ async function loadProducts() {
 
 
         console.log(
-            "Fallback products loaded:",
+            "Local products loaded:",
             productDatabase.length
         );
 
 
     } catch (error) {
 
-        console.error(
-            "Product loading failed:",
+        console.warn(
+            "Local products unavailable:",
             error
         );
 
 
-        productDatabase =
-            [];
+        productDatabase = [];
 
     }
 
@@ -585,11 +708,9 @@ function setupSellerFilter() {
 
 
     select.innerHTML = `
-
         <option value="all">
             All Sellers
         </option>
-
     `;
 
 
@@ -649,7 +770,9 @@ function compareGold() {
 
 
     const purity =
-        purityElement.value;
+        normalizePurity(
+            purityElement.value
+        );
 
 
     const weight =
@@ -835,24 +958,10 @@ function calculateProduct(
         );
 
 
-    /*
-     * Total price before offers
-     */
-
     const grossPrice =
         listedPrice +
         shipping;
 
-
-    /*
-     * Effective price:
-     *
-     * Listed price
-     * + shipping
-     * - coupon
-     * - payment offer
-     * - cashback
-     */
 
     const maxPaymentDiscount =
         Math.max(
@@ -971,10 +1080,6 @@ function refreshComparison() {
         [...currentProducts];
 
 
-    /*
-     * Seller
-     */
-
     if (
         sellerFilter !== "all"
     ) {
@@ -1000,10 +1105,6 @@ function refreshComparison() {
 
     }
 
-
-    /*
-     * Payment
-     */
 
     if (
         paymentFilter === "card"
@@ -1035,10 +1136,6 @@ function refreshComparison() {
     }
 
 
-    /*
-     * Premium
-     */
-
     if (
         premiumFilter !== "all"
     ) {
@@ -1061,19 +1158,12 @@ function refreshComparison() {
     }
 
 
-    /*
-     * Sorting
-     */
-
     if (
         sortFilter === "effective"
     ) {
 
         filtered.sort(
-            (
-                a,
-                b
-            ) =>
+            (a, b) =>
                 a.effectivePrice -
                 b.effectivePrice
         );
@@ -1086,10 +1176,7 @@ function refreshComparison() {
     ) {
 
         filtered.sort(
-            (
-                a,
-                b
-            ) =>
+            (a, b) =>
                 a.listedPrice -
                 b.listedPrice
         );
@@ -1102,10 +1189,7 @@ function refreshComparison() {
     ) {
 
         filtered.sort(
-            (
-                a,
-                b
-            ) =>
+            (a, b) =>
                 a.premium -
                 b.premium
         );
@@ -1118,10 +1202,7 @@ function refreshComparison() {
     ) {
 
         filtered.sort(
-            (
-                a,
-                b
-            ) =>
+            (a, b) =>
                 totalOffers(b) -
                 totalOffers(a)
         );
@@ -1266,7 +1347,6 @@ function renderComparison(
             const action =
                 product.productUrl
                     ? `
-
                         <a
                             class="deal-btn"
                             href="${escapeAttribute(
@@ -1277,10 +1357,8 @@ function renderComparison(
                         >
                             View
                         </a>
-
                     `
                     : `
-
                         <button
                             class="deal-btn"
                             type="button"
@@ -1288,7 +1366,6 @@ function renderComparison(
                         >
                             Details
                         </button>
-
                     `;
 
 
@@ -1889,22 +1966,14 @@ function escapeAttribute(
 
 
 /* =========================================================
-   AUTO REFRESH GOLD RATE
+   AUTO REFRESH
 ========================================================= */
-
-/*
- * Refresh every 5 minutes.
- */
 
 setInterval(
     async function () {
 
         await loadGoldRates();
 
-        /*
-         * If comparison is already displayed,
-         * recalculate prices using new gold rate.
-         */
 
         const results =
             document.getElementById(
@@ -1919,9 +1988,11 @@ setInterval(
         ) {
 
             const purity =
-                document.getElementById(
-                    "purity"
-                )?.value;
+                normalizePurity(
+                    document.getElementById(
+                        "purity"
+                    )?.value
+                );
 
 
             const weight =
@@ -1961,11 +2032,6 @@ setInterval(
    GLOBAL FUNCTIONS
 ========================================================= */
 
-/*
- * These are intentionally exposed globally
- * because index.html uses onclick/onchange.
- */
-
 window.compareGold =
     compareGold;
 
@@ -1977,3 +2043,9 @@ window.loadGoldRates =
 
 window.loadProducts =
     loadProducts;
+
+window.setupSellerFilter =
+    setupSellerFilter;
+
+window.updateGoldRateUI =
+    updateGoldRateUI;
