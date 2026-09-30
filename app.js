@@ -1,17 +1,40 @@
 /* =========================================================
    GoldManiaSavings
    app.js
-   Frontend controller for index.html
+   FULL CORRECTED VERSION
 
-   API:
+   Worker API:
    https://goldmaniasavings-api.onlinetechmine.workers.dev
 
-   Works with:
+   Supports:
    /api/health
    /api/gold
    /api/products
    /api/sellers
    /api/offers
+
+   IMPORTANT GOLD FIX:
+   Worker can return either:
+
+   {
+     ok: true,
+     rates: {
+       "24K": { perGram: 14957 },
+       "22K": { perGram: 13710 },
+       "18K": { perGram: 11218 }
+     }
+   }
+
+   OR:
+
+   {
+     ok: true,
+     indiaReference: {
+       rates: {...}
+     }
+   }
+
+   This app supports BOTH formats.
 ========================================================= */
 
 "use strict";
@@ -35,10 +58,10 @@ const API = {
 const REQUEST_TIMEOUT = 15000;
 
 const CACHE_KEYS = {
-  gold: "gms_gold_cache_v2",
-  products: "gms_products_cache_v2",
-  sellers: "gms_sellers_cache_v2",
-  offers: "gms_offers_cache_v2"
+  gold: "gms_gold_cache_v3",
+  products: "gms_products_cache_v3",
+  sellers: "gms_sellers_cache_v3",
+  offers: "gms_offers_cache_v3"
 };
 
 
@@ -56,13 +79,11 @@ const state = {
 
   offers: [],
 
-
   selectedPurity: "",
 
   selectedWeight: "",
 
   selectedSeller: "",
-
 
   productsLoaded: false,
 
@@ -70,6 +91,9 @@ const state = {
 
   offersLoaded: false,
 
+  healthLoaded: false,
+
+  apiConnected: false,
 
   loadingProducts: false,
 
@@ -77,13 +101,13 @@ const state = {
 
   loadingOffers: false,
 
-
-  workerOnline: false,
-
+  loadingHealth: false,
 
   lastProductUpdate: null,
 
-  lastGoldUpdate: null
+  lastGoldUpdate: null,
+
+  lastHealthUpdate: null
 
 };
 
@@ -94,9 +118,7 @@ const state = {
 
 function $(selector) {
 
-  return document.querySelector(
-    selector
-  );
+  return document.querySelector(selector);
 
 }
 
@@ -104,9 +126,7 @@ function $(selector) {
 function $all(selector) {
 
   return Array.from(
-    document.querySelectorAll(
-      selector
-    )
+    document.querySelectorAll(selector)
   );
 
 }
@@ -114,25 +134,12 @@ function $all(selector) {
 
 function safeText(value) {
 
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
@@ -153,34 +160,22 @@ async function init() {
     "Connecting..."
   );
 
-
   bindEvents();
-
-
-  /*
-   * Load cached data immediately.
-   * This prevents a blank screen.
-   */
 
   loadCachedData();
 
-
   renderAll();
 
-
   /*
-   * Check Worker first.
-   */
-
-  const workerOnline =
-    await checkWorkerHealth();
-
-
-  /*
-   * Load fresh data.
+   * Health + actual APIs are loaded.
+   *
+   * Health failure alone must NOT make
+   * the entire site appear unavailable.
    */
 
   await Promise.allSettled([
+
+    loadHealth(),
 
     loadGold(),
 
@@ -192,58 +187,9 @@ async function init() {
 
   ]);
 
-
   renderAll();
 
-
-  /*
-   * Final connection status.
-   */
-
-  if (workerOnline) {
-
-    if (state.goldLoaded) {
-
-      setConnectionStatus(
-        "Worker Online • Gold Live"
-      );
-
-    } else if (
-      state.gold
-    ) {
-
-      setConnectionStatus(
-        "Worker Online • Cached Gold"
-      );
-
-    } else {
-
-      setConnectionStatus(
-        "Worker Online"
-      );
-
-    }
-
-  } else {
-
-    if (
-      state.gold ||
-      state.products.length > 0
-    ) {
-
-      setConnectionStatus(
-        "Worker unavailable • Cached data"
-      );
-
-    } else {
-
-      setConnectionStatus(
-        "Worker unavailable"
-      );
-
-    }
-
-  }
+  updateConnectionStatus();
 
 }
 
@@ -254,24 +200,16 @@ async function init() {
 
 function bindEvents() {
 
-  const refreshButtons =
-    $all("button");
-
-
-  refreshButtons.forEach(
-    button => {
+  $all("button")
+    .forEach(button => {
 
       const text =
         String(
           button.textContent || ""
-        )
-          .toLowerCase();
-
+        ).toLowerCase();
 
       if (
-        text.includes(
-          "refresh"
-        )
+        text.includes("refresh")
       ) {
 
         button.addEventListener(
@@ -287,49 +225,33 @@ function bindEvents() {
 
       }
 
-    }
-  );
+    });
 
 
   const purity =
     findSelect([
-
       "#purity",
-
       "#puritySelect",
-
       "#purity-filter",
-
       "[name='purity']"
-
     ]);
 
 
   const weight =
     findSelect([
-
       "#weight",
-
       "#weightSelect",
-
       "#weight-filter",
-
       "[name='weight']"
-
     ]);
 
 
   const seller =
     findSelect([
-
       "#seller",
-
       "#sellerSelect",
-
       "#seller-filter",
-
       "[name='seller']"
-
     ]);
 
 
@@ -384,14 +306,8 @@ function bindEvents() {
   }
 
 
-  /*
-   * Compare button
-   */
-
   const compareButton =
-    findButtonByText(
-      "compare"
-    );
+    findButtonByText("compare");
 
 
   if (compareButton) {
@@ -412,14 +328,8 @@ function bindEvents() {
   }
 
 
-  /*
-   * Clear button
-   */
-
   const clearButton =
-    findButtonByText(
-      "clear"
-    );
+    findButtonByText("clear");
 
 
   if (clearButton) {
@@ -444,9 +354,7 @@ function bindEvents() {
    SELECT FINDER
 ========================================================= */
 
-function findSelect(
-  selectors
-) {
+function findSelect(selectors) {
 
   for (
     const selector of selectors
@@ -454,7 +362,6 @@ function findSelect(
 
     const element =
       $(selector);
-
 
     if (
       element &&
@@ -467,7 +374,6 @@ function findSelect(
 
   }
 
-
   return null;
 
 }
@@ -477,24 +383,19 @@ function findSelect(
    BUTTON FINDER
 ========================================================= */
 
-function findButtonByText(
-  text
-) {
+function findButtonByText(text) {
 
   const wanted =
-    text.toLowerCase();
-
+    String(text)
+      .toLowerCase();
 
   return $all("button")
-    .find(
-      button =>
-        String(
-          button.textContent || ""
-        )
-          .toLowerCase()
-          .includes(
-            wanted
-          )
+    .find(button =>
+      String(
+        button.textContent || ""
+      )
+        .toLowerCase()
+        .includes(wanted)
     ) || null;
 
 }
@@ -508,43 +409,28 @@ function readFilters() {
 
   const purity =
     findSelect([
-
       "#purity",
-
       "#puritySelect",
-
       "#purity-filter",
-
       "[name='purity']"
-
     ]);
 
 
   const weight =
     findSelect([
-
       "#weight",
-
       "#weightSelect",
-
       "#weight-filter",
-
       "[name='weight']"
-
     ]);
 
 
   const seller =
     findSelect([
-
       "#seller",
-
       "#sellerSelect",
-
       "#seller-filter",
-
       "[name='seller']"
-
     ]);
 
 
@@ -576,47 +462,33 @@ function clearFilters() {
 
 
   [
-
     "#purity",
-
     "#puritySelect",
-
     "#purity-filter",
-
     "[name='purity']",
 
     "#weight",
-
     "#weightSelect",
-
     "#weight-filter",
-
     "[name='weight']",
 
     "#seller",
-
     "#sellerSelect",
-
     "#seller-filter",
-
     "[name='seller']"
 
-  ]
-    .forEach(
-      selector => {
+  ].forEach(selector => {
 
-        const element =
-          $(selector);
+    const element =
+      $(selector);
 
+    if (element) {
 
-        if (element) {
+      element.value = "";
 
-          element.value = "";
+    }
 
-        }
-
-      }
-    );
+  });
 
 
   renderProducts();
@@ -625,13 +497,10 @@ function clearFilters() {
 
 
 /* =========================================================
-   API FETCH
+   FETCH JSON
 ========================================================= */
 
-async function fetchJSON(
-  url,
-  options = {}
-) {
+async function fetchJSON(url) {
 
   const controller =
     new AbortController();
@@ -639,8 +508,7 @@ async function fetchJSON(
 
   const timeout =
     setTimeout(
-      () =>
-        controller.abort(),
+      () => controller.abort(),
       REQUEST_TIMEOUT
     );
 
@@ -651,18 +519,11 @@ async function fetchJSON(
       await fetch(
         url,
         {
-
-          method:
-            options.method ||
-            "GET",
+          method: "GET",
 
           headers: {
-
             "Accept":
-              "application/json",
-
-            ...(options.headers || {})
-
+              "application/json"
           },
 
           cache:
@@ -670,20 +531,8 @@ async function fetchJSON(
 
           signal:
             controller.signal
-
         }
       );
-
-
-    if (
-      !response.ok
-    ) {
-
-      throw new Error(
-        `HTTP ${response.status}`
-      );
-
-    }
 
 
     const contentType =
@@ -692,30 +541,45 @@ async function fetchJSON(
       ) || "";
 
 
-    if (
-      !contentType
-        .toLowerCase()
-        .includes(
-          "application/json"
-        )
-    ) {
-
+    const raw =
       await response.text();
 
+
+    if (!response.ok) {
+
       throw new Error(
-        "API did not return JSON"
+        `HTTP ${response.status}`
       );
 
     }
 
 
-    return await response.json();
+    let data;
+
+
+    try {
+
+      data =
+        JSON.parse(raw);
+
+    } catch {
+
+      throw new Error(
+        contentType.includes(
+          "application/json"
+        )
+          ? "Invalid JSON response"
+          : "API did not return JSON"
+      );
+
+    }
+
+
+    return data;
 
   } finally {
 
-    clearTimeout(
-      timeout
-    );
+    clearTimeout(timeout);
 
   }
 
@@ -723,10 +587,22 @@ async function fetchJSON(
 
 
 /* =========================================================
-   WORKER HEALTH
+   HEALTH
 ========================================================= */
 
-async function checkWorkerHealth() {
+async function loadHealth() {
+
+  if (
+    state.loadingHealth
+  ) {
+
+    return;
+
+  }
+
+
+  state.loadingHealth = true;
+
 
   try {
 
@@ -736,81 +612,32 @@ async function checkWorkerHealth() {
       );
 
 
-    console.log(
-      "[GoldManiaSavings] Worker health:",
-      data
-    );
+    state.healthLoaded = true;
 
+    state.apiConnected =
+      data?.ok !== false;
 
-    /*
-     * Different Worker health responses
-     * are accepted.
-     */
+    state.lastHealthUpdate =
+      new Date();
 
-    const healthy =
-      Boolean(
-
-        data &&
-
-        (
-
-          data.ok === true ||
-
-          data.status === "ok" ||
-
-          data.status === "healthy" ||
-
-          data.status === "online" ||
-
-          data.live === true
-
-        )
-
-      );
-
-
-    /*
-     * If endpoint returned valid JSON,
-     * Worker itself responded.
-     */
-
-    state.workerOnline = true;
-
-
-    if (healthy) {
-
-      setConnectionStatus(
-        "Worker Online"
-      );
-
-    } else {
-
-      setConnectionStatus(
-        "Worker Connected"
-      );
-
-    }
-
-
-    return true;
 
   } catch (error) {
 
-    console.error(
-      "[GoldManiaSavings] Worker health failed:",
+    console.warn(
+      "Health API failed:",
       error
     );
 
+    /*
+     * IMPORTANT:
+     *
+     * Health failure does not mean
+     * gold/products APIs are unavailable.
+     */
 
-    state.workerOnline = false;
+  } finally {
 
-
-    setConnectionStatus(
-      "Worker unavailable"
-    );
-
-
-    return false;
+    state.loadingHealth = false;
 
   }
 
@@ -862,24 +689,6 @@ async function loadGold() {
     }
 
 
-    /*
-     * IMPORTANT:
-     *
-     * Worker currently returns:
-     *
-     * {
-     *   ok: true,
-     *   live: true,
-     *   source: "SnapData",
-     *   rates: {
-     *     "24K": {
-     *       perGram: 14957
-     *     },
-     *     ...
-     *   }
-     * }
-     */
-
     const normalized =
       normalizeGoldResponse(
         data
@@ -889,7 +698,7 @@ async function loadGold() {
     if (!normalized) {
 
       throw new Error(
-        "Gold API returned valid response, but rates could not be detected"
+        "Gold API returned rates in an unsupported format"
       );
 
     }
@@ -899,17 +708,13 @@ async function loadGold() {
       normalized;
 
 
-    state.goldLoaded =
-      true;
+    state.goldLoaded = true;
 
+    state.apiConnected = true;
 
     state.lastGoldUpdate =
       new Date();
 
-
-    /*
-     * Save normalized response.
-     */
 
     saveCache(
       CACHE_KEYS.gold,
@@ -920,19 +725,28 @@ async function loadGold() {
     renderGold();
 
 
+    updateConnectionStatus();
+
+
   } catch (error) {
 
     console.error(
-      "[GoldManiaSavings] Gold loading failed:",
+      "Gold loading failed:",
       error
     );
 
 
     /*
-     * Keep cached gold if available.
+     * If cache exists, keep displaying it.
      */
 
-    if (!state.gold) {
+    if (
+      state.gold
+    ) {
+
+      renderGold();
+
+    } else {
 
       renderGoldError(
         "Gold price unavailable"
@@ -951,11 +765,10 @@ async function loadGold() {
 
 /* =========================================================
    GOLD NORMALIZER
+   SUPPORTS MULTIPLE WORKER FORMATS
 ========================================================= */
 
-function normalizeGoldResponse(
-  data
-) {
+function normalizeGoldResponse(data) {
 
   if (
     !data ||
@@ -968,69 +781,105 @@ function normalizeGoldResponse(
 
 
   /*
-   * Supports all of these:
+   * FORMAT 1
    *
-   * data.rates
-   * data.india.rates
-   * data.indiaReference.rates
+   * {
+   *   rates: {
+   *     "24K": {...}
+   *   }
+   * }
    */
 
-  const reference =
-    data.indiaReference ||
-    data.india ||
+  let reference =
     data;
 
 
+  /*
+   * FORMAT 2
+   *
+   * {
+   *   indiaReference: {
+   *     rates: {...}
+   *   }
+   * }
+   */
+
+  if (
+    data.indiaReference &&
+    typeof data.indiaReference === "object"
+  ) {
+
+    reference =
+      data.indiaReference;
+
+  }
+
+
+  /*
+   * FORMAT 3
+   *
+   * {
+   *   india: {
+   *     rates: {...}
+   *   }
+   */
+
+  else if (
+    data.india &&
+    typeof data.india === "object"
+  ) {
+
+    reference =
+      data.india;
+
+  }
+
+
   const rates =
-    reference?.rates ||
+    reference.rates ||
     data.rates ||
     {};
 
 
   const r24 =
     extractRate(
-      rates["24K"] ||
-      rates["24k"] ||
-      rates["24"]
+      rates["24K"] ??
+      rates["24k"] ??
+      rates["24"] ??
+      data["24K"] ??
+      data["24k"]
     );
 
 
   const r22 =
     extractRate(
-      rates["22K"] ||
-      rates["22k"] ||
-      rates["22"]
+      rates["22K"] ??
+      rates["22k"] ??
+      rates["22"] ??
+      data["22K"] ??
+      data["22k"]
     );
 
 
   const r18 =
     extractRate(
-      rates["18K"] ||
-      rates["18k"] ||
-      rates["18"]
+      rates["18K"] ??
+      rates["18k"] ??
+      rates["18"] ??
+      data["18K"] ??
+      data["18k"]
     );
 
 
   /*
-   * At least one valid rate
-   * must exist.
+   * At least one rate must exist.
    */
 
   if (
-
-    r24 <= 0 &&
-
-    r22 <= 0 &&
-
-    r18 <= 0
-
+    !r24 &&
+    !r22 &&
+    !r18
   ) {
-
-    console.error(
-      "[GoldManiaSavings] No usable gold rates found:",
-      data
-    );
-
 
     return null;
 
@@ -1039,17 +888,17 @@ function normalizeGoldResponse(
 
   return {
 
+    ok: true,
+
     source:
       reference.source ||
       data.source ||
-      "India Gold Reference",
-
+      "SnapData",
 
     resolution:
       reference.resolution ||
       data.resolution ||
       "daily",
-
 
     date:
       reference.date ||
@@ -1057,37 +906,34 @@ function normalizeGoldResponse(
       data.timestamp ||
       "",
 
+    timestamp:
+      data.timestamp ||
+      reference.timestamp ||
+      "",
 
     currency:
       reference.currency ||
       data.currency ||
       "INR",
 
-
     unit:
       reference.unit ||
       data.unit ||
       "INR/gram",
 
-
     live:
-      data.live === true,
-
+      data.live !== false,
 
     cached:
       data.cached === true,
 
-
     rates: {
 
-      "24K":
-        r24,
+      "24K": r24,
 
-      "22K":
-        r22,
+      "22K": r22,
 
-      "18K":
-        r18
+      "18K": r18
 
     }
 
@@ -1097,39 +943,38 @@ function normalizeGoldResponse(
 
 
 /* =========================================================
-   EXTRACT GOLD RATE
+   EXTRACT RATE
 ========================================================= */
 
-function extractRate(
-  value
-) {
+function extractRate(value) {
 
   if (
-    value !== null &&
-    value !== undefined &&
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+
+    return 0;
+
+  }
+
+
+  if (
     typeof value === "object"
   ) {
 
     return number(
-
       value.perGram ??
-
       value.price ??
-
       value.value ??
-
       value.rate ??
-
-      0
-
+      value.amount
     );
 
   }
 
 
-  return number(
-    value
-  );
+  return number(value);
 
 }
 
@@ -1152,21 +997,12 @@ async function loadProducts() {
   state.loadingProducts = true;
 
 
-  showProductsLoading();
-
-
   try {
 
     const data =
       await fetchJSON(
         API.products
       );
-
-
-    console.log(
-      "[GoldManiaSavings] /api/products:",
-      data
-    );
 
 
     if (
@@ -1196,8 +1032,9 @@ async function loadProducts() {
       );
 
 
-    state.productsLoaded =
-      true;
+    state.productsLoaded = true;
+
+    state.apiConnected = true;
 
 
     state.lastProductUpdate =
@@ -1211,32 +1048,29 @@ async function loadProducts() {
     saveCache(
       CACHE_KEYS.products,
       {
-
         updatedAt:
           data.updatedAt ||
           new Date().toISOString(),
 
         products:
           state.products
-
       }
     );
 
 
-    renderProducts();
+    renderSellerOptions();
 
+    populateWeightOptions();
+
+    renderProducts();
 
   } catch (error) {
 
     console.error(
-      "[GoldManiaSavings] Product loading failed:",
+      "Product loading failed:",
       error
     );
 
-
-    /*
-     * Cached products remain visible.
-     */
 
     if (
       state.products.length === 0
@@ -1261,155 +1095,130 @@ async function loadProducts() {
    NORMALIZE PRODUCTS
 ========================================================= */
 
-function normalizeProducts(
-  products
-) {
+function normalizeProducts(products) {
 
   return products
-
     .filter(Boolean)
+    .map(product => {
 
-    .map(
-      product => {
-
-        const price =
-          number(
-            product.listedPrice ||
-            product.price
-          );
-
-
-        const weight =
-          number(
-            product.weight
-          );
+      const price =
+        number(
+          product.listedPrice ??
+          product.price ??
+          product.salePrice
+        );
 
 
-        const purity =
-          normalizePurity(
-            product.purity
-          );
+      const weight =
+        number(
+          product.weight ??
+          product.weightGrams ??
+          product.grams
+        );
 
 
-        const productUrl =
-          normalizeProductUrl(
-
-            product.productUrl ||
-
-            product.url ||
-
-            product.link
-
-          );
+      const purity =
+        normalizePurity(
+          product.purity ??
+          product.karat ??
+          product.goldPurity
+        );
 
 
-        return {
-
-          ...product,
-
-
-          sellerId:
-            String(
-              product.sellerId ||
-              ""
-            ),
+      const productUrl =
+        normalizeProductUrl(
+          product.productUrl ||
+          product.url ||
+          product.link ||
+          product.productLink
+        );
 
 
-          seller:
-            product.seller ||
+      return {
+
+        ...product,
+
+        sellerId:
+          String(
             product.sellerId ||
-            "Seller",
+            product.seller_id ||
+            product.seller ||
+            ""
+          ),
 
+        seller:
+          product.sellerName ||
+          product.seller ||
+          product.sellerId ||
+          "Seller",
 
-          productName:
-            cleanProductName(
+        productName:
+          cleanProductName(
+            product.productName ||
+            product.name ||
+            product.title ||
+            "Gold Coin"
+          ),
 
-              product.productName ||
+        purity,
 
-              product.name ||
+        weight,
 
-              "Gold Coin"
+        listedPrice:
+          price,
 
-            ),
+        mrp:
+          number(
+            product.mrp
+          ),
 
+        coupon:
+          number(
+            product.coupon
+          ),
 
-          purity,
+        cardOffer:
+          number(
+            product.cardOffer
+          ),
 
+        upiOffer:
+          number(
+            product.upiOffer
+          ),
 
-          weight,
+        cashback:
+          number(
+            product.cashback
+          ),
 
+        voucher:
+          String(
+            product.voucher || ""
+          ).trim(),
 
-          listedPrice:
-            price,
+        promoCode:
+          String(
+            product.promoCode || ""
+          ).trim(),
 
+        offerText:
+          String(
+            product.offerText || ""
+          ).trim(),
 
-          mrp:
-            number(
-              product.mrp
-            ),
+        productUrl,
 
+        status:
+          product.status ||
+          "verified"
 
-          coupon:
-            number(
-              product.coupon
-            ),
+      };
 
-
-          cardOffer:
-            number(
-              product.cardOffer
-            ),
-
-
-          upiOffer:
-            number(
-              product.upiOffer
-            ),
-
-
-          cashback:
-            number(
-              product.cashback
-            ),
-
-
-          voucher:
-            String(
-              product.voucher ||
-              ""
-            ).trim(),
-
-
-          promoCode:
-            String(
-              product.promoCode ||
-              ""
-            ).trim(),
-
-
-          offerText:
-            String(
-              product.offerText ||
-              ""
-            ).trim(),
-
-
-          productUrl,
-
-
-          status:
-            product.status ||
-            "verified"
-
-        };
-
-      }
-    )
-
-    .filter(
-      product =>
-        product.listedPrice > 0 &&
-        product.productUrl
+    })
+    .filter(product =>
+      product.listedPrice > 0 &&
+      product.productUrl
     );
 
 }
@@ -1429,12 +1238,6 @@ async function loadSellers() {
       );
 
 
-    console.log(
-      "[GoldManiaSavings] /api/sellers:",
-      data
-    );
-
-
     if (
       data &&
       Array.isArray(
@@ -1444,6 +1247,8 @@ async function loadSellers() {
 
       state.sellers =
         data.sellers;
+
+      state.apiConnected = true;
 
 
       saveCache(
@@ -1458,8 +1263,8 @@ async function loadSellers() {
 
   } catch (error) {
 
-    console.error(
-      "[GoldManiaSavings] Seller loading failed:",
+    console.warn(
+      "Seller loading failed:",
       error
     );
 
@@ -1494,12 +1299,6 @@ async function loadOffers() {
       );
 
 
-    console.log(
-      "[GoldManiaSavings] /api/offers:",
-      data
-    );
-
-
     if (
       data &&
       Array.isArray(
@@ -1510,9 +1309,9 @@ async function loadOffers() {
       state.offers =
         data.offers;
 
+      state.offersLoaded = true;
 
-      state.offersLoaded =
-        true;
+      state.apiConnected = true;
 
 
       saveCache(
@@ -1527,8 +1326,8 @@ async function loadOffers() {
 
   } catch (error) {
 
-    console.error(
-      "[GoldManiaSavings] Offers loading failed:",
+    console.warn(
+      "Offers loading failed:",
       error
     );
 
@@ -1545,32 +1344,24 @@ async function loadOffers() {
    CACHE
 ========================================================= */
 
-function saveCache(
-  key,
-  value
-) {
+function saveCache(key, value) {
 
   try {
 
     localStorage.setItem(
-
       key,
-
       JSON.stringify({
-
         savedAt:
           new Date().toISOString(),
 
         value
-
       })
-
     );
 
   } catch (error) {
 
     console.warn(
-      "[GoldManiaSavings] Cache save failed:",
+      "Cache save failed:",
       error
     );
 
@@ -1579,9 +1370,7 @@ function saveCache(
 }
 
 
-function readCache(
-  key
-) {
+function readCache(key) {
 
   try {
 
@@ -1599,15 +1388,11 @@ function readCache(
 
 
     const parsed =
-      JSON.parse(
-        raw
-      );
+      JSON.parse(raw);
 
 
-    return (
-      parsed?.value ??
-      parsed
-    );
+    return parsed?.value ??
+      parsed;
 
   } catch {
 
@@ -1618,11 +1403,11 @@ function readCache(
 }
 
 
-function loadCachedData() {
+/* =========================================================
+   LOAD CACHED DATA
+========================================================= */
 
-  /*
-   * GOLD
-   */
+function loadCachedData() {
 
   const gold =
     readCache(
@@ -1633,14 +1418,12 @@ function loadCachedData() {
   if (gold) {
 
     state.gold =
-      gold;
+      normalizeGoldResponse(
+        gold
+      ) || gold;
 
   }
 
-
-  /*
-   * PRODUCTS
-   */
 
   const products =
     readCache(
@@ -1649,13 +1432,10 @@ function loadCachedData() {
 
 
   if (
-
     products &&
-
     Array.isArray(
       products.products
     )
-
   ) {
 
     state.products =
@@ -1663,10 +1443,10 @@ function loadCachedData() {
         products.products
       );
 
-  } else if (
-    Array.isArray(
-      products
-    )
+  }
+
+  else if (
+    Array.isArray(products)
   ) {
 
     state.products =
@@ -1677,10 +1457,6 @@ function loadCachedData() {
   }
 
 
-  /*
-   * SELLERS
-   */
-
   const sellers =
     readCache(
       CACHE_KEYS.sellers
@@ -1688,9 +1464,7 @@ function loadCachedData() {
 
 
   if (
-    Array.isArray(
-      sellers
-    )
+    Array.isArray(sellers)
   ) {
 
     state.sellers =
@@ -1699,10 +1473,6 @@ function loadCachedData() {
   }
 
 
-  /*
-   * OFFERS
-   */
-
   const offers =
     readCache(
       CACHE_KEYS.offers
@@ -1710,13 +1480,38 @@ function loadCachedData() {
 
 
   if (
-    Array.isArray(
-      offers
-    )
+    Array.isArray(offers)
   ) {
 
     state.offers =
       offers;
+
+  }
+
+
+  if (
+    state.gold
+  ) {
+
+    state.goldLoaded = true;
+
+  }
+
+
+  if (
+    state.products.length > 0
+  ) {
+
+    state.productsLoaded = true;
+
+  }
+
+
+  if (
+    state.offers.length > 0
+  ) {
+
+    state.offersLoaded = true;
 
   }
 
@@ -1735,18 +1530,20 @@ async function refreshAll() {
 
 
   /*
-   * Check Worker.
+   * Reset only request flags.
+   * Do NOT delete cached data.
    */
 
-  const workerOnline =
-    await checkWorkerHealth();
+  state.loadingGold = false;
 
+  state.loadingProducts = false;
 
-  /*
-   * Refresh everything.
-   */
+  state.loadingOffers = false;
+
 
   await Promise.allSettled([
+
+    loadHealth(),
 
     loadGold(),
 
@@ -1761,55 +1558,62 @@ async function refreshAll() {
 
   renderAll();
 
+  updateConnectionStatus();
+
+}
+
+
+/* =========================================================
+   CONNECTION STATUS
+========================================================= */
+
+function updateConnectionStatus() {
 
   /*
-   * Correct final status.
+   * Any successful API response means
+   * Worker is reachable.
    */
 
-  if (workerOnline) {
+  if (
+    state.goldLoaded ||
+    state.productsLoaded ||
+    state.offersLoaded ||
+    state.healthLoaded ||
+    state.apiConnected
+  ) {
 
-    if (state.goldLoaded) {
+    setConnectionStatus(
+      "Connected"
+    );
 
-      setConnectionStatus(
-        "Worker Online • Gold Live"
-      );
-
-    } else if (
-      state.gold
-    ) {
-
-      setConnectionStatus(
-        "Worker Online • Cached Gold"
-      );
-
-    } else {
-
-      setConnectionStatus(
-        "Worker Online"
-      );
-
-    }
-
-  } else {
-
-    if (
-      state.gold ||
-      state.products.length > 0
-    ) {
-
-      setConnectionStatus(
-        "Worker unavailable • Cached data"
-      );
-
-    } else {
-
-      setConnectionStatus(
-        "Worker unavailable"
-      );
-
-    }
+    return;
 
   }
+
+
+  /*
+   * Cached data means app still has
+   * usable data even if Worker is down.
+   */
+
+  if (
+    state.gold ||
+    state.products.length > 0 ||
+    state.offers.length > 0
+  ) {
+
+    setConnectionStatus(
+      "Connected • Cached"
+    );
+
+    return;
+
+  }
+
+
+  setConnectionStatus(
+    "Worker unavailable"
+  );
 
 }
 
@@ -1856,139 +1660,131 @@ function renderGold() {
     state.gold.rates || {};
 
 
-  /*
-   * Direct selectors.
-   */
-
-  setText(
-
-    [
-
-      "#gold24",
-
-      "#price24",
-
-      "[data-gold='24K']"
-
-    ],
-
-    formatINR(
+  const rate24 =
+    number(
       rates["24K"]
-    )
-
-  );
+    );
 
 
-  setText(
-
-    [
-
-      "#gold22",
-
-      "#price22",
-
-      "[data-gold='22K']"
-
-    ],
-
-    formatINR(
+  const rate22 =
+    number(
       rates["22K"]
-    )
+    );
 
+
+  const rate18 =
+    number(
+      rates["18K"]
+    );
+
+
+  setText(
+    [
+      "#gold24",
+      "#price24",
+      "[data-gold='24K']"
+    ],
+    formatINR(rate24)
   );
 
 
   setText(
-
     [
-
-      "#gold18",
-
-      "#price18",
-
-      "[data-gold='18K']"
-
+      "#gold22",
+      "#price22",
+      "[data-gold='22K']"
     ],
-
-    formatINR(
-      rates["18K"]
-    )
-
+    formatINR(rate22)
   );
 
 
-  /*
-   * Replace generic Loading...
-   * cards.
-   */
+  setText(
+    [
+      "#gold18",
+      "#price18",
+      "[data-gold='18K']"
+    ],
+    formatINR(rate18)
+  );
+
 
   replaceGoldLoading(
     "24K",
-    rates["24K"]
+    rate24
   );
 
 
   replaceGoldLoading(
     "22K",
-    rates["22K"]
+    rate22
   );
 
 
   replaceGoldLoading(
     "18K",
-    rates["18K"]
+    rate18
   );
 
 
-  /*
-   * Source.
-   */
-
   setText(
-
     [
-
       "#goldSource",
-
       "#gold-source",
-
       "[data-role='gold-source']"
-
     ],
-
     state.gold.source ||
-      "India Gold Reference"
-
+    "SnapData"
   );
 
 
-  /*
-   * Updated time.
-   */
-
   setText(
-
     [
-
       "#goldUpdated",
-
       "#gold-updated",
-
       "[data-role='gold-updated']"
-
     ],
-
     formatDate(
+      state.gold.timestamp ||
       state.gold.date
     )
+  );
 
+
+  /*
+   * Additional common selectors.
+   */
+
+  setText(
+    [
+      "#gold24Price",
+      "[data-gold-price='24K']"
+    ],
+    formatINR(rate24)
+  );
+
+
+  setText(
+    [
+      "#gold22Price",
+      "[data-gold-price='22K']"
+    ],
+    formatINR(rate22)
+  );
+
+
+  setText(
+    [
+      "#gold18Price",
+      "[data-gold-price='18K']"
+    ],
+    formatINR(rate18)
   );
 
 }
 
 
 /* =========================================================
-   REPLACE GOLD LOADING
+   REPLACE GOLD LOADING TEXT
 ========================================================= */
 
 function replaceGoldLoading(
@@ -1997,8 +1793,7 @@ function replaceGoldLoading(
 ) {
 
   if (
-    !value ||
-    Number(value) <= 0
+    !value
   ) {
 
     return;
@@ -2006,18 +1801,8 @@ function replaceGoldLoading(
   }
 
 
-  const wanted =
-    purity.toLowerCase();
-
-
-  const candidates =
-    $all(
-      "body *"
-    );
-
-
-  candidates.forEach(
-    element => {
+  $all("body *")
+    .forEach(element => {
 
       if (
         element.children.length > 0
@@ -2035,7 +1820,7 @@ function replaceGoldLoading(
 
 
       if (
-        text !== "Loading..."
+        !/^Loading\.\.\.$/i.test(text)
       ) {
 
         return;
@@ -2053,40 +1838,16 @@ function replaceGoldLoading(
 
       if (
         parentText.includes(
-          wanted
+          purity.toLowerCase()
         )
       ) {
 
         element.textContent =
-          formatINR(
-            value
-          );
+          formatINR(value);
 
       }
 
-    }
-  );
-
-}
-
-
-/* =========================================================
-   GOLD LOADING
-========================================================= */
-
-function setGoldLoading() {
-
-  /*
-   * Don't overwrite cached gold.
-   */
-
-  if (
-    state.gold
-  ) {
-
-    return;
-
-  }
+    });
 
 }
 
@@ -2095,38 +1856,46 @@ function setGoldLoading() {
    GOLD ERROR
 ========================================================= */
 
-function renderGoldError(
-  message
-) {
+function renderGoldError(message) {
 
-  $all(
-    "body *"
-  )
-    .forEach(
-      element => {
+  /*
+   * Never overwrite valid cached/current gold.
+   */
 
-        if (
-          element.children.length > 0
-        ) {
+  if (
+    state.gold
+  ) {
 
-          return;
+    renderGold();
 
-        }
+    return;
+
+  }
 
 
-        if (
-          element.textContent
-            .trim() ===
-          "Loading..."
-        ) {
+  $all("body *")
+    .forEach(element => {
 
-          element.textContent =
-            message;
+      if (
+        element.children.length > 0
+      ) {
 
-        }
+        return;
 
       }
-    );
+
+
+      if (
+        element.textContent
+          .trim() === "Loading..."
+      ) {
+
+        element.textContent =
+          message;
+
+      }
+
+    });
 
 }
 
@@ -2139,15 +1908,10 @@ function renderSellerOptions() {
 
   const select =
     findSelect([
-
       "#seller",
-
       "#sellerSelect",
-
       "#seller-filter",
-
       "[name='seller']"
-
     ]);
 
 
@@ -2167,35 +1931,40 @@ function renderSellerOptions() {
   `;
 
 
-  const sellers =
-    [
-      ...state.sellers
-    ];
-
-
-  /*
-   * Also derive sellers
-   * from products.
-   */
-
   const map =
     new Map();
 
 
-  sellers.forEach(
+  state.sellers.forEach(
     seller => {
 
-      if (
-        seller?.id
-      ) {
+      if (!seller) {
+
+        return;
+
+      }
+
+
+      const id =
+        String(
+          seller.id ||
+          seller.sellerId ||
+          seller.slug ||
+          ""
+        );
+
+
+      const name =
+        seller.name ||
+        seller.seller ||
+        id;
+
+
+      if (id) {
 
         map.set(
-
-          seller.id,
-
-          seller.name ||
-          seller.id
-
+          id,
+          name
         );
 
       }
@@ -2212,12 +1981,9 @@ function renderSellerOptions() {
       ) {
 
         map.set(
-
           product.sellerId,
-
           product.seller ||
           product.sellerId
-
         );
 
       }
@@ -2229,7 +1995,6 @@ function renderSellerOptions() {
   Array.from(
     map.entries()
   )
-
     .sort(
       (a, b) =>
         String(a[1])
@@ -2237,7 +2002,6 @@ function renderSellerOptions() {
             String(b[1])
           )
     )
-
     .forEach(
       ([id, name]) => {
 
@@ -2276,9 +2040,7 @@ function renderSellerOptions() {
 function getFilteredProducts() {
 
   let products =
-    [
-      ...state.products
-    ];
+    [...state.products];
 
 
   if (
@@ -2289,7 +2051,7 @@ function getFilteredProducts() {
       products.filter(
         product =>
           String(
-            product.purity
+            product.purity || ""
           )
             .toUpperCase() ===
           String(
@@ -2312,22 +2074,17 @@ function getFilteredProducts() {
 
 
     if (
-      Number.isFinite(
-        wanted
-      )
+      Number.isFinite(wanted)
     ) {
 
       products =
         products.filter(
           product =>
             Math.abs(
-
               Number(
                 product.weight
               ) -
-
               wanted
-
             ) < 0.0001
         );
 
@@ -2355,10 +2112,6 @@ function getFilteredProducts() {
 
   }
 
-
-  /*
-   * Cheapest first.
-   */
 
   products.sort(
     (a, b) =>
@@ -2412,7 +2165,9 @@ function renderProducts() {
         </tr>
       `;
 
-    } else {
+    }
+
+    else {
 
       tableBody.innerHTML =
         products
@@ -2427,15 +2182,10 @@ function renderProducts() {
 
     }
 
-
     return;
 
   }
 
-
-  /*
-   * Card/grid fallback.
-   */
 
   const container =
     findProductContainer();
@@ -2589,16 +2339,13 @@ function productRow(
     );
 
 
-  const priceClass =
-    cheapest
-      ? "gms-cheapest"
-      : "";
-
-
   return `
-    <tr class="${priceClass}">
+    <tr
+      class="${cheapest ? "gms-cheapest" : ""}"
+    >
 
       <td>
+
         <strong>
           ${safeText(
             product.seller
@@ -2614,15 +2361,18 @@ function productRow(
             `
             : ""
         }
+
       </td>
 
 
       <td>
+
         <strong>
           ${safeText(
             product.productName
           )}
         </strong>
+
       </td>
 
 
@@ -2641,6 +2391,7 @@ function productRow(
 
 
       <td>
+
         <strong class="gms-price">
           ${formatINR(
             product.listedPrice
@@ -2650,7 +2401,6 @@ function productRow(
         ${
           product.mrp >
           product.listedPrice
-
             ? `
               <small class="gms-mrp">
                 MRP
@@ -2659,7 +2409,6 @@ function productRow(
                 )}
               </small>
             `
-
             : ""
         }
 
@@ -2670,7 +2419,6 @@ function productRow(
 
         ${
           offer
-
             ? `
               <div class="gms-offer">
                 ${safeText(
@@ -2678,7 +2426,6 @@ function productRow(
                 )}
               </div>
             `
-
             : `
               <span class="gms-no-offer">
                 —
@@ -2735,9 +2482,7 @@ function productCard(
   return `
     <article
       class="gms-product-card
-      ${cheapest
-        ? "gms-cheapest"
-        : ""}"
+      ${cheapest ? "gms-cheapest" : ""}"
     >
 
       ${
@@ -2769,9 +2514,7 @@ function productCard(
         ${safeText(
           product.purity
         )}
-
         ·
-
         ${formatWeight(
           product.weight
         )}
@@ -2787,7 +2530,6 @@ function productCard(
 
       ${
         offer
-
           ? `
             <div class="gms-offer">
               ${safeText(
@@ -2795,7 +2537,6 @@ function productCard(
               )}
             </div>
           `
-
           : ""
       }
 
@@ -2831,7 +2572,6 @@ function isCheapest(
       item =>
         item.purity ===
           product.purity &&
-
         Number(
           item.weight
         ) ===
@@ -2878,11 +2618,20 @@ function getOfferSummary(
   product
 ) {
 
+  if (!product) {
+
+    return "";
+
+  }
+
+
   const parts = [];
 
 
   if (
-    product.coupon > 0
+    number(
+      product.coupon
+    ) > 0
   ) {
 
     parts.push(
@@ -2895,7 +2644,9 @@ function getOfferSummary(
 
 
   if (
-    product.cardOffer > 0
+    number(
+      product.cardOffer
+    ) > 0
   ) {
 
     parts.push(
@@ -2908,7 +2659,9 @@ function getOfferSummary(
 
 
   if (
-    product.upiOffer > 0
+    number(
+      product.upiOffer
+    ) > 0
   ) {
 
     parts.push(
@@ -2921,7 +2674,9 @@ function getOfferSummary(
 
 
   if (
-    product.cashback > 0
+    number(
+      product.cashback
+    ) > 0
   ) {
 
     parts.push(
@@ -2990,19 +2745,15 @@ function renderOffers() {
   }
 
 
-  /*
-   * Prefer API offers.
-   * Otherwise derive from products.
-   */
-
   let offers =
-    state.offers;
+    Array.isArray(
+      state.offers
+    )
+      ? state.offers
+      : [];
 
 
   if (
-    !Array.isArray(
-      offers
-    ) ||
     offers.length === 0
   ) {
 
@@ -3058,7 +2809,6 @@ function renderOffers() {
 
               ${
                 offer.productName
-
                   ? `
                     <div>
                       ${safeText(
@@ -3066,7 +2816,6 @@ function renderOffers() {
                       )}
                     </div>
                   `
-
                   : ""
               }
 
@@ -3080,7 +2829,6 @@ function renderOffers() {
 
               ${
                 offer.productUrl
-
                   ? `
                     <a
                       href="${safeText(
@@ -3092,7 +2840,6 @@ function renderOffers() {
                       View Product
                     </a>
                   `
-
                   : ""
               }
 
@@ -3147,10 +2894,6 @@ function findOffersContainer() {
 
   }
 
-
-  /*
-   * Find section by heading.
-   */
 
   const headings =
     $all(
@@ -3232,44 +2975,37 @@ function updateProductCount(
   );
 
 
-  /*
-   * Current page may have:
-   * "0 products"
-   */
-
   if (!updated) {
 
-    $all(
-      "body *"
-    )
-      .forEach(
-        element => {
+    $all("body *")
+      .forEach(element => {
 
-          if (
-            element.children.length === 0
-          ) {
+        if (
+          element.children.length !== 0
+        ) {
 
-            const text =
-              String(
-                element.textContent ||
-                ""
-              ).trim();
-
-
-            if (
-              /^\d+\s+products?$/i
-                .test(text)
-            ) {
-
-              element.textContent =
-                `${count} products`;
-
-            }
-
-          }
+          return;
 
         }
-      );
+
+
+        const text =
+          String(
+            element.textContent || ""
+          ).trim();
+
+
+        if (
+          /^\d+\s+products?$/i
+            .test(text)
+        ) {
+
+          element.textContent =
+            `${count} products`;
+
+        }
+
+      });
 
   }
 
@@ -3277,25 +3013,8 @@ function updateProductCount(
 
 
 /* =========================================================
-   LOADING / ERROR
+   PRODUCT ERROR
 ========================================================= */
-
-function showProductsLoading() {
-
-  /*
-   * Don't replace cached products.
-   */
-
-  if (
-    state.products.length > 0
-  ) {
-
-    return;
-
-  }
-
-}
-
 
 function renderProductsError(
   message
@@ -3388,36 +3107,30 @@ function setConnectionStatus(
   );
 
 
-  /*
-   * Current page may use:
-   * "Connecting..."
-   */
-
   if (!found) {
 
-    $all(
-      "body *"
-    )
-      .forEach(
-        element => {
+    $all("body *")
+      .forEach(element => {
 
-          if (
-
-            element.children.length === 0 &&
+        if (
+          element.children.length === 0 &&
+          (
+            element.textContent
+              .trim() ===
+              "Connecting..." ||
 
             element.textContent
               .trim() ===
-            "Connecting..."
+              "Worker unavailable"
+          )
+        ) {
 
-          ) {
-
-            element.textContent =
-              text;
-
-          }
+          element.textContent =
+            text;
 
         }
-      );
+
+      });
 
   }
 
@@ -3432,7 +3145,8 @@ function updateLastRefresh() {
 
   const date =
     state.lastProductUpdate ||
-    state.lastGoldUpdate;
+    state.lastGoldUpdate ||
+    state.lastHealthUpdate;
 
 
   if (!date) {
@@ -3443,25 +3157,16 @@ function updateLastRefresh() {
 
 
   const formatted =
-    formatDate(
-      date
-    );
+    formatDate(date);
 
 
   setText(
-
     [
-
       "#lastRefresh",
-
       "#lastUpdated",
-
       "[data-last-refresh]"
-
     ],
-
     formatted
-
   );
 
 }
@@ -3500,18 +3205,12 @@ function setText(
    NUMBER
 ========================================================= */
 
-function number(
-  value
-) {
+function number(value) {
 
   if (
-
     value === null ||
-
     value === undefined ||
-
     value === ""
-
   ) {
 
     return 0;
@@ -3519,23 +3218,24 @@ function number(
   }
 
 
+  if (
+    typeof value === "number"
+  ) {
+
+    return Number.isFinite(value)
+      ? value
+      : 0;
+
+  }
+
+
   const parsed =
     Number(
-
       String(value)
-
-        .replace(
-          /₹/g,
-          ""
-        )
-
-        .replace(
-          /,/g,
-          ""
-        )
-
+        .replace(/₹/g, "")
+        .replace(/,/g, "")
+        .replace(/INR/gi, "")
         .trim()
-
     );
 
 
@@ -3552,14 +3252,10 @@ function number(
    CURRENCY
 ========================================================= */
 
-function formatINR(
-  value
-) {
+function formatINR(value) {
 
   const amount =
-    number(
-      value
-    );
+    number(value);
 
 
   if (
@@ -3572,25 +3268,15 @@ function formatINR(
 
 
   return new Intl.NumberFormat(
-
     "en-IN",
-
     {
+      style: "currency",
 
-      style:
-        "currency",
+      currency: "INR",
 
-      currency:
-        "INR",
-
-      maximumFractionDigits:
-        2
-
+      maximumFractionDigits: 2
     }
-
-  ).format(
-    amount
-  );
+  ).format(amount);
 
 }
 
@@ -3599,19 +3285,13 @@ function formatINR(
    WEIGHT
 ========================================================= */
 
-function formatWeight(
-  value
-) {
+function formatWeight(value) {
 
   const weight =
-    number(
-      value
-    );
+    number(value);
 
 
-  if (
-    !weight
-  ) {
+  if (!weight) {
 
     return "—";
 
@@ -3627,9 +3307,7 @@ function formatWeight(
    DATE
 ========================================================= */
 
-function formatDate(
-  value
-) {
+function formatDate(value) {
 
   if (!value) {
 
@@ -3640,12 +3318,8 @@ function formatDate(
 
   const date =
     value instanceof Date
-
       ? value
-
-      : new Date(
-          value
-        );
+      : new Date(value);
 
 
   if (
@@ -3654,36 +3328,24 @@ function formatDate(
     )
   ) {
 
-    return String(
-      value
-    );
+    return String(value);
 
   }
 
 
   return date.toLocaleString(
-
     "en-IN",
-
     {
+      day: "2-digit",
 
-      day:
-        "2-digit",
+      month: "short",
 
-      month:
-        "short",
+      year: "numeric",
 
-      year:
-        "numeric",
+      hour: "2-digit",
 
-      hour:
-        "2-digit",
-
-      minute:
-        "2-digit"
-
+      minute: "2-digit"
     }
-
   );
 
 }
@@ -3693,29 +3355,20 @@ function formatDate(
    PURITY
 ========================================================= */
 
-function normalizePurity(
-  value
-) {
+function normalizePurity(value) {
 
   const text =
     String(
       value || ""
     )
       .toUpperCase()
-      .replace(
-        /\s/g,
-        ""
-      );
+      .replace(/\s/g, "");
 
 
   if (
-
     text.includes("24") ||
-
     text.includes("999") ||
-
     text.includes("995")
-
   ) {
 
     return "24K";
@@ -3724,11 +3377,8 @@ function normalizePurity(
 
 
   if (
-
     text.includes("22") ||
-
     text.includes("916")
-
   ) {
 
     return "22K";
@@ -3737,11 +3387,8 @@ function normalizePurity(
 
 
   if (
-
     text.includes("18") ||
-
     text.includes("750")
-
   ) {
 
     return "18K";
@@ -3760,32 +3407,20 @@ function normalizePurity(
    PRODUCT NAME
 ========================================================= */
 
-function cleanProductName(
-  value
-) {
+function cleanProductName(value) {
 
   return String(
     value || ""
   )
-
     .replace(
-
       /\b(TRY AT HOME|TRY VIDEO CALL|VIEW SIMILAR|CHECK DELIVERY DATE)\b/gi,
-
       ""
-
     )
-
     .replace(
-
       /\s+/g,
-
       " "
-
     )
-
     .trim()
-
     .slice(
       0,
       180
@@ -3798,9 +3433,7 @@ function cleanProductName(
    PRODUCT URL
 ========================================================= */
 
-function normalizeProductUrl(
-  value
-) {
+function normalizeProductUrl(value) {
 
   if (!value) {
 
@@ -3810,15 +3443,12 @@ function normalizeProductUrl(
 
 
   const text =
-    String(
-      value
-    ).trim();
+    String(value)
+      .trim();
 
 
   if (
-    !/^https?:\/\//i.test(
-      text
-    )
+    !/^https?:\/\//i.test(text)
   ) {
 
     return "";
@@ -3829,9 +3459,10 @@ function normalizeProductUrl(
   /*
    * IMPORTANT:
    *
-   * Keep exact product URL.
-   * Do NOT convert it to category URL.
-   * Query parameters are preserved.
+   * Exact product URL is preserved.
+   *
+   * No category conversion.
+   * No query parameter removal.
    */
 
   return text;
@@ -3847,15 +3478,10 @@ function populatePurityOptions() {
 
   const select =
     findSelect([
-
       "#purity",
-
       "#puritySelect",
-
       "#purity-filter",
-
       "[name='purity']"
-
     ]);
 
 
@@ -3871,7 +3497,6 @@ function populatePurityOptions() {
 
 
   select.innerHTML = `
-
     <option value="">
       All Purity
     </option>
@@ -3887,7 +3512,6 @@ function populatePurityOptions() {
     <option value="18K">
       18K
     </option>
-
   `;
 
 
@@ -3905,15 +3529,10 @@ function populateWeightOptions() {
 
   const select =
     findSelect([
-
       "#weight",
-
       "#weightSelect",
-
       "#weight-filter",
-
       "[name='weight']"
-
     ]);
 
 
@@ -3930,27 +3549,20 @@ function populateWeightOptions() {
 
   const weights =
     Array.from(
-
       new Set(
-
         state.products
-
           .map(
             product =>
               number(
                 product.weight
               )
           )
-
           .filter(
             weight =>
               weight > 0
           )
-
       )
-
     )
-
     .sort(
       (a, b) =>
         a - b
@@ -3958,11 +3570,9 @@ function populateWeightOptions() {
 
 
   select.innerHTML = `
-
     <option value="">
       All Weights
     </option>
-
   `;
 
 
@@ -3976,9 +3586,7 @@ function populateWeightOptions() {
 
 
       option.value =
-        String(
-          weight
-        );
+        String(weight);
 
 
       option.textContent =
@@ -4009,45 +3617,41 @@ window.GoldManiaSavings = {
 
   API,
 
-
   refresh:
     refreshAll,
 
+  reloadHealth:
+    loadHealth,
 
   reloadGold:
     loadGold,
 
-
   reloadProducts:
     loadProducts,
 
+  reloadSellers:
+    loadSellers,
 
   reloadOffers:
     loadOffers,
-
-
-  checkWorker:
-    checkWorkerHealth,
-
 
   clearCache() {
 
     Object.values(
       CACHE_KEYS
-    )
-      .forEach(
-        key => {
+    ).forEach(
+      key => {
 
-          try {
+        try {
 
-            localStorage.removeItem(
-              key
-            );
+          localStorage.removeItem(
+            key
+          );
 
-          } catch {}
+        } catch {}
 
-        }
-      );
+      }
+    );
 
 
     location.reload();
