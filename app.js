@@ -6,15 +6,47 @@
    API:
    https://goldmaniasavings-api.onlinetechmine.workers.dev
 
-   Works with:
+   Supports:
    /api/health
    /api/gold
    /api/products
    /api/sellers
    /api/offers
+
+   IMPORTANT:
+   Gold API supports BOTH:
+
+   1) Current Worker format:
+
+   {
+     "ok": true,
+     "live": true,
+     "source": "SnapData",
+     "timestamp": "...",
+     "date": "2026-09-30",
+     "currency": "INR",
+     "unit": "INR/gram",
+     "rates": {
+       "24K": { "perGram": 14957 },
+       "22K": { "perGram": 13710 },
+       "18K": { "perGram": 11218 }
+     }
+   }
+
+   2) Older nested format:
+
+   {
+     "ok": true,
+     "indiaReference": {
+       "rates": {
+         "24K": { "perGram": 14957 }
+       }
+     }
+   }
 ========================================================= */
 
 "use strict";
+
 
 /* =========================================================
    CONFIG
@@ -46,25 +78,37 @@ const CACHE_KEYS = {
 ========================================================= */
 
 const state = {
+
   gold: null,
+
   products: [],
+
   sellers: [],
+
   offers: [],
 
   selectedPurity: "",
+
   selectedWeight: "",
+
   selectedSeller: "",
 
   productsLoaded: false,
+
   goldLoaded: false,
+
   offersLoaded: false,
 
   loadingProducts: false,
+
   loadingGold: false,
+
   loadingOffers: false,
 
   lastProductUpdate: null,
+
   lastGoldUpdate: null
+
 };
 
 
@@ -73,21 +117,35 @@ const state = {
 ========================================================= */
 
 function $(selector) {
-  return document.querySelector(selector);
+
+  return document.querySelector(
+    selector
+  );
+
 }
+
 
 function $all(selector) {
+
   return Array.from(
-    document.querySelectorAll(selector)
+    document.querySelectorAll(
+      selector
+    )
   );
+
 }
 
+
 function safeText(value) {
-  return String(value ?? "")
+
+  return String(
+    value ?? ""
+  )
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+
 }
 
 
@@ -100,6 +158,7 @@ document.addEventListener(
   init
 );
 
+
 async function init() {
 
   setConnectionStatus(
@@ -110,7 +169,6 @@ async function init() {
 
   /*
    * Load cached data immediately.
-   * This prevents a blank/loading-only screen.
    */
 
   loadCachedData();
@@ -118,25 +176,35 @@ async function init() {
   renderAll();
 
   /*
-   * Then get fresh data.
+   * Fetch fresh data.
    */
 
   await Promise.allSettled([
+
     loadGold(),
+
     loadProducts(),
+
     loadSellers(),
+
     loadOffers()
+
   ]);
 
   renderAll();
 
   setConnectionStatus(
+
     state.goldLoaded ||
     state.productsLoaded ||
     state.offersLoaded
+
       ? "Connected"
+
       : "Offline / API unavailable"
+
   );
+
 }
 
 
@@ -149,31 +217,35 @@ function bindEvents() {
   const refreshButtons =
     $all("button");
 
-  refreshButtons.forEach(button => {
 
-    const text =
-      String(
-        button.textContent || ""
-      ).toLowerCase();
+  refreshButtons.forEach(
+    button => {
 
-    if (
-      text.includes("refresh")
-    ) {
+      const text =
+        String(
+          button.textContent || ""
+        ).toLowerCase();
 
-      button.addEventListener(
-        "click",
-        async event => {
 
-          event.preventDefault();
+      if (
+        text.includes("refresh")
+      ) {
 
-          await refreshAll();
+        button.addEventListener(
+          "click",
+          async event => {
 
-        }
-      );
+            event.preventDefault();
+
+            await refreshAll();
+
+          }
+        );
+
+      }
 
     }
-
-  });
+  );
 
 
   const purity =
@@ -184,6 +256,7 @@ function bindEvents() {
       "[name='purity']"
     ]);
 
+
   const weight =
     findSelect([
       "#weight",
@@ -191,6 +264,7 @@ function bindEvents() {
       "#weight-filter",
       "[name='weight']"
     ]);
+
 
   const seller =
     findSelect([
@@ -252,12 +326,9 @@ function bindEvents() {
   }
 
 
-  /*
-   * Compare button
-   */
-
   const compareButton =
     findButtonByText("compare");
+
 
   if (compareButton) {
 
@@ -277,12 +348,9 @@ function bindEvents() {
   }
 
 
-  /*
-   * Clear button
-   */
-
   const clearButton =
     findButtonByText("clear");
+
 
   if (clearButton) {
 
@@ -315,6 +383,7 @@ function findSelect(selectors) {
     const element =
       $(selector);
 
+
     if (
       element &&
       element.tagName === "SELECT"
@@ -326,6 +395,7 @@ function findSelect(selectors) {
 
   }
 
+
   return null;
 
 }
@@ -335,20 +405,21 @@ function findSelect(selectors) {
    BUTTON FINDER
 ========================================================= */
 
-function findButtonByText(
-  text
-) {
+function findButtonByText(text) {
 
   const wanted =
-    text.toLowerCase();
+    String(text)
+      .toLowerCase();
+
 
   return $all("button")
-    .find(button =>
-      String(
-        button.textContent || ""
-      )
-        .toLowerCase()
-        .includes(wanted)
+    .find(
+      button =>
+        String(
+          button.textContent || ""
+        )
+          .toLowerCase()
+          .includes(wanted)
     ) || null;
 
 }
@@ -368,6 +439,7 @@ function readFilters() {
       "[name='purity']"
     ]);
 
+
   const weight =
     findSelect([
       "#weight",
@@ -375,6 +447,7 @@ function readFilters() {
       "#weight-filter",
       "[name='weight']"
     ]);
+
 
   const seller =
     findSelect([
@@ -388,8 +461,10 @@ function readFilters() {
   state.selectedPurity =
     purity?.value || "";
 
+
   state.selectedWeight =
     weight?.value || "";
+
 
   state.selectedSeller =
     seller?.value || "";
@@ -404,11 +479,14 @@ function readFilters() {
 function clearFilters() {
 
   state.selectedPurity = "";
+
   state.selectedWeight = "";
+
   state.selectedSeller = "";
 
 
   [
+
     "#purity",
     "#puritySelect",
     "#purity-filter",
@@ -423,17 +501,22 @@ function clearFilters() {
     "#sellerSelect",
     "#seller-filter",
     "[name='seller']"
-  ]
-    .forEach(selector => {
+
+  ].forEach(
+    selector => {
 
       const element =
         $(selector);
 
+
       if (element) {
+
         element.value = "";
+
       }
 
-    });
+    }
+  );
 
 
   renderProducts();
@@ -453,6 +536,7 @@ async function fetchJSON(
   const controller =
     new AbortController();
 
+
   const timeout =
     setTimeout(
       () => controller.abort(),
@@ -466,14 +550,17 @@ async function fetchJSON(
       await fetch(
         url,
         {
+
           method:
             options.method || "GET",
 
           headers: {
+
             "Accept":
               "application/json",
 
             ...(options.headers || {})
+
           },
 
           cache:
@@ -481,6 +568,7 @@ async function fetchJSON(
 
           signal:
             controller.signal
+
         }
       );
 
@@ -501,13 +589,12 @@ async function fetchJSON(
 
 
     if (
-      !contentType.includes(
-        "application/json"
-      )
+      !contentType
+        .toLowerCase()
+        .includes("application/json")
     ) {
 
-      const text =
-        await response.text();
+      await response.text();
 
       throw new Error(
         "API did not return JSON"
@@ -520,7 +607,9 @@ async function fetchJSON(
 
   } finally {
 
-    clearTimeout(timeout);
+    clearTimeout(
+      timeout
+    );
 
   }
 
@@ -536,10 +625,14 @@ async function loadGold() {
   if (
     state.loadingGold
   ) {
+
     return;
+
   }
 
+
   state.loadingGold = true;
+
 
   setGoldLoading();
 
@@ -565,15 +658,28 @@ async function loadGold() {
     }
 
 
-    state.gold =
+    const normalized =
       normalizeGoldResponse(
         data
       );
 
-    state.goldLoaded =
-      Boolean(
-        state.gold
+
+    if (!normalized) {
+
+      throw new Error(
+        "Gold API returned no usable rates"
       );
+
+    }
+
+
+    state.gold =
+      normalized;
+
+
+    state.goldLoaded =
+      true;
+
 
     state.lastGoldUpdate =
       new Date();
@@ -587,6 +693,7 @@ async function loadGold() {
 
     renderGold();
 
+
   } catch (error) {
 
     console.error(
@@ -596,7 +703,17 @@ async function loadGold() {
 
 
     /*
-     * Keep cached value if available.
+     * IMPORTANT:
+     *
+     * If Worker returns:
+     *
+     * source = SnapData
+     * rates = valid
+     *
+     * goldprice.dev 429 should NOT
+     * make the frontend fail.
+     *
+     * Cached value is retained.
      */
 
     if (
@@ -626,14 +743,9 @@ function normalizeGoldResponse(
   data
 ) {
 
-  const reference =
-    data.indiaReference ||
-    data.india ||
-    null;
-
-
   if (
-    !reference
+    !data ||
+    typeof data !== "object"
   ) {
 
     return null;
@@ -641,8 +753,51 @@ function normalizeGoldResponse(
   }
 
 
+  /*
+   * CURRENT WORKER FORMAT
+   *
+   * rates are directly inside data.
+   */
+
+  const directRates =
+    data.rates &&
+    typeof data.rates === "object"
+      ? data.rates
+      : null;
+
+
+  /*
+   * OLD FORMAT
+   *
+   * indiaReference.rates
+   * india.rates
+   */
+
+  const nestedReference =
+    data.indiaReference ||
+    data.india ||
+    null;
+
+
+  const nestedRates =
+    nestedReference &&
+    nestedReference.rates &&
+    typeof nestedReference.rates === "object"
+
+      ? nestedReference.rates
+
+      : null;
+
+
+  /*
+   * Prefer direct Worker format.
+   * Fallback to nested format.
+   */
+
   const rates =
-    reference.rates || {};
+    directRates ||
+    nestedRates ||
+    {};
 
 
   const r24 =
@@ -650,10 +805,12 @@ function normalizeGoldResponse(
       rates["24K"]
     );
 
+
   const r22 =
     extractRate(
       rates["22K"]
     );
+
 
   const r18 =
     extractRate(
@@ -661,10 +818,14 @@ function normalizeGoldResponse(
     );
 
 
+  /*
+   * At least one valid rate required.
+   */
+
   if (
-    !r24 &&
-    !r22 &&
-    !r18
+    r24 <= 0 &&
+    r22 <= 0 &&
+    r18 <= 0
   ) {
 
     return null;
@@ -672,39 +833,82 @@ function normalizeGoldResponse(
   }
 
 
+  /*
+   * Metadata can exist either
+   * at root or inside nested reference.
+   */
+
+  const source =
+    nestedReference?.source ||
+    data.source ||
+    "India Gold Reference";
+
+
+  const resolution =
+    nestedReference?.resolution ||
+    data.resolution ||
+    "daily";
+
+
+  const date =
+    nestedReference?.date ||
+    data.date ||
+    nestedReference?.timestamp ||
+    data.timestamp ||
+    "";
+
+
+  const currency =
+    nestedReference?.currency ||
+    data.currency ||
+    "INR";
+
+
+  const unit =
+    nestedReference?.unit ||
+    data.unit ||
+    "INR/gram";
+
+
   return {
 
-    source:
-      reference.source ||
-      "India Gold Reference",
+    source,
 
-    resolution:
-      reference.resolution ||
-      "daily",
+    resolution,
 
-    date:
-      reference.date ||
-      data.timestamp ||
-      "",
+    date,
 
-    currency:
-      reference.currency ||
-      "INR",
+    currency,
 
-    unit:
-      reference.unit ||
-      "INR/gram",
+    unit,
+
+    live:
+      data.live === true,
+
+    cached:
+      data.cached === true,
 
     rates: {
-      "24K": r24,
-      "22K": r22,
-      "18K": r18
+
+      "24K":
+        r24,
+
+      "22K":
+        r22,
+
+      "18K":
+        r18
+
     }
 
   };
 
 }
 
+
+/* =========================================================
+   GOLD RATE EXTRACTOR
+========================================================= */
 
 function extractRate(value) {
 
@@ -713,19 +917,51 @@ function extractRate(value) {
     typeof value === "object"
   ) {
 
-    return Number(
-      value.perGram ||
-      value.price ||
-      value.value ||
-      0
-    );
+    /*
+     * Current Worker:
+     * { perGram: 14957 }
+     */
+
+    const candidates = [
+
+      value.perGram,
+
+      value.price,
+
+      value.value,
+
+      value.rate,
+
+      value.amount
+
+    ];
+
+
+    for (
+      const candidate of candidates
+    ) {
+
+      const parsed =
+        number(candidate);
+
+
+      if (
+        parsed > 0
+      ) {
+
+        return parsed;
+
+      }
+
+    }
+
+
+    return 0;
 
   }
 
 
-  return Number(
-    value || 0
-  );
+  return number(value);
 
 }
 
@@ -739,10 +975,14 @@ async function loadProducts() {
   if (
     state.loadingProducts
   ) {
+
     return;
+
   }
 
+
   state.loadingProducts = true;
+
 
   showProductsLoading();
 
@@ -781,6 +1021,7 @@ async function loadProducts() {
         products
       );
 
+
     state.productsLoaded =
       true;
 
@@ -796,17 +1037,20 @@ async function loadProducts() {
     saveCache(
       CACHE_KEYS.products,
       {
+
         updatedAt:
           data.updatedAt ||
           new Date().toISOString(),
 
         products:
           state.products
+
       }
     );
 
 
     renderProducts();
+
 
   } catch (error) {
 
@@ -815,10 +1059,6 @@ async function loadProducts() {
       error
     );
 
-
-    /*
-     * Cached products remain visible.
-     */
 
     if (
       state.products.length === 0
@@ -853,7 +1093,7 @@ function normalizeProducts(
 
       const price =
         number(
-          product.listedPrice ||
+          product.listedPrice ??
           product.price
         );
 
@@ -889,6 +1129,7 @@ function normalizeProducts(
 
         seller:
           product.seller ||
+          product.sellerName ||
           product.sellerId ||
           "Seller",
 
@@ -907,19 +1148,29 @@ function normalizeProducts(
           price,
 
         mrp:
-          number(product.mrp),
+          number(
+            product.mrp
+          ),
 
         coupon:
-          number(product.coupon),
+          number(
+            product.coupon
+          ),
 
         cardOffer:
-          number(product.cardOffer),
+          number(
+            product.cardOffer
+          ),
 
         upiOffer:
-          number(product.upiOffer),
+          number(
+            product.upiOffer
+          ),
 
         cashback:
-          number(product.cashback),
+          number(
+            product.cashback
+          ),
 
         voucher:
           String(
@@ -945,9 +1196,10 @@ function normalizeProducts(
       };
 
     })
-    .filter(product =>
-      product.listedPrice > 0 &&
-      product.productUrl
+    .filter(
+      product =>
+        product.listedPrice > 0 &&
+        product.productUrl
     );
 
 }
@@ -977,10 +1229,12 @@ async function loadSellers() {
       state.sellers =
         data.sellers;
 
+
       saveCache(
         CACHE_KEYS.sellers,
         state.sellers
       );
+
 
       renderSellerOptions();
 
@@ -1007,8 +1261,11 @@ async function loadOffers() {
   if (
     state.loadingOffers
   ) {
+
     return;
+
   }
+
 
   state.loadingOffers = true;
 
@@ -1030,6 +1287,7 @@ async function loadOffers() {
 
       state.offers =
         data.offers;
+
 
       state.offersLoaded =
         true;
@@ -1073,13 +1331,18 @@ function saveCache(
   try {
 
     localStorage.setItem(
+
       key,
+
       JSON.stringify({
+
         savedAt:
           new Date().toISOString(),
 
         value
+
       })
+
     );
 
   } catch {
@@ -1104,17 +1367,24 @@ function readCache(
         key
       );
 
+
     if (!raw) {
+
       return null;
+
     }
 
 
     const parsed =
-      JSON.parse(raw);
+      JSON.parse(
+        raw
+      );
 
 
-    return parsed?.value ??
-      parsed;
+    return (
+      parsed?.value ??
+      parsed
+    );
 
   } catch {
 
@@ -1131,6 +1401,7 @@ function loadCachedData() {
     readCache(
       CACHE_KEYS.gold
     );
+
 
   if (gold) {
 
@@ -1175,6 +1446,7 @@ function loadCachedData() {
       CACHE_KEYS.sellers
     );
 
+
   if (
     Array.isArray(sellers)
   ) {
@@ -1189,6 +1461,7 @@ function loadCachedData() {
     readCache(
       CACHE_KEYS.offers
     );
+
 
   if (
     Array.isArray(offers)
@@ -1214,10 +1487,15 @@ async function refreshAll() {
 
 
   await Promise.allSettled([
+
     loadGold(),
+
     loadProducts(),
+
     loadSellers(),
+
     loadOffers()
+
   ]);
 
 
@@ -1225,7 +1503,15 @@ async function refreshAll() {
 
 
   setConnectionStatus(
-    "Connected"
+
+    state.goldLoaded ||
+    state.productsLoaded ||
+    state.offersLoaded
+
+      ? "Connected"
+
+      : "Offline / API unavailable"
+
   );
 
 }
@@ -1236,6 +1522,10 @@ async function refreshAll() {
 ========================================================= */
 
 function renderAll() {
+
+  populatePurityOptions();
+
+  populateWeightOptions();
 
   renderGold();
 
@@ -1259,13 +1549,19 @@ function renderGold() {
   if (
     !state.gold
   ) {
+
     return;
+
   }
 
 
   const rates =
     state.gold.rates || {};
 
+
+  /*
+   * Direct selectors.
+   */
 
   setText(
     [
@@ -1304,8 +1600,8 @@ function renderGold() {
 
 
   /*
-   * Current index.html uses
-   * generic "Loading..." elements.
+   * Fallback for existing HTML
+   * containing "Loading..."
    */
 
   replaceGoldLoading(
@@ -1313,10 +1609,12 @@ function renderGold() {
     rates["24K"]
   );
 
+
   replaceGoldLoading(
     "22K",
     rates["22K"]
   );
+
 
   replaceGoldLoading(
     "18K",
@@ -1349,13 +1647,22 @@ function renderGold() {
 }
 
 
+/* =========================================================
+   REPLACE GOLD LOADING
+========================================================= */
+
 function replaceGoldLoading(
   purity,
   value
 ) {
 
-  const wanted =
-    purity.toLowerCase();
+  if (
+    number(value) <= 0
+  ) {
+
+    return;
+
+  }
 
 
   const candidates =
@@ -1364,48 +1671,56 @@ function replaceGoldLoading(
     );
 
 
-  candidates.forEach(element => {
+  candidates.forEach(
+    element => {
 
-    if (
-      element.children.length > 0
-    ) {
-      return;
+      if (
+        element.children.length > 0
+      ) {
+
+        return;
+
+      }
+
+
+      const text =
+        String(
+          element.textContent || ""
+        ).trim();
+
+
+      if (
+        text !== "Loading..."
+      ) {
+
+        return;
+
+      }
+
+
+      const parentText =
+        String(
+          element.parentElement
+            ?.textContent || ""
+        )
+          .toLowerCase();
+
+
+      if (
+        parentText.includes(
+          purity.toLowerCase()
+        )
+      ) {
+
+        element.textContent =
+          formatINR(
+            value
+          );
+
+      }
+
     }
-
-
-    const text =
-      String(
-        element.textContent || ""
-      ).trim();
-
-
-    if (
-      text !== "Loading..."
-    ) {
-      return;
-    }
-
-
-    const parentText =
-      String(
-        element.parentElement
-          ?.textContent || ""
-      )
-        .toLowerCase();
-
-
-    if (
-      parentText.includes(
-        purity.toLowerCase()
-      )
-    ) {
-
-      element.textContent =
-        formatINR(value);
-
-    }
-
-  });
+  );
 
 }
 
@@ -1417,28 +1732,16 @@ function replaceGoldLoading(
 function setGoldLoading() {
 
   /*
-   * Don't overwrite cached gold.
+   * Do not overwrite cached gold.
    */
 
-  if (state.gold) {
+  if (
+    state.gold
+  ) {
+
     return;
+
   }
-
-
-  $all(
-    "body *"
-  )
-    .forEach(element => {
-
-      if (
-        element.children.length === 0 &&
-        element.textContent
-          .trim() === ""
-      ) {
-        return;
-      }
-
-    });
 
 }
 
@@ -1451,29 +1754,90 @@ function renderGoldError(
   message
 ) {
 
-  $all(
-    "body *"
-  )
-    .forEach(element => {
+  /*
+   * Prefer explicit gold selectors
+   * if available.
+   */
+
+  const selectors = [
+
+    "#gold24",
+    "#price24",
+    "#gold22",
+    "#price22",
+    "#gold18",
+    "#price18"
+
+  ];
+
+
+  let found = false;
+
+
+  selectors.forEach(
+    selector => {
+
+      const element =
+        $(selector);
+
 
       if (
-        element.children.length > 0
-      ) {
-        return;
-      }
-
-
-      if (
+        element &&
         element.textContent
-          .trim() === "Loading..."
+          .trim() ===
+          "Loading..."
       ) {
 
         element.textContent =
           message;
 
+        found = true;
+
       }
 
-    });
+    }
+  );
+
+
+  if (found) {
+
+    return;
+
+  }
+
+
+  /*
+   * Fallback.
+   */
+
+  $all(
+    "body *"
+  )
+    .forEach(
+      element => {
+
+        if (
+          element.children.length > 0
+        ) {
+
+          return;
+
+        }
+
+
+        if (
+          element.textContent
+            .trim() ===
+            "Loading..."
+        ) {
+
+          element.textContent =
+            message;
+
+        }
+
+      }
+    );
 
 }
 
@@ -1494,7 +1858,9 @@ function renderSellerOptions() {
 
 
   if (!select) {
+
     return;
+
   }
 
 
@@ -1511,11 +1877,6 @@ function renderSellerOptions() {
     [...state.sellers];
 
 
-  /*
-   * Also derive sellers from
-   * actual products.
-   */
-
   const map =
     new Map();
 
@@ -1528,8 +1889,11 @@ function renderSellerOptions() {
       ) {
 
         map.set(
-          seller.id,
+          String(
+            seller.id
+          ),
           seller.name ||
+          seller.title ||
           seller.id
         );
 
@@ -1547,7 +1911,9 @@ function renderSellerOptions() {
       ) {
 
         map.set(
-          product.sellerId,
+          String(
+            product.sellerId
+          ),
           product.seller ||
           product.sellerId
         );
@@ -1563,9 +1929,10 @@ function renderSellerOptions() {
   )
     .sort(
       (a, b) =>
-        a[1].localeCompare(
-          b[1]
-        )
+        String(a[1])
+          .localeCompare(
+            String(b[1])
+          )
     )
     .forEach(
       ([id, name]) => {
@@ -1575,11 +1942,14 @@ function renderSellerOptions() {
             "option"
           );
 
+
         option.value =
           id;
 
+
         option.textContent =
           name;
+
 
         select.appendChild(
           option
@@ -1612,9 +1982,13 @@ function getFilteredProducts() {
     products =
       products.filter(
         product =>
-          product.purity
+          String(
+            product.purity || ""
+          )
             .toUpperCase() ===
-          state.selectedPurity
+          String(
+            state.selectedPurity
+          )
             .toUpperCase()
       );
 
@@ -1632,7 +2006,9 @@ function getFilteredProducts() {
 
 
     if (
-      Number.isFinite(wanted)
+      Number.isFinite(
+        wanted
+      )
     ) {
 
       products =
@@ -1641,7 +2017,8 @@ function getFilteredProducts() {
             Math.abs(
               Number(
                 product.weight
-              ) - wanted
+              ) -
+              wanted
             ) < 0.0001
         );
 
@@ -1669,10 +2046,6 @@ function getFilteredProducts() {
 
   }
 
-
-  /*
-   * Cheapest first.
-   */
 
   products.sort(
     (a, b) =>
@@ -1717,8 +2090,10 @@ function renderProducts() {
 
       tableBody.innerHTML = `
         <tr>
-          <td colspan="7"
-              class="gms-empty">
+          <td
+            colspan="7"
+            class="gms-empty"
+          >
             🪙 No matching gold coins found.
           </td>
         </tr>
@@ -1744,16 +2119,14 @@ function renderProducts() {
   }
 
 
-  /*
-   * Card/grid fallback.
-   */
-
   const container =
     findProductContainer();
 
 
   if (!container) {
+
     return;
+
   }
 
 
@@ -1793,11 +2166,17 @@ function renderProducts() {
 function findProductTableBody() {
 
   const selectors = [
+
     "#productsTableBody",
+
     "#productTableBody",
+
     "#comparisonBody",
+
     "#products-body",
+
     "table tbody"
+
   ];
 
 
@@ -1808,8 +2187,11 @@ function findProductTableBody() {
     const element =
       $(selector);
 
+
     if (element) {
+
       return element;
+
     }
 
   }
@@ -1827,13 +2209,21 @@ function findProductTableBody() {
 function findProductContainer() {
 
   const selectors = [
+
     "#products",
+
     "#productList",
+
     "#productsGrid",
+
     "#comparison",
+
     "#comparisonResults",
+
     ".product-grid",
+
     ".products-grid"
+
   ];
 
 
@@ -1844,8 +2234,11 @@ function findProductContainer() {
     const element =
       $(selector);
 
+
     if (element) {
+
       return element;
+
     }
 
   }
@@ -1878,84 +2271,123 @@ function productRow(
     );
 
 
-  const priceClass =
-    cheapest
-      ? "gms-cheapest"
-      : "";
-
-
   return `
-    <tr class="${priceClass}">
+    <tr
+      class="${
+        cheapest
+          ? "gms-cheapest"
+          : ""
+      }"
+    >
 
       <td>
+
         <strong>
-          ${safeText(product.seller)}
+          ${safeText(
+            product.seller
+          )}
         </strong>
 
         ${
           cheapest
-            ? `<span class="gms-best-price">
-                 LOWEST PRICE
-               </span>`
+            ? `
+              <span class="gms-best-price">
+                LOWEST PRICE
+              </span>
+            `
             : ""
         }
+
       </td>
 
+
       <td>
+
         <strong>
-          ${safeText(product.productName)}
+          ${safeText(
+            product.productName
+          )}
         </strong>
+
       </td>
 
-      <td>
-        ${safeText(product.purity || "-")}
-      </td>
 
       <td>
-        ${formatWeight(product.weight)}
+        ${safeText(
+          product.purity || "-"
+        )}
       </td>
 
+
       <td>
+        ${formatWeight(
+          product.weight
+        )}
+      </td>
+
+
+      <td>
+
         <strong class="gms-price">
-          ${formatINR(product.listedPrice)}
+          ${formatINR(
+            product.listedPrice
+          )}
         </strong>
 
         ${
-          product.mrp > product.listedPrice
+          product.mrp >
+          product.listedPrice
+
             ? `
               <small class="gms-mrp">
-                MRP ${formatINR(product.mrp)}
+                MRP ${formatINR(
+                  product.mrp
+                )}
               </small>
             `
+
             : ""
         }
+
       </td>
 
+
       <td>
+
         ${
           offer
+
             ? `
               <div class="gms-offer">
-                ${safeText(offer)}
+                ${safeText(
+                  offer
+                )}
               </div>
             `
+
             : `
               <span class="gms-no-offer">
                 —
               </span>
             `
         }
+
       </td>
 
+
       <td>
+
         <a
           class="gms-product-link"
-          href="${safeText(product.productUrl)}"
+          href="${safeText(
+            product.productUrl
+          )}"
           target="_blank"
           rel="noopener noreferrer"
         >
           View Product
         </a>
+
       </td>
 
     </tr>
@@ -1987,8 +2419,16 @@ function productCard(
 
 
   return `
-    <article class="gms-product-card
-      ${cheapest ? "gms-cheapest" : ""}">
+    <article
+      class="
+        gms-product-card
+        ${
+          cheapest
+            ? "gms-cheapest"
+            : ""
+        }
+      "
+    >
 
       ${
         cheapest
@@ -2000,37 +2440,57 @@ function productCard(
           : ""
       }
 
+
       <div class="gms-seller">
-        ${safeText(product.seller)}
+        ${safeText(
+          product.seller
+        )}
       </div>
+
 
       <h3>
-        ${safeText(product.productName)}
+        ${safeText(
+          product.productName
+        )}
       </h3>
 
+
       <div>
-        ${safeText(product.purity)}
+        ${safeText(
+          product.purity
+        )}
         ·
-        ${formatWeight(product.weight)}
+        ${formatWeight(
+          product.weight
+        )}
       </div>
 
+
       <div class="gms-price">
-        ${formatINR(product.listedPrice)}
+        ${formatINR(
+          product.listedPrice
+        )}
       </div>
+
 
       ${
         offer
           ? `
             <div class="gms-offer">
-              ${safeText(offer)}
+              ${safeText(
+                offer
+              )}
             </div>
           `
           : ""
       }
 
+
       <a
         class="gms-product-link"
-        href="${safeText(product.productUrl)}"
+        href="${safeText(
+          product.productUrl
+        )}"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -2057,8 +2517,12 @@ function isCheapest(
       item =>
         item.purity ===
           product.purity &&
-        Number(item.weight) ===
-          Number(product.weight)
+        Number(
+          item.weight
+        ) ===
+        Number(
+          product.weight
+        )
     );
 
 
@@ -2085,7 +2549,8 @@ function isCheapest(
   return (
     Number(
       product.listedPrice
-    ) === minimum
+    ) ===
+    minimum
   );
 
 }
@@ -2099,48 +2564,71 @@ function getOfferSummary(
   product
 ) {
 
+  if (!product) {
+
+    return "";
+
+  }
+
+
   const parts = [];
 
 
   if (
-    product.coupon > 0
+    number(
+      product.coupon
+    ) > 0
   ) {
 
     parts.push(
-      `Coupon ${formatINR(product.coupon)}`
+      `Coupon ${formatINR(
+        product.coupon
+      )}`
     );
 
   }
 
 
   if (
-    product.cardOffer > 0
+    number(
+      product.cardOffer
+    ) > 0
   ) {
 
     parts.push(
-      `Card ${formatINR(product.cardOffer)}`
+      `Card ${formatINR(
+        product.cardOffer
+      )}`
     );
 
   }
 
 
   if (
-    product.upiOffer > 0
+    number(
+      product.upiOffer
+    ) > 0
   ) {
 
     parts.push(
-      `UPI ${formatINR(product.upiOffer)}`
+      `UPI ${formatINR(
+        product.upiOffer
+      )}`
     );
 
   }
 
 
   if (
-    product.cashback > 0
+    number(
+      product.cashback
+    ) > 0
   ) {
 
     parts.push(
-      `Cashback ${formatINR(product.cashback)}`
+      `Cashback ${formatINR(
+        product.cashback
+      )}`
     );
 
   }
@@ -2151,7 +2639,9 @@ function getOfferSummary(
   ) {
 
     parts.push(
-      `Voucher: ${product.voucher}`
+      `Voucher: ${
+        product.voucher
+      }`
     );
 
   }
@@ -2162,7 +2652,9 @@ function getOfferSummary(
   ) {
 
     parts.push(
-      `Promo: ${product.promoCode}`
+      `Promo: ${
+        product.promoCode
+      }`
     );
 
   }
@@ -2197,14 +2689,11 @@ function renderOffers() {
 
 
   if (!container) {
+
     return;
+
   }
 
-
-  /*
-   * Prefer API offers.
-   * If unavailable, derive from products.
-   */
 
   let offers =
     state.offers;
@@ -2255,7 +2744,9 @@ function renderOffers() {
 
 
           return `
-            <div class="gms-offer-card">
+            <div
+              class="gms-offer-card"
+            >
 
               <strong>
                 ${safeText(
@@ -2264,8 +2755,10 @@ function renderOffers() {
                 )}
               </strong>
 
+
               ${
                 offer.productName
+
                   ? `
                     <div>
                       ${safeText(
@@ -2273,15 +2766,21 @@ function renderOffers() {
                       )}
                     </div>
                   `
+
                   : ""
               }
 
+
               <div class="gms-offer">
-                ${safeText(text)}
+                ${safeText(
+                  text
+                )}
               </div>
+
 
               ${
                 offer.productUrl
+
                   ? `
                     <a
                       href="${safeText(
@@ -2293,6 +2792,7 @@ function renderOffers() {
                       View Product
                     </a>
                   `
+
                   : ""
               }
 
@@ -2313,13 +2813,21 @@ function renderOffers() {
 function findOffersContainer() {
 
   const selectors = [
+
     "#offers",
+
     "#offersList",
+
     "#offerList",
+
     "#deals",
+
     "#offersContainer",
+
     ".offers-grid",
+
     ".offers-list"
+
   ];
 
 
@@ -2330,18 +2838,15 @@ function findOffersContainer() {
     const element =
       $(selector);
 
+
     if (element) {
+
       return element;
+
     }
 
   }
 
-
-  /*
-   * Current index may not have a
-   * dedicated id. Find section by
-   * heading.
-   */
 
   const headings =
     $all(
@@ -2388,14 +2893,20 @@ function updateProductCount(
 ) {
 
   const selectors = [
+
     "#productCount",
+
     "#productsCount",
+
     "#comparisonCount",
+
     "[data-product-count]"
+
   ];
 
 
-  let updated = false;
+  let updated =
+    false;
 
 
   selectors.forEach(
@@ -2403,6 +2914,7 @@ function updateProductCount(
 
       const element =
         $(selector);
+
 
       if (element) {
 
@@ -2417,39 +2929,36 @@ function updateProductCount(
   );
 
 
-  /*
-   * Current page has text:
-   * "0 products"
-   */
-
   if (!updated) {
 
     $all("body *")
-      .forEach(element => {
-
-        if (
-          element.children.length === 0
-        ) {
-
-          const text =
-            String(
-              element.textContent || ""
-            ).trim();
-
+      .forEach(
+        element => {
 
           if (
-            /^\d+\s+products?$/i
-              .test(text)
+            element.children.length === 0
           ) {
 
-            element.textContent =
-              `${count} products`;
+            const text =
+              String(
+                element.textContent || ""
+              ).trim();
+
+
+            if (
+              /^\d+\s+products?$/i
+                .test(text)
+            ) {
+
+              element.textContent =
+                `${count} products`;
+
+            }
 
           }
 
         }
-
-      });
+      );
 
   }
 
@@ -2463,18 +2972,23 @@ function updateProductCount(
 function showProductsLoading() {
 
   /*
-   * Don't replace existing
-   * cached products.
+   * Keep cached products visible.
    */
 
   if (
     state.products.length > 0
   ) {
+
     return;
+
   }
 
 }
 
+
+/* =========================================================
+   PRODUCT ERROR
+========================================================= */
 
 function renderProductsError(
   message
@@ -2488,9 +3002,13 @@ function renderProductsError(
 
     tbody.innerHTML = `
       <tr>
-        <td colspan="7"
-            class="gms-empty">
-          ${safeText(message)}
+        <td
+          colspan="7"
+          class="gms-empty"
+        >
+          ${safeText(
+            message
+          )}
         </td>
       </tr>
     `;
@@ -2508,7 +3026,9 @@ function renderProductsError(
 
     container.innerHTML = `
       <div class="gms-empty">
-        ${safeText(message)}
+        ${safeText(
+          message
+        )}
       </div>
     `;
 
@@ -2526,14 +3046,20 @@ function setConnectionStatus(
 ) {
 
   const selectors = [
+
     "#connectionStatus",
+
     "#status",
+
     "[data-connection-status]",
+
     ".connection-status"
+
   ];
 
 
-  let found = false;
+  let found =
+    false;
 
 
   selectors.forEach(
@@ -2541,6 +3067,7 @@ function setConnectionStatus(
 
       const element =
         $(selector);
+
 
       if (element) {
 
@@ -2555,28 +3082,29 @@ function setConnectionStatus(
   );
 
 
-  /*
-   * Current page uses "Connecting..."
-   */
-
   if (!found) {
 
     $all("body *")
-      .forEach(element => {
+      .forEach(
+        element => {
 
-        if (
-          element.children.length === 0 &&
-          element.textContent
-            .trim() ===
-            "Connecting..."
-        ) {
+          if (
 
-          element.textContent =
-            text;
+            element.children.length === 0 &&
+
+            element.textContent
+              .trim() ===
+              "Connecting..."
+
+          ) {
+
+            element.textContent =
+              text;
+
+          }
 
         }
-
-      });
+      );
 
   }
 
@@ -2595,7 +3123,9 @@ function updateLastRefresh() {
 
 
   if (!date) {
+
     return;
+
   }
 
 
@@ -2631,6 +3161,7 @@ function setText(
 
       const element =
         $(selector);
+
 
       if (element) {
 
@@ -2695,7 +3226,7 @@ function formatINR(
 
 
   if (
-    !amount
+    amount <= 0
   ) {
 
     return "₹ —";
@@ -2706,11 +3237,17 @@ function formatINR(
   return new Intl.NumberFormat(
     "en-IN",
     {
+
       style: "currency",
+
       currency: "INR",
+
       maximumFractionDigits: 2
+
     }
-  ).format(amount);
+  ).format(
+    amount
+  );
 
 }
 
@@ -2727,8 +3264,12 @@ function formatWeight(
     number(value);
 
 
-  if (!weight) {
+  if (
+    weight <= 0
+  ) {
+
     return "—";
+
   }
 
 
@@ -2746,14 +3287,20 @@ function formatDate(
 ) {
 
   if (!value) {
+
     return "—";
+
   }
 
 
   const date =
     value instanceof Date
+
       ? value
-      : new Date(value);
+
+      : new Date(
+          value
+        );
 
 
   if (
@@ -2762,7 +3309,9 @@ function formatDate(
     )
   ) {
 
-    return String(value);
+    return String(
+      value
+    );
 
   }
 
@@ -2770,11 +3319,17 @@ function formatDate(
   return date.toLocaleString(
     "en-IN",
     {
+
       day: "2-digit",
+
       month: "short",
+
       year: "numeric",
+
       hour: "2-digit",
+
       minute: "2-digit"
+
     }
   );
 
@@ -2794,7 +3349,10 @@ function normalizePurity(
       value || ""
     )
       .toUpperCase()
-      .replace(/\s/g, "");
+      .replace(
+        /\s/g,
+        ""
+      );
 
 
   if (
@@ -2847,7 +3405,12 @@ function cleanProductName(
     value || ""
   )
     .replace(
-      /\b(TRY AT HOME|TRY VIDEO CALL|VIEW SIMILAR|CHECK DELIVERY DATE)\b/gi,
+      /\b(
+        TRY AT HOME|
+        TRY VIDEO CALL|
+        VIEW SIMILAR|
+        CHECK DELIVERY DATE
+      )\b/gi,
       ""
     )
     .replace(
@@ -2871,9 +3434,7 @@ function normalizeProductUrl(
   value
 ) {
 
-  if (
-    !value
-  ) {
+  if (!value) {
 
     return "";
 
@@ -2881,12 +3442,15 @@ function normalizeProductUrl(
 
 
   const text =
-    String(value)
-      .trim();
+    String(
+      value
+    ).trim();
 
 
   if (
-    !/^https?:\/\//i.test(text)
+    !/^https?:\/\//i.test(
+      text
+    )
   ) {
 
     return "";
@@ -2897,18 +3461,10 @@ function normalizeProductUrl(
   /*
    * IMPORTANT:
    *
-   * Do NOT convert exact product URLs
-   * into category URLs.
+   * Preserve exact product URLs.
    *
-   * Query parameters are preserved.
-   *
-   * Example:
-   *
-   * https://www.bluestone.com/gold+coins/
-   * 50-milligram-24-kt-lakshmi-gold-coin
-   * ~208916.html?impEvent=...
-   *
-   * stays exactly as supplied.
+   * Do NOT convert them to
+   * category URLs.
    */
 
   return text;
@@ -2917,7 +3473,7 @@ function normalizeProductUrl(
 
 
 /* =========================================================
-   SETUP FILTER OPTIONS
+   PURITY OPTIONS
 ========================================================= */
 
 function populatePurityOptions() {
@@ -2932,7 +3488,9 @@ function populatePurityOptions() {
 
 
   if (!select) {
+
     return;
+
   }
 
 
@@ -2941,10 +3499,23 @@ function populatePurityOptions() {
 
 
   select.innerHTML = `
-    <option value="">All Purity</option>
-    <option value="24K">24K</option>
-    <option value="22K">22K</option>
-    <option value="18K">18K</option>
+
+    <option value="">
+      All Purity
+    </option>
+
+    <option value="24K">
+      24K
+    </option>
+
+    <option value="22K">
+      22K
+    </option>
+
+    <option value="18K">
+      18K
+    </option>
+
   `;
 
 
@@ -2970,7 +3541,9 @@ function populateWeightOptions() {
 
 
   if (!select) {
+
     return;
+
   }
 
 
@@ -3001,7 +3574,11 @@ function populateWeightOptions() {
 
 
   select.innerHTML = `
-    <option value="">All Weights</option>
+
+    <option value="">
+      All Weights
+    </option>
+
   `;
 
 
@@ -3013,11 +3590,16 @@ function populateWeightOptions() {
           "option"
         );
 
+
       option.value =
-        String(weight);
+        String(
+          weight
+        );
+
 
       option.textContent =
         `${weight} g`;
+
 
       select.appendChild(
         option
@@ -3031,25 +3613,6 @@ function populateWeightOptions() {
     current || "";
 
 }
-
-
-/* =========================================================
-   INITIAL FILTER OPTIONS PATCH
-========================================================= */
-
-const originalRenderAll =
-  renderAll;
-
-renderAll =
-  function patchedRenderAll() {
-
-    populatePurityOptions();
-
-    populateWeightOptions();
-
-    originalRenderAll();
-
-  };
 
 
 /* =========================================================
@@ -3091,6 +3654,7 @@ window.GoldManiaSavings = {
 
       }
     );
+
 
     location.reload();
 
