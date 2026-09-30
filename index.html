@@ -1,821 +1,1334 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoldManiaSavings</title>
 
-    <meta charset="UTF-8">
+<style>
+:root{
+  --gold:#d4af37;
+  --gold2:#f5d76e;
+  --dark:#0d1117;
+  --dark2:#151b24;
+  --card:#ffffff;
+  --muted:#687386;
+  --green:#168a52;
+  --red:#c93636;
+  --border:#e7eaf0;
+  --bg:#f6f7fa;
+}
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+*{
+  box-sizing:border-box;
+}
 
-    <title>
-        GoldManiaSavings | Gold Coin Price Comparison
-    </title>
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:#111827;
+}
 
-    <meta
-        name="description"
-        content="Compare 24K and 22K gold coin prices, offers and effective prices."
-    >
+header{
+  background:linear-gradient(135deg,#0b0f14,#1a202b);
+  color:white;
+  padding:24px 18px 30px;
+  border-bottom:3px solid var(--gold);
+}
 
-    <link
-        rel="stylesheet"
-        href="./style.css"
-    >
+.header-inner{
+  max-width:1200px;
+  margin:auto;
+}
 
+.logo{
+  font-size:27px;
+  font-weight:800;
+  color:var(--gold2);
+}
+
+.subtitle{
+  margin-top:5px;
+  color:#c9ced8;
+  font-size:14px;
+}
+
+main{
+  max-width:1200px;
+  margin:22px auto;
+  padding:0 15px 50px;
+}
+
+.section-title{
+  font-size:21px;
+  font-weight:800;
+  margin:28px 0 13px;
+}
+
+.status{
+  background:white;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px 15px;
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:15px;
+}
+
+.gold-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+
+.gold-card{
+  background:linear-gradient(145deg,#fff,#fffaf0);
+  border:1px solid #eadcae;
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+
+.gold-card .karat{
+  font-size:14px;
+  color:#7a6840;
+  font-weight:700;
+}
+
+.gold-card .price{
+  font-size:28px;
+  font-weight:850;
+  margin:8px 0 3px;
+  color:#9b7312;
+}
+
+.gold-card .unit{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.gold-source{
+  margin-top:8px;
+  font-size:11px;
+  color:#858b96;
+}
+
+.controls{
+  background:white;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:15px;
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr;
+  gap:10px;
+}
+
+input,select{
+  width:100%;
+  border:1px solid #dfe3ea;
+  background:white;
+  padding:12px;
+  border-radius:9px;
+  font-size:14px;
+  outline:none;
+}
+
+input:focus,select:focus{
+  border-color:var(--gold);
+}
+
+.products{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+  margin-top:15px;
+}
+
+.product{
+  background:white;
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:290px;
+  box-shadow:0 4px 16px rgba(0,0,0,.04);
+}
+
+.product-top{
+  padding:17px 17px 10px;
+  flex:1;
+}
+
+.seller{
+  display:inline-block;
+  background:#fff7d8;
+  color:#795e08;
+  font-size:11px;
+  font-weight:800;
+  padding:5px 8px;
+  border-radius:20px;
+  margin-bottom:10px;
+}
+
+.product h3{
+  margin:4px 0 9px;
+  font-size:17px;
+  line-height:1.35;
+}
+
+.meta{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.badge{
+  background:#f1f3f7;
+  color:#4d5562;
+  border-radius:7px;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:700;
+}
+
+.product-price{
+  font-size:23px;
+  font-weight:850;
+  color:#111827;
+}
+
+.price-label{
+  font-size:11px;
+  color:var(--muted);
+}
+
+.offer-box{
+  margin-top:11px;
+  padding:10px;
+  border-radius:9px;
+  background:#edf9f2;
+  color:#176b43;
+  font-size:12px;
+  line-height:1.45;
+}
+
+.offer-title{
+  font-weight:800;
+  margin-bottom:3px;
+}
+
+.product-bottom{
+  border-top:1px solid var(--border);
+  padding:12px 15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.visit{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  background:#111827;
+  color:white;
+  padding:10px 14px;
+  border-radius:9px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.visit:hover{
+  background:#000;
+}
+
+.source-note{
+  font-size:10px;
+  color:#89919d;
+}
+
+.empty{
+  grid-column:1/-1;
+  background:white;
+  border:1px dashed #cfd4dd;
+  border-radius:14px;
+  padding:30px;
+  text-align:center;
+  color:var(--muted);
+}
+
+.disclaimer{
+  margin-top:25px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:15px;
+  font-size:12px;
+  color:#697281;
+  line-height:1.55;
+}
+
+footer{
+  text-align:center;
+  padding:20px;
+  font-size:12px;
+  color:#7b8390;
+}
+
+@media(max-width:850px){
+  .gold-grid{
+    grid-template-columns:1fr;
+  }
+
+  .products{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .controls{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(max-width:560px){
+  .products{
+    grid-template-columns:1fr;
+  }
+
+  .controls{
+    grid-template-columns:1fr;
+  }
+
+  .gold-card .price{
+    font-size:25px;
+  }
+}
+</style>
 </head>
-
 
 <body>
 
-
-<!-- =====================================================
-     HEADER
-===================================================== -->
-
-<header class="site-header">
-
-    <div class="container header-inner">
-
-        <div class="brand">
-
-            <div class="brand-icon">
-                🪙
-            </div>
-
-            <div>
-
-                <h1>
-                    GoldManiaSavings
-                </h1>
-
-                <p>
-                    Gold Coin Price Comparison
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="header-status">
-
-            <span>
-                🇮🇳 India
-            </span>
-
-        </div>
-
+<header>
+  <div class="header-inner">
+    <div class="logo">🪙 GoldManiaSavings</div>
+    <div class="subtitle">
+      Compare gold coin prices, purity, weight and available offers
     </div>
-
+  </div>
 </header>
 
+<main>
 
+  <div id="goldStatus" class="status">
+    Loading live India gold rates...
+  </div>
 
-<!-- =====================================================
-     MAIN
-===================================================== -->
+  <div class="section-title">
+    Live Gold Price
+  </div>
 
-<main class="container">
+  <section class="gold-grid">
 
-
-<!-- =====================================================
-     LIVE GOLD RATE
-===================================================== -->
-
-<section class="live-rate-box">
-
-    <div class="live-rate-header">
-
-        <div>
-
-            <h2>
-                🪙 Live Gold Rate
-            </h2>
-
-            <p>
-                Current reference gold price
-            </p>
-
-        </div>
-
-
-        <span
-            id="liveRateStatus"
-            class="live-status"
-        >
-            🟡 Loading...
-        </span>
-
+    <div class="gold-card">
+      <div class="karat">24K GOLD</div>
+      <div id="gold24" class="price">Loading...</div>
+      <div class="unit">per gram · INR</div>
+      <div class="gold-source">IBJA benchmark</div>
     </div>
 
-
-    <div class="live-rate-grid">
-
-
-        <!-- 24K -->
-
-        <div class="live-rate-card">
-
-            <span>
-                24K Gold
-            </span>
-
-            <strong id="live24Rate">
-                Loading...
-            </strong>
-
-            <small>
-                per gram
-            </small>
-
-        </div>
-
-
-        <!-- 22K -->
-
-        <div class="live-rate-card">
-
-            <span>
-                22K Gold
-            </span>
-
-            <strong id="live22Rate">
-                Loading...
-            </strong>
-
-            <small>
-                per gram
-            </small>
-
-        </div>
-
-
-        <!-- 18K -->
-
-        <div class="live-rate-card">
-
-            <span>
-                18K Gold
-            </span>
-
-            <strong id="live18Rate">
-                Loading...
-            </strong>
-
-            <small>
-                per gram
-            </small>
-
-        </div>
-
+    <div class="gold-card">
+      <div class="karat">22K GOLD</div>
+      <div id="gold22" class="price">Loading...</div>
+      <div class="unit">per gram · INR</div>
+      <div class="gold-source">IBJA benchmark</div>
     </div>
 
-
-    <div
-        id="liveRateUpdated"
-        class="live-updated"
-    >
-        Waiting for live rate...
+    <div class="gold-card">
+      <div class="karat">18K GOLD</div>
+      <div id="gold18" class="price">Loading...</div>
+      <div class="unit">per gram · INR</div>
+      <div class="gold-source">IBJA benchmark</div>
     </div>
 
-</section>
+  </section>
 
+  <div class="section-title">
+    Gold Coin Deals
+  </div>
 
+  <section class="controls">
 
-<!-- =====================================================
-     CALCULATOR
-===================================================== -->
-
-<section class="calculator-card">
-
-
-    <div class="section-heading">
-
-        <h2>
-            Gold Coin Calculator
-        </h2>
-
-        <p>
-            Enter purity and weight to compare available gold coins.
-        </p>
-
-    </div>
-
-
-
-    <div class="calculator-grid">
-
-
-        <!-- PURITY -->
-
-        <div class="form-group">
-
-            <label for="purity">
-                Gold Purity
-            </label>
-
-            <select id="purity">
-
-                <option value="24K">
-                    24K Gold
-                </option>
-
-                <option value="22K">
-                    22K Gold
-                </option>
-
-            </select>
-
-        </div>
-
-
-
-        <!-- WEIGHT -->
-
-        <div class="form-group">
-
-            <label for="weight">
-                Gold Weight
-            </label>
-
-            <select id="weight">
-
-                <option value="0.05">
-                    0.05 g
-                </option>
-
-                <option value="0.1">
-                    0.1 g
-                </option>
-
-                <option value="0.25">
-                    0.25 g
-                </option>
-
-                <option value="0.5">
-                    0.5 g
-                </option>
-
-                <option value="1">
-                    1 g
-                </option>
-
-                <option value="2">
-                    2 g
-                </option>
-
-                <option value="5">
-                    5 g
-                </option>
-
-                <option value="10">
-                    10 g
-                </option>
-
-                <option value="20">
-                    20 g
-                </option>
-
-                <option value="50">
-                    50 g
-                </option>
-
-                <option value="100">
-                    100 g
-                </option>
-
-            </select>
-
-        </div>
-
-
-
-        <!-- 24K RATE -->
-
-        <div class="form-group">
-
-            <label for="rate24">
-                24K Reference Rate / g
-            </label>
-
-            <input
-                id="rate24"
-                type="number"
-                readonly
-                placeholder="Live rate"
-            >
-
-        </div>
-
-
-
-        <!-- 22K RATE -->
-
-        <div class="form-group">
-
-            <label for="rate22">
-                22K Reference Rate / g
-            </label>
-
-            <input
-                id="rate22"
-                type="number"
-                readonly
-                placeholder="Live rate"
-            >
-
-        </div>
-
-    </div>
-
-
-
-    <button
-        id="compareButton"
-        class="primary-button"
-        type="button"
-        onclick="compareGold()"
+    <input
+      id="search"
+      type="search"
+      placeholder="Search coin, seller, Lakshmi, Ganesha..."
     >
 
-        🔍 Compare Gold Prices
-
-    </button>
-
-
-</section>
-
-
-
-<!-- =====================================================
-     SUMMARY
-===================================================== -->
-
-<section
-    id="results"
-    class="results-section"
-    style="display:none;"
->
-
-
-    <div class="summary-card">
-
-
-        <div class="summary-heading">
-
-            <div>
-
-                <h2 id="comparisonTitle">
-                    Gold Coin Comparison
-                </h2>
-
-                <p>
-                    Based on current live gold rate
-                </p>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="summary-grid">
-
-
-            <div class="summary-item">
-
-                <span>
-                    Purity
-                </span>
-
-                <strong id="summaryPurity">
-                    -
-                </strong>
-
-            </div>
-
-
-            <div class="summary-item">
-
-                <span>
-                    Weight
-                </span>
-
-                <strong id="summaryWeight">
-                    -
-                </strong>
-
-            </div>
-
-
-            <div class="summary-item">
-
-                <span>
-                    Pure Gold
-                </span>
-
-                <strong id="summaryPureGold">
-                    -
-                </strong>
-
-            </div>
-
-
-            <div class="summary-item">
-
-                <span>
-                    Gold Value
-                </span>
-
-                <strong id="summaryGoldValue">
-                    -
-                </strong>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-
-<!-- =====================================================
-     FILTERS
-===================================================== -->
-
-<div class="filter-card">
-
-
-    <div class="filter-heading">
-
-        <h3>
-            Compare & Filter
-        </h3>
-
-    </div>
-
-
-    <div class="filter-grid">
-
-
-        <!-- SELLER -->
-
-        <div class="form-group">
-
-            <label for="sellerFilter">
-                Seller
-            </label>
-
-            <select
-                id="sellerFilter"
-                onchange="refreshComparison()"
-            >
-
-                <option value="all">
-                    All Sellers
-                </option>
-
-            </select>
-
-        </div>
-
-
-
-        <!-- PAYMENT -->
-
-        <div class="form-group">
-
-            <label for="paymentFilter">
-                Payment Offer
-            </label>
-
-            <select
-                id="paymentFilter"
-                onchange="refreshComparison()"
-            >
-
-                <option value="all">
-                    All Payment Types
-                </option>
-
-                <option value="card">
-                    Card Offer
-                </option>
-
-                <option value="upi">
-                    UPI Offer
-                </option>
-
-            </select>
-
-        </div>
-
-
-
-        <!-- PREMIUM -->
-
-        <div class="form-group">
-
-            <label for="premiumFilter">
-                Max Premium
-            </label>
-
-            <select
-                id="premiumFilter"
-                onchange="refreshComparison()"
-            >
-
-                <option value="all">
-                    Any Premium
-                </option>
-
-                <option value="5">
-                    Up to 5%
-                </option>
-
-                <option value="10">
-                    Up to 10%
-                </option>
-
-                <option value="15">
-                    Up to 15%
-                </option>
-
-                <option value="20">
-                    Up to 20%
-                </option>
-
-            </select>
-
-        </div>
-
-
-
-        <!-- SORT -->
-
-        <div class="form-group">
-
-            <label for="sortFilter">
-                Sort By
-            </label>
-
-            <select
-                id="sortFilter"
-                onchange="refreshComparison()"
-            >
-
-                <option value="effective">
-                    Effective Price
-                </option>
-
-                <option value="listed">
-                    Listed Price
-                </option>
-
-                <option value="premium">
-                    Lowest Premium
-                </option>
-
-                <option value="offer">
-                    Highest Offers
-                </option>
-
-            </select>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-
-<!-- =====================================================
-     COMPARISON TABLE
-===================================================== -->
-
-<section class="comparison-card">
-
-
-    <div class="comparison-header">
-
-        <div>
-
-            <h3>
-                Gold Coin Comparison
-            </h3>
-
-            <p>
-                Prices and offers shown from available data sources.
-            </p>
-
-        </div>
-
-
-        <div class="comparison-note">
-
-            🟢 Verified &nbsp;
-            🟡 Sample &nbsp;
-            🔵 Expired
-
-        </div>
-
-    </div>
-
-
-
-    <div class="table-wrapper">
-
-        <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>
-                        Seller / Product
-                    </th>
-
-                    <th>
-                        Listed Price
-                    </th>
-
-                    <th>
-                        Gold Value
-                    </th>
-
-                    <th>
-                        Premium
-                    </th>
-
-                    <th>
-                        Offers
-                    </th>
-
-                    <th>
-                        Effective Price
-                    </th>
-
-                    <th>
-                        Action
-                    </th>
-
-                </tr>
-
-            </thead>
-
-
-            <tbody id="comparisonBody">
-
-                <tr>
-
-                    <td
-                        colspan="7"
-                        class="empty-state"
-                    >
-
-                        Select weight and purity,
-                        then click
-                        <strong>
-                            Compare Gold Prices
-                        </strong>.
-
-                    </td>
-
-                </tr>
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-
-</section>
-
-
-</section>
-
-
-
-<!-- =====================================================
-     IMPORTANT INFORMATION
-===================================================== -->
-
-<section class="info-card">
-
-    <h2>
-        About GoldManiaSavings
-    </h2>
-
-
-    <p>
-
-        GoldManiaSavings helps compare gold coin prices,
-        premiums and available offers across different sellers.
-
-    </p>
-
-
-    <div class="info-grid">
-
-
-        <div>
-
-            <strong>
-                🟢 Verified
-            </strong>
-
-            <p>
-                Data verified from an authorised or connected source.
-            </p>
-
-        </div>
-
-
-        <div>
-
-            <strong>
-                🟡 Sample
-            </strong>
-
-            <p>
-                Demonstration data that is not currently live.
-            </p>
-
-        </div>
-
-
-        <div>
-
-            <strong>
-                🔵 Expired
-            </strong>
-
-            <p>
-                Offer or information has passed its validity period.
-            </p>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-
-<!-- =====================================================
-     DISCLAIMER
-===================================================== -->
-
-<section class="disclaimer">
-
-    <strong>
-        Important:
-    </strong>
-
-    Gold prices can change frequently.
-    Always verify the final price, taxes, shipping charges,
-    payment conditions and offer terms with the seller
-    before purchasing.
-
-</section>
-
+    <select id="sellerFilter">
+      <option value="">All Sellers</option>
+    </select>
+
+    <select id="purityFilter">
+      <option value="">All Purity</option>
+      <option value="24K">24K</option>
+      <option value="22K">22K</option>
+      <option value="18K">18K</option>
+    </select>
+
+    <select id="weightFilter">
+      <option value="">All Weight</option>
+      <option value="0.5">0.5 g</option>
+      <option value="1">1 g</option>
+      <option value="2">2 g</option>
+      <option value="4">4 g</option>
+      <option value="5">5 g</option>
+      <option value="8">8 g</option>
+      <option value="10">10 g</option>
+      <option value="20">20 g</option>
+      <option value="50">50 g</option>
+    </select>
+
+  </section>
+
+  <div id="productCount" class="status" style="margin-top:12px">
+    Loading products...
+  </div>
+
+  <section id="products" class="products"></section>
+
+  <div class="disclaimer">
+    <strong>Important:</strong>
+    Gold prices and product prices can change at any time.
+    The product buttons open the seller's website.
+    This page does not process payments or represent the sellers.
+    Offers, vouchers, promo codes, card offers and UPI offers are shown
+    only when they are actually available in the product data.
+  </div>
 
 </main>
 
-
-
-<!-- =====================================================
-     FOOTER
-===================================================== -->
-
-<footer class="site-footer">
-
-    <div class="container">
-
-        <p>
-            © 2026 GoldManiaSavings
-        </p>
-
-        <p>
-            Gold price comparison and savings tool.
-        </p>
-
-    </div>
-
+<footer>
+  GoldManiaSavings · Static GitHub Pages
 </footer>
 
 
+<script>
+"use strict";
 
-<!-- =====================================================
-     JAVASCRIPT
-===================================================== -->
+/* =========================================================
+   CONFIG
+========================================================= */
 
-<script src="./app.js"></script>
+const GOLD_ENDPOINT =
+  "https://snapdata.dev/api/v1/gold/in/latest.json";
 
+
+/*
+ * These are OFFICIAL seller search/product pages.
+ *
+ * Important:
+ * We never pretend a category URL is an exact product URL.
+ * Exact URLs below are known product URLs.
+ */
+
+const PRODUCTS = [
+
+  /* =========================
+     CARATLANE
+  ========================= */
+
+  {
+    seller:"CaratLane",
+    sellerKey:"caratlane",
+    name:"2g, 24Kt Plain Gold Coin",
+    purity:"24K",
+    weight:2,
+    price:33920,
+    url:"https://www.caratlane.com/gold-coins/2g-24kt-plain-gold-coin-gc00027-4y0000.html",
+    offers:[]
+  },
+
+  {
+    seller:"CaratLane",
+    sellerKey:"caratlane",
+    name:"2g, 24Kt Lakshmi Gold Coin",
+    purity:"24K",
+    weight:2,
+    price:33920,
+    url:"https://www.caratlane.com/gold-coins/2g-24kt-lakshmi-gold-coin-gc00002-4y0000.html",
+    offers:[]
+  },
+
+  {
+    seller:"CaratLane",
+    sellerKey:"caratlane",
+    name:"2g, 24Kt Lord Balaji Gold Coin",
+    purity:"24K",
+    weight:2,
+    price:34198,
+    url:"https://www.caratlane.com/gold-coins/2g-24kt-lord-balaji-gold-coin-gc00007-4y0000.html",
+    offers:[]
+  },
+
+  {
+    seller:"CaratLane",
+    sellerKey:"caratlane",
+    name:"2g, 24Kt Guru Nanak Gold Coin",
+    purity:"24K",
+    weight:2,
+    price:34498,
+    url:"https://www.caratlane.com/gold-coins/2g-24kt-guru-nanak-gold-coin-gc00052-4y0000.html",
+    offers:[]
+  },
+
+  {
+    seller:"CaratLane",
+    sellerKey:"caratlane",
+    name:"2g, 24Kt Shirdi Sai Baba Gold Coin",
+    purity:"24K",
+    weight:2,
+    price:33982,
+    url:"https://www.caratlane.com/gold-coins/2g-24kt-shirdi-sai-baba-gold-coin-gc00054-4y0000.html",
+    offers:[]
+  },
+
+
+  /* =========================
+     TANISHQ
+  ========================= */
+
+  {
+    seller:"Tanishq",
+    sellerKey:"tanishq",
+    name:"1 gram 24 Karat Gold Coin",
+    purity:"24K",
+    weight:1,
+    price:16871,
+    url:"https://www.tanishq.co.in/product/1-gram-24-karat-gold-coin-600102znaraw00.html?lang=en_IN",
+    offers:[]
+  },
+
+
+  /* =========================
+     SENCO
+  ========================= */
+
+  {
+    seller:"Senco Gold & Diamonds",
+    sellerKey:"senco",
+    name:"24K, 1 g 999.9 Pure Gold Coin",
+    purity:"24K",
+    weight:1,
+    price:16720,
+    url:"https://sencogoldanddiamonds.com/jewellery/24k-1-g-999.9-pure-gold-coin",
+    offers:[]
+  },
+
+  {
+    seller:"Senco Gold & Diamonds",
+    sellerKey:"senco",
+    name:"24K, 2 g 999.9 Pure Gold Coin",
+    purity:"24K",
+    weight:2,
+    price:33440,
+    url:"https://sencogoldanddiamonds.com/jewellery/24k-2-g-999.9-pure-gold-coin",
+    offers:[]
+  },
+
+
+  /* =========================
+     MMTC-PAMP
+  ========================= */
+
+  {
+    seller:"MMTC-PAMP",
+    sellerKey:"mmtc",
+    name:"3g Lakshmi 24K 999.9+ Gold Coin",
+    purity:"24K",
+    weight:3,
+    price:0,
+    url:"https://www.mmtcpamp.com/shop/gold/mmtc-pamp-lakshmi-24k-9999-3-gm-gold-coin",
+    offers:[]
+  },
+
+
+  /* =========================
+     SELLER SEARCH ENTRY POINTS
+     =========================
+     These are NOT presented as
+     exact products.
+  */
+
+  {
+    seller:"BlueStone",
+    sellerKey:"bluestone",
+    name:"Gold Coins — Official Catalogue",
+    purity:"",
+    weight:0,
+    price:0,
+    url:"https://www.bluestone.com/jewellery/goldcoins.html",
+    catalogue:true,
+    offers:[]
+  },
+
+  {
+    seller:"Kalyan Jewellers",
+    sellerKey:"kalyan",
+    name:"Gold Coins — Official Catalogue",
+    purity:"",
+    weight:0,
+    price:0,
+    url:"https://www.kalyanjewellers.net/Jewellery/Gold/gold-coin.php",
+    catalogue:true,
+    offers:[]
+  },
+
+  {
+    seller:"Candere",
+    sellerKey:"candere",
+    name:"Gold Coins — Official Catalogue",
+    purity:"",
+    weight:0,
+    price:0,
+    url:"https://www.candere.com/gifts/gold-coins.html",
+    catalogue:true,
+    offers:[]
+  },
+
+  {
+    seller:"Tanishq",
+    sellerKey:"tanishq",
+    name:"Gold Coins — Official Catalogue",
+    purity:"",
+    weight:0,
+    price:0,
+    url:"https://www.tanishq.co.in/shop/gold-coin",
+    catalogue:true,
+    offers:[]
+  },
+
+  {
+    seller:"CaratLane",
+    sellerKey:"caratlane",
+    name:"Gold Coins — Official Catalogue",
+    purity:"",
+    weight:0,
+    price:0,
+    url:"https://www.caratlane.com/gold-coins.html",
+    catalogue:true,
+    offers:[]
+  }
+
+];
+
+
+/* =========================================================
+   GOLD RATE
+========================================================= */
+
+async function loadGoldRate(){
+
+  const status =
+    document.getElementById("goldStatus");
+
+  try{
+
+    status.textContent =
+      "Fetching live India gold benchmark...";
+
+    const response =
+      await fetch(
+        GOLD_ENDPOINT + "?t=" + Date.now(),
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "Accept":"application/json"
+          }
+        }
+      );
+
+    if(!response.ok){
+      throw new Error(
+        "Gold source HTTP " + response.status
+      );
+    }
+
+    const data =
+      await response.json();
+
+    const observations =
+      Array.isArray(data.observations)
+        ? data.observations
+        : [];
+
+
+    function findRate(instrumentNames){
+
+      for(const item of observations){
+
+        if(
+          instrumentNames.includes(
+            item.instrument
+          )
+        ){
+
+          const value =
+            Number(item.value);
+
+          if(
+            Number.isFinite(value) &&
+            value > 0
+          ){
+            return value;
+          }
+        }
+      }
+
+      return 0;
+    }
+
+
+    const rate24 =
+      findRate([
+        "XAU.24K",
+        "XAU.24K.INR.G"
+      ]);
+
+    const rate22 =
+      findRate([
+        "XAU.22K",
+        "XAU.22K.INR.G"
+      ]);
+
+    const rate18 =
+      findRate([
+        "XAU.18K",
+        "XAU.18K.INR.G"
+      ]);
+
+
+    if(
+      !rate24 &&
+      !rate22 &&
+      !rate18
+    ){
+      throw new Error(
+        "No gold observations found"
+      );
+    }
+
+
+    setText(
+      "gold24",
+      rate24
+        ? money(rate24)
+        : "N/A"
+    );
+
+    setText(
+      "gold22",
+      rate22
+        ? money(rate22)
+        : "N/A"
+    );
+
+    setText(
+      "gold18",
+      rate18
+        ? money(rate18)
+        : "N/A"
+    );
+
+
+    const date =
+      data.coverage?.to ||
+      data.generated_at ||
+      new Date().toISOString();
+
+
+    status.innerHTML =
+      "✓ Live gold benchmark loaded · " +
+      escapeHTML(formatDate(date)) +
+      " · Source: IBJA via SnapData";
+
+
+  }catch(error){
+
+    console.error(
+      "Gold rate error:",
+      error
+    );
+
+
+    setText(
+      "gold24",
+      "Unavailable"
+    );
+
+    setText(
+      "gold22",
+      "Unavailable"
+    );
+
+    setText(
+      "gold18",
+      "Unavailable"
+    );
+
+
+    status.innerHTML =
+      "⚠ Gold rate could not be loaded. " +
+      "Please refresh the page.";
+
+  }
+
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+function loadProducts(){
+
+  populateSellerFilter();
+
+  renderProducts();
+
+}
+
+
+/* =========================================================
+   SELLER FILTER
+========================================================= */
+
+function populateSellerFilter(){
+
+  const select =
+    document.getElementById(
+      "sellerFilter"
+    );
+
+
+  const sellers =
+    [...new Set(
+      PRODUCTS.map(
+        p => p.seller
+      )
+    )].sort();
+
+
+  for(const seller of sellers){
+
+    const option =
+      document.createElement("option");
+
+    option.value =
+      seller;
+
+    option.textContent =
+      seller;
+
+    select.appendChild(option);
+
+  }
+
+}
+
+
+/* =========================================================
+   FILTERING
+========================================================= */
+
+function getFilteredProducts(){
+
+  const search =
+    document
+      .getElementById("search")
+      .value
+      .trim()
+      .toLowerCase();
+
+
+  const seller =
+    document
+      .getElementById("sellerFilter")
+      .value;
+
+
+  const purity =
+    document
+      .getElementById("purityFilter")
+      .value;
+
+
+  const weight =
+    document
+      .getElementById("weightFilter")
+      .value;
+
+
+  return PRODUCTS.filter(product => {
+
+    if(
+      search &&
+      !(
+        product.name.toLowerCase().includes(search) ||
+        product.seller.toLowerCase().includes(search) ||
+        String(product.purity).toLowerCase().includes(search)
+      )
+    ){
+      return false;
+    }
+
+
+    if(
+      seller &&
+      product.seller !== seller
+    ){
+      return false;
+    }
+
+
+    if(
+      purity &&
+      product.purity !== purity
+    ){
+      return false;
+    }
+
+
+    if(
+      weight &&
+      Number(product.weight) !== Number(weight)
+    ){
+      return false;
+    }
+
+
+    return true;
+
+  });
+
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function renderProducts(){
+
+  const container =
+    document.getElementById(
+      "products"
+    );
+
+  const count =
+    document.getElementById(
+      "productCount"
+    );
+
+
+  const products =
+    getFilteredProducts();
+
+
+  count.textContent =
+    products.length +
+    " product entries";
+
+
+  container.innerHTML = "";
+
+
+  if(!products.length){
+
+    container.innerHTML =
+      '<div class="empty">' +
+      'No matching products found.' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  for(const product of products){
+
+    container.appendChild(
+      createProductCard(product)
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
+
+function createProductCard(product){
+
+  const article =
+    document.createElement("article");
+
+  article.className =
+    "product";
+
+
+  const top =
+    document.createElement("div");
+
+  top.className =
+    "product-top";
+
+
+  const seller =
+    document.createElement("div");
+
+  seller.className =
+    "seller";
+
+  seller.textContent =
+    product.seller;
+
+
+  const title =
+    document.createElement("h3");
+
+  title.textContent =
+    product.name;
+
+
+  const meta =
+    document.createElement("div");
+
+  meta.className =
+    "meta";
+
+
+  if(product.weight){
+
+    meta.appendChild(
+      badge(
+        product.weight + " g"
+      )
+    );
+
+  }
+
+
+  if(product.purity){
+
+    meta.appendChild(
+      badge(
+        product.purity
+      )
+    );
+
+  }
+
+
+  if(product.catalogue){
+
+    meta.appendChild(
+      badge(
+        "Official Catalogue"
+      )
+    );
+
+  }
+
+
+  top.appendChild(seller);
+  top.appendChild(title);
+  top.appendChild(meta);
+
+
+  if(
+    product.price &&
+    product.price > 0
+  ){
+
+    const price =
+      document.createElement("div");
+
+    price.className =
+      "product-price";
+
+    price.textContent =
+      money(product.price);
+
+    top.appendChild(price);
+
+
+    const label =
+      document.createElement("div");
+
+    label.className =
+      "price-label";
+
+    label.textContent =
+      "Listed price";
+
+    top.appendChild(label);
+
+  }
+
+
+  const offerHTML =
+    buildOfferHTML(
+      product.offers
+    );
+
+
+  if(offerHTML){
+
+    const offer =
+      document.createElement("div");
+
+    offer.className =
+      "offer-box";
+
+    offer.innerHTML =
+      offerHTML;
+
+    top.appendChild(offer);
+
+  }
+
+
+  const bottom =
+    document.createElement("div");
+
+  bottom.className =
+    "product-bottom";
+
+
+  const note =
+    document.createElement("div");
+
+  note.className =
+    "source-note";
+
+  note.textContent =
+    product.catalogue
+      ? "Official seller page"
+      : "Exact product page";
+
+
+  const link =
+    document.createElement("a");
+
+  link.className =
+    "visit";
+
+  link.href =
+    product.url;
+
+  link.target =
+    "_blank";
+
+  link.rel =
+    "noopener noreferrer";
+
+  link.textContent =
+    product.catalogue
+      ? "Browse Site →"
+      : "View Product →";
+
+
+  bottom.appendChild(note);
+  bottom.appendChild(link);
+
+
+  article.appendChild(top);
+  article.appendChild(bottom);
+
+
+  return article;
+
+}
+
+
+/* =========================================================
+   OFFERS
+========================================================= */
+
+function buildOfferHTML(offers){
+
+  if(
+    !offers ||
+    !Array.isArray(offers) ||
+    !offers.length
+  ){
+    return "";
+  }
+
+
+  const valid =
+    offers.filter(
+      item =>
+        item &&
+        String(item).trim()
+    );
+
+
+  if(!valid.length){
+    return "";
+  }
+
+
+  return `
+    <div class="offer-title">
+      Offers
+    </div>
+    ${valid
+      .map(
+        item =>
+          "• " + escapeHTML(item)
+      )
+      .join("<br>")}
+  `;
+
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function badge(text){
+
+  const el =
+    document.createElement("span");
+
+  el.className =
+    "badge";
+
+  el.textContent =
+    text;
+
+  return el;
+
+}
+
+
+function money(value){
+
+  const number =
+    Number(value);
+
+  if(
+    !Number.isFinite(number)
+  ){
+    return "₹0";
+  }
+
+
+  return "₹" +
+    number.toLocaleString(
+      "en-IN",
+      {
+        maximumFractionDigits:2
+      }
+    );
+
+}
+
+
+function setText(id,value){
+
+  const el =
+    document.getElementById(id);
+
+  if(el){
+    el.textContent = value;
+  }
+
+}
+
+
+function formatDate(value){
+
+  const date =
+    new Date(value);
+
+  if(
+    Number.isNaN(
+      date.getTime()
+    )
+  ){
+    return String(value);
+  }
+
+
+  return date.toLocaleString(
+    "en-IN",
+    {
+      dateStyle:"medium",
+      timeStyle:"short"
+    }
+  );
+
+}
+
+
+function escapeHTML(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================================================
+   EVENTS
+========================================================= */
+
+[
+  "search",
+  "sellerFilter",
+  "purityFilter",
+  "weightFilter"
+].forEach(id => {
+
+  document
+    .getElementById(id)
+    .addEventListener(
+      "input",
+      renderProducts
+    );
+
+  document
+    .getElementById(id)
+    .addEventListener(
+      "change",
+      renderProducts
+    );
+
+});
+
+
+/* =========================================================
+   START
+========================================================= */
+
+loadProducts();
+
+loadGoldRate();
+
+</script>
 
 </body>
-
 </html>
