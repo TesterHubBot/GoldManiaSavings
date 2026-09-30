@@ -1,9 +1,8 @@
 /* =========================================================
    GoldManiaSavings
    Complete Frontend Application
-   Multi-Seller + Live Gold Rate + Cached Products
+   Seller-agnostic product comparison
 ========================================================= */
-
 
 /* =========================================================
    CONFIGURATION
@@ -11,10 +10,6 @@
 
 const LIVE_API_URL =
     "https://goldmaniasavings-api.onlinetechmine.workers.dev";
-
-
-const API_TIMEOUT =
-    15000;
 
 
 /* =========================================================
@@ -26,23 +21,14 @@ let productDatabase = [];
 let currentProducts = [];
 
 let currentGoldRates = {
-
     "24K": 0,
-
     "22K": 0,
-
     "18K": 0
-
 };
 
 
-let goldRateSource = "";
-
-let goldRateTimestamp = null;
-
-
 /* =========================================================
-   PAGE INITIALIZATION
+   INITIALIZATION
 ========================================================= */
 
 document.addEventListener(
@@ -53,76 +39,20 @@ document.addEventListener(
             "GoldManiaSavings starting..."
         );
 
-
         setupWeightOptions();
 
+        setupFilterListeners();
 
         await loadGoldRates();
 
-
         await loadProducts();
-
 
         setupSellerFilter();
 
-
         updateCalculatorRates();
-
-
-        console.log(
-            "GoldManiaSavings ready."
-        );
 
     }
 );
-
-
-/* =========================================================
-   SAFE FETCH
-========================================================= */
-
-async function fetchWithTimeout(
-    url,
-    options = {},
-    timeout = API_TIMEOUT
-) {
-
-    const controller =
-        new AbortController();
-
-
-    const timer =
-        setTimeout(
-            function () {
-
-                controller.abort();
-
-            },
-            timeout
-        );
-
-
-    try {
-
-        return await fetch(
-            url,
-            {
-
-                ...options,
-
-                signal:
-                    controller.signal
-
-            }
-        );
-
-    } finally {
-
-        clearTimeout(timer);
-
-    }
-
-}
 
 
 /* =========================================================
@@ -132,24 +62,15 @@ async function fetchWithTimeout(
 function setupWeightOptions() {
 
     const weightSelect =
-        document.getElementById(
-            "weight"
-        );
-
+        document.getElementById("weight");
 
     if (!weightSelect) {
-
         return;
-
     }
 
-
-    if (
-        weightSelect.options.length === 0
-    ) {
+    if (weightSelect.options.length === 0) {
 
         const weights = [
-
             0.05,
             0.1,
             0.25,
@@ -161,26 +82,19 @@ function setupWeightOptions() {
             20,
             50,
             100
-
         ];
 
-
         weights.forEach(
-            function (weight) {
+            weight => {
 
                 const option =
-                    document.createElement(
-                        "option"
-                    );
-
+                    document.createElement("option");
 
                 option.value =
-                    weight;
-
+                    String(weight);
 
                 option.textContent =
                     `${weight} g`;
-
 
                 weightSelect.appendChild(
                     option
@@ -195,33 +109,56 @@ function setupWeightOptions() {
 
 
 /* =========================================================
-   GOLD RATE
+   FILTER LISTENERS
+========================================================= */
+
+function setupFilterListeners() {
+
+    const ids = [
+        "sellerFilter",
+        "paymentFilter",
+        "premiumFilter",
+        "sortFilter"
+    ];
+
+    ids.forEach(
+        id => {
+
+            const element =
+                document.getElementById(id);
+
+            if (!element) {
+                return;
+            }
+
+            element.addEventListener(
+                "change",
+                refreshComparison
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   GOLD RATES
 ========================================================= */
 
 async function loadGoldRates() {
 
-    setLiveStatus(
-        "🟡 Loading..."
-    );
-
+    setLiveStatus("🟡 Loading...");
 
     try {
 
         const response =
-            await fetchWithTimeout(
+            await fetch(
                 `${LIVE_API_URL}/api/gold`,
                 {
-                    method: "GET",
-
-                    cache: "no-store",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
+                    cache: "no-store"
                 }
             );
-
 
         if (!response.ok) {
 
@@ -231,158 +168,87 @@ async function loadGoldRates() {
 
         }
 
-
         const data =
             await response.json();
 
-
         if (
-            !data ||
             !data.ok
         ) {
 
             throw new Error(
-                "Invalid gold API response"
+                "Gold API returned ok=false"
             );
 
         }
 
 
         /*
-         * New backend response:
+         * New API format:
          *
          * indiaReference.rates
          *
-         * Older backend response:
-         *
+         * Fallback:
          * rates
          */
 
-        let rates =
-            null;
-
-
-        if (
-            data.indiaReference &&
-            data.indiaReference.rates
-        ) {
-
-            rates =
-                data.indiaReference.rates;
-
-            goldRateSource =
-                data.indiaReference.source ||
-                "India Reference";
-
-        }
-
-
-        else if (
-            data.rates
-        ) {
-
-            rates =
-                data.rates;
-
-            goldRateSource =
-                data.source ||
-                "Gold API";
-
-        }
-
-
-        else if (
-            data.internationalSpot &&
-            data.internationalSpot.rates
-        ) {
-
-            rates =
-                data.internationalSpot.rates;
-
-            goldRateSource =
-                data.internationalSpot.source ||
-                "International Spot";
-
-        }
-
-
-        if (!rates) {
-
-            throw new Error(
-                "Gold rates not found"
-            );
-
-        }
+        const rates =
+            data.indiaReference?.rates ||
+            data.rates ||
+            data.internationalSpot?.rates ||
+            {};
 
 
         currentGoldRates["24K"] =
             Number(
-                rates["24K"]?.perGram ??
-                rates["24K"] ??
+                rates["24K"]?.perGram ||
+                rates["24K"] ||
                 0
             );
 
 
         currentGoldRates["22K"] =
             Number(
-                rates["22K"]?.perGram ??
-                rates["22K"] ??
+                rates["22K"]?.perGram ||
+                rates["22K"] ||
                 0
             );
 
 
         currentGoldRates["18K"] =
             Number(
-                rates["18K"]?.perGram ??
-                rates["18K"] ??
+                rates["18K"]?.perGram ||
+                rates["18K"] ||
                 0
             );
 
 
         if (
-            currentGoldRates["24K"] <= 0 &&
-            currentGoldRates["22K"] <= 0 &&
-            currentGoldRates["18K"] <= 0
+            !currentGoldRates["24K"] &&
+            !currentGoldRates["22K"] &&
+            !currentGoldRates["18K"]
         ) {
 
             throw new Error(
-                "Gold rates are zero"
+                "No gold rates found"
             );
 
         }
 
 
-        goldRateTimestamp =
-            data.timestamp ||
-            new Date().toISOString();
-
-
         updateGoldRateUI();
-
 
         updateCalculatorRates();
 
-
-        /*
-         * IMPORTANT:
-         *
-         * Your backend is live.
-         * Therefore don't show Offline
-         * when the API returns valid rates.
-         */
-
-        setLiveStatus(
-            "🟢 LIVE"
-        );
+        setLiveStatus("🟢 LIVE");
 
 
         updateLastUpdated(
-            goldRateTimestamp
+            data.timestamp
         );
 
 
         console.log(
-            "Live gold rates:",
+            "Live India gold rates:",
             currentGoldRates
         );
 
@@ -394,34 +260,13 @@ async function loadGoldRates() {
             error
         );
 
+        setLiveStatus(
+            "🔴 Offline"
+        );
 
-        /*
-         * Do not erase existing rates.
-         */
-
-        if (
-            currentGoldRates["24K"] > 0
-        ) {
-
-            setLiveStatus(
-                "🟡 LAST RATE"
-            );
-
-            updateLastUpdated(
-                goldRateTimestamp
-            );
-
-        } else {
-
-            setLiveStatus(
-                "🔴 Offline"
-            );
-
-            updateLastUpdated(
-                null
-            );
-
-        }
+        updateLastUpdated(
+            null
+        );
 
     }
 
@@ -429,7 +274,7 @@ async function loadGoldRates() {
 
 
 /* =========================================================
-   UPDATE GOLD RATE UI
+   GOLD RATE UI
 ========================================================= */
 
 function updateGoldRateUI() {
@@ -439,12 +284,10 @@ function updateGoldRateUI() {
             "live24Rate"
         );
 
-
     const rate22 =
         document.getElementById(
             "live22Rate"
         );
-
 
     const rate18 =
         document.getElementById(
@@ -485,21 +328,16 @@ function updateGoldRateUI() {
 
 
 /* =========================================================
-   CALCULATOR RATE INPUTS
+   CALCULATOR
 ========================================================= */
 
 function updateCalculatorRates() {
 
     const rate24 =
-        document.getElementById(
-            "rate24"
-        );
-
+        document.getElementById("rate24");
 
     const rate22 =
-        document.getElementById(
-            "rate22"
-        );
+        document.getElementById("rate22");
 
 
     if (rate24) {
@@ -521,18 +359,15 @@ function updateCalculatorRates() {
 
 
 /* =========================================================
-   STATUS
+   LIVE STATUS
 ========================================================= */
 
-function setLiveStatus(
-    text
-) {
+function setLiveStatus(text) {
 
     const element =
         document.getElementById(
             "liveRateStatus"
         );
-
 
     if (element) {
 
@@ -548,20 +383,15 @@ function setLiveStatus(
    LAST UPDATED
 ========================================================= */
 
-function updateLastUpdated(
-    timestamp
-) {
+function updateLastUpdated(timestamp) {
 
     const element =
         document.getElementById(
             "liveRateUpdated"
         );
 
-
     if (!element) {
-
         return;
-
     }
 
 
@@ -586,7 +416,7 @@ function updateLastUpdated(
     ) {
 
         element.textContent =
-            "Updated recently";
+            "Live rate available";
 
         return;
 
@@ -607,36 +437,20 @@ function updateLastUpdated(
 
 async function loadProducts() {
 
-    setProductStatus(
-        "🟡 Loading sellers..."
-    );
-
-
-    let apiLoaded =
-        false;
+    productDatabase = [];
 
 
     /*
-     * FIRST:
-     * Cloudflare Worker
+     * LIVE WORKER API
      */
 
     try {
 
         const response =
-            await fetchWithTimeout(
+            await fetch(
                 `${LIVE_API_URL}/api/products`,
                 {
-
-                    method: "GET",
-
-                    cache: "no-store",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-
+                    cache: "no-store"
                 }
             );
 
@@ -656,70 +470,41 @@ async function loadProducts() {
 
         if (
             data &&
-            data.ok &&
             Array.isArray(
                 data.products
             )
         ) {
 
             productDatabase =
-                normalizeProductDatabase(
-                    data.products
-                );
-
-
-            apiLoaded =
-                true;
+                data.products
+                    .map(
+                        normalizeFrontendProduct
+                    )
+                    .filter(Boolean);
 
 
             console.log(
-                "Products API:",
+                "API products loaded:",
+                productDatabase.length,
                 {
-                    count:
-                        productDatabase.length,
-
-                    live:
-                        data.live,
-
-                    cacheUsed:
-                        data.cacheUsed
+                    live: data.live,
+                    cacheUsed: data.cacheUsed
                 }
             );
 
 
-            if (
-                data.cacheUsed
-            ) {
-
-                setProductStatus(
-                    "🟡 Cached seller data"
-                );
-
-            } else if (
-                data.live
-            ) {
-
-                setProductStatus(
-                    "🟢 LIVE seller data"
-                );
-
-            } else {
-
-                setProductStatus(
-                    "🟢 Seller data loaded"
-                );
-
-            }
-
-
             /*
-             * If products are available,
-             * don't unnecessarily fall back.
+             * IMPORTANT:
+             *
+             * Even if API returns zero products,
+             * don't silently pretend it is offline.
              */
 
             if (
                 productDatabase.length > 0
             ) {
+
+                setupSellerFilter();
 
                 return;
 
@@ -727,10 +512,11 @@ async function loadProducts() {
 
         }
 
+
     } catch (error) {
 
         console.warn(
-            "Products API unavailable:",
+            "Live products API failed:",
             error
         );
 
@@ -738,26 +524,16 @@ async function loadProducts() {
 
 
     /*
-     * SECOND:
-     * Local products.json fallback
+     * FALLBACK products.json
      */
 
     try {
 
         const response =
-            await fetchWithTimeout(
+            await fetch(
                 "./products.json",
                 {
-
-                    method: "GET",
-
-                    cache: "no-store",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-
+                    cache: "no-store"
                 }
             );
 
@@ -775,8 +551,7 @@ async function loadProducts() {
             await response.json();
 
 
-        let products =
-            [];
+        let products = [];
 
 
         if (
@@ -786,10 +561,7 @@ async function loadProducts() {
             products =
                 data;
 
-        }
-
-        else if (
-            data &&
+        } else if (
             Array.isArray(
                 data.products
             )
@@ -802,98 +574,41 @@ async function loadProducts() {
 
 
         productDatabase =
-            normalizeProductDatabase(
-                products
-            );
-
-
-        if (
-            productDatabase.length > 0
-        ) {
-
-            setProductStatus(
-                "🟡 Local product data"
-            );
-
-        }
-
-        else if (!apiLoaded) {
-
-            setProductStatus(
-                "⚪ No seller products"
-            );
-
-        }
+            products
+                .map(
+                    normalizeFrontendProduct
+                )
+                .filter(Boolean);
 
 
         console.log(
-            "Fallback products:",
+            "Fallback products loaded:",
             productDatabase.length
         );
 
 
     } catch (error) {
 
-        console.warn(
-            "products.json unavailable:",
+        console.error(
+            "Product loading failed:",
             error
         );
 
-
-        if (
-            productDatabase.length === 0
-        ) {
-
-            productDatabase =
-                [];
-
-            setProductStatus(
-                "⚪ No seller products"
-            );
-
-        }
+        productDatabase = [];
 
     }
+
+
+    setupSellerFilter();
 
 }
 
 
 /* =========================================================
-   NORMALIZE PRODUCT DATABASE
+   NORMALIZE FRONTEND PRODUCT
 ========================================================= */
 
-function normalizeProductDatabase(
-    products
-) {
-
-    if (
-        !Array.isArray(products)
-    ) {
-
-        return [];
-
-    }
-
-
-    return products
-        .map(
-            normalizeProduct
-        )
-        .filter(
-            product =>
-                product !== null
-        );
-
-}
-
-
-/* =========================================================
-   NORMALIZE SINGLE PRODUCT
-========================================================= */
-
-function normalizeProduct(
-    product
-) {
+function normalizeFrontendProduct(product) {
 
     if (
         !product ||
@@ -909,30 +624,35 @@ function normalizeProduct(
         String(
             product.sellerId ||
             product.seller ||
+            product.source ||
             "unknown"
-        );
+        )
+        .trim();
 
 
-    const seller =
-        cleanText(
+    const sellerName =
+        String(
             product.seller ||
             product.sellerName ||
-            sellerId
-        );
+            product.source ||
+            sellerId ||
+            "Seller"
+        )
+        .trim();
 
 
     const productName =
-        cleanText(
+        String(
             product.productName ||
             product.name ||
             "Gold Product"
-        );
+        )
+        .trim();
 
 
     const purity =
         normalizePurity(
             product.purity ||
-            product.karat ||
             "24K"
         );
 
@@ -941,101 +661,96 @@ function normalizeProduct(
         Number(
             product.weight ??
             product.weightGrams ??
-            product.grams ??
             0
         );
 
 
     const listedPrice =
-        numberValue(
+        Number(
             product.listedPrice ??
             product.price ??
-            product.salePrice
+            0
         );
 
 
     const mrp =
-        numberValue(
+        Number(
             product.mrp ??
-            product.mrpPrice
+            0
         );
 
 
     const shipping =
-        numberValue(
+        Number(
             product.shipping ??
-            product.deliveryCharge
+            0
         );
 
 
     const coupon =
-        numberValue(
+        Number(
             product.coupon ??
-            product.couponDiscount
+            0
         );
 
 
     const cardOffer =
-        numberValue(
+        Number(
             product.cardOffer ??
-            product.cardDiscount
+            0
         );
 
 
     const upiOffer =
-        numberValue(
+        Number(
             product.upiOffer ??
-            product.upiDiscount
+            0
         );
 
 
     const cashback =
-        numberValue(
+        Number(
             product.cashback ??
-            product.cashbackAmount
-        );
-
-
-    const voucher =
-        cleanText(
-            product.voucher ||
-            product.voucherCode ||
-            ""
-        );
-
-
-    const promoCode =
-        cleanText(
-            product.promoCode ||
-            product.promo ||
-            product.promo_code ||
-            ""
-        );
-
-
-    const offerText =
-        cleanText(
-            product.offerText ||
-            product.offers ||
-            product.offer ||
-            ""
+            0
         );
 
 
     /*
-     * FIX:
-     *
-     * productUrl was previously {}
-     * in the API response.
-     *
-     * Only allow valid strings.
+     * New offer fields
+     */
+
+    const voucher =
+        product.voucher ??
+        product.vouchers ??
+        product.voucherCode ??
+        "";
+
+
+    const promoCode =
+        product.promoCode ??
+        product.promo ??
+        product.promoCodes ??
+        "";
+
+
+    const offerText =
+        product.offerText ??
+        product.offers ??
+        product.offer ??
+        "";
+
+
+    /*
+     * productUrl sometimes arrives
+     * as an object instead of string.
      */
 
     const productUrl =
-        normalizeProductUrl(
+        normalizeURL(
             product.productUrl ||
             product.url ||
-            product.link
+            product.link ||
+            ""
         );
 
 
@@ -1046,12 +761,13 @@ function normalizeProduct(
         id:
             String(
                 product.id ||
-                `${sellerId}-${productName}-${weight}`
+                cryptoSafeId()
             ),
 
         sellerId,
 
-        seller,
+        seller:
+            sellerName,
 
         productName,
 
@@ -1073,11 +789,20 @@ function normalizeProduct(
 
         cashback,
 
-        voucher,
+        voucher:
+            normalizeOfferText(
+                voucher
+            ),
 
-        promoCode,
+        promoCode:
+            normalizeOfferText(
+                promoCode
+            ),
 
-        offerText,
+        offerText:
+            normalizeOfferText(
+                offerText
+            ),
 
         productUrl,
 
@@ -1091,13 +816,142 @@ function normalizeProduct(
 
         source:
             product.source ||
-            seller,
+            sellerName,
 
         lastUpdated:
             product.lastUpdated ||
             null
 
     };
+
+}
+
+
+/* =========================================================
+   SAFE ID
+========================================================= */
+
+function cryptoSafeId() {
+
+    try {
+
+        if (
+            typeof crypto !== "undefined" &&
+            crypto.randomUUID
+        ) {
+
+            return crypto.randomUUID();
+
+        }
+
+    } catch (error) {
+
+        /* ignore */
+
+    }
+
+
+    return (
+        "product-" +
+        Date.now() +
+        "-" +
+        Math.random()
+            .toString(36)
+            .slice(2)
+    );
+
+}
+
+
+/* =========================================================
+   NORMALIZE URL
+========================================================= */
+
+function normalizeURL(value) {
+
+    if (!value) {
+        return "";
+    }
+
+
+    /*
+     * If API accidentally sends
+     * an object:
+     *
+     * { url: "..." }
+     *
+     * or
+     *
+     * { href: "..." }
+     */
+
+    if (
+        typeof value === "object"
+    ) {
+
+        value =
+            value.url ||
+            value.href ||
+            value.link ||
+            value.productUrl ||
+            "";
+
+    }
+
+
+    if (
+        typeof value !== "string"
+    ) {
+
+        return "";
+
+    }
+
+
+    value =
+        value.trim();
+
+
+    if (!value) {
+        return "";
+    }
+
+
+    /*
+     * Only allow web URLs.
+     */
+
+    if (
+        /^https?:\/\//i.test(
+            value
+        )
+    ) {
+
+        return value;
+
+    }
+
+
+    /*
+     * If API returned
+     * www.example.com
+     */
+
+    if (
+        /^www\./i.test(
+            value
+        )
+    ) {
+
+        return (
+            "https://" +
+            value
+        );
+
+    }
+
+
+    return "";
 
 }
 
@@ -1115,9 +969,7 @@ function setupSellerFilter() {
 
 
     if (!select) {
-
         return;
-
     }
 
 
@@ -1126,17 +978,20 @@ function setupSellerFilter() {
 
 
     productDatabase.forEach(
-        function (product) {
+        product => {
 
             const id =
-                product.sellerId ||
-                product.seller ||
-                "unknown";
+                String(
+                    product.sellerId ||
+                    product.seller ||
+                    "unknown"
+                );
 
 
             const name =
                 product.seller ||
                 product.sellerName ||
+                product.source ||
                 id;
 
 
@@ -1149,17 +1004,34 @@ function setupSellerFilter() {
     );
 
 
-    select.innerHTML = `
+    const oldValue =
+        select.value;
 
-        <option value="all">
-            All Sellers
-        </option>
 
-    `;
+    select.innerHTML = "";
+
+
+    const allOption =
+        document.createElement(
+            "option"
+        );
+
+
+    allOption.value =
+        "all";
+
+
+    allOption.textContent =
+        "All Sellers";
+
+
+    select.appendChild(
+        allOption
+    );
 
 
     sellers.forEach(
-        function (name, id) {
+        (name, id) => {
 
             const option =
                 document.createElement(
@@ -1182,36 +1054,19 @@ function setupSellerFilter() {
         }
     );
 
-}
 
+    if (
+        oldValue &&
+        [...select.options]
+            .some(
+                option =>
+                    option.value ===
+                    oldValue
+            )
+    ) {
 
-/* =========================================================
-   PRODUCT STATUS
-========================================================= */
-
-function setProductStatus(
-    text
-) {
-
-    /*
-     * Supports an optional element:
-     *
-     * sellerStatus
-     *
-     * If your HTML doesn't have it,
-     * nothing happens.
-     */
-
-    const element =
-        document.getElementById(
-            "sellerStatus"
-        );
-
-
-    if (element) {
-
-        element.textContent =
-            text;
+        select.value =
+            oldValue;
 
     }
 
@@ -1219,7 +1074,7 @@ function setProductStatus(
 
 
 /* =========================================================
-   MAIN COMPARISON
+   COMPARE GOLD
 ========================================================= */
 
 function compareGold() {
@@ -1301,13 +1156,8 @@ function compareGold() {
 
 
         results.scrollIntoView({
-
-            behavior:
-                "smooth",
-
-            block:
-                "start"
-
+            behavior: "smooth",
+            block: "start"
         });
 
     }
@@ -1326,7 +1176,7 @@ function buildComparisonProducts(
 
     const matching =
         productDatabase.filter(
-            function (product) {
+            product => {
 
                 const productPurity =
                     normalizePurity(
@@ -1361,15 +1211,12 @@ function buildComparisonProducts(
 
 
     return matching.map(
-        function (product) {
-
-            return calculateProduct(
+        product =>
+            calculateProduct(
                 product,
                 purity,
                 weight
-            );
-
-        }
+            )
     );
 
 }
@@ -1398,39 +1245,45 @@ function calculateProduct(
 
 
     const listedPrice =
-        numberValue(
+        Number(
             product.listedPrice ||
-            product.price
+            product.price ||
+            0
         );
 
 
     const shipping =
-        numberValue(
-            product.shipping
+        Number(
+            product.shipping ||
+            0
         );
 
 
     const coupon =
-        numberValue(
-            product.coupon
+        Number(
+            product.coupon ||
+            0
         );
 
 
     const cardOffer =
-        numberValue(
-            product.cardOffer
+        Number(
+            product.cardOffer ||
+            0
         );
 
 
     const upiOffer =
-        numberValue(
-            product.upiOffer
+        Number(
+            product.upiOffer ||
+            0
         );
 
 
     const cashback =
-        numberValue(
-            product.cashback
+        Number(
+            product.cashback ||
+            0
         );
 
 
@@ -1440,11 +1293,13 @@ function calculateProduct(
 
 
     /*
-     * Card / UPI are alternatives.
-     * Do not subtract both simultaneously.
+     * Card / UPI are alternative
+     * payment methods.
+     *
+     * Don't subtract both.
      */
 
-    const maxPaymentDiscount =
+    const paymentDiscount =
         Math.max(
             cardOffer,
             upiOffer
@@ -1454,17 +1309,14 @@ function calculateProduct(
     const effectivePrice =
         Math.max(
             0,
-
             grossPrice -
             coupon -
-            maxPaymentDiscount -
+            paymentDiscount -
             cashback
-
         );
 
 
-    let premium =
-        0;
+    let premium = 0;
 
 
     if (
@@ -1565,7 +1417,7 @@ function refreshComparison() {
 
 
     /*
-     * Seller
+     * SELLER
      */
 
     if (
@@ -1574,17 +1426,25 @@ function refreshComparison() {
 
         filtered =
             filtered.filter(
-                function (product) {
+                product => {
 
                     return (
 
-                        product.sellerId ===
-                        sellerFilter
+                        String(
+                            product.sellerId
+                        ) ===
+                        String(
+                            sellerFilter
+                        )
 
                         ||
 
-                        product.seller ===
-                        sellerFilter
+                        String(
+                            product.seller
+                        ) ===
+                        String(
+                            sellerFilter
+                        )
 
                     );
 
@@ -1595,7 +1455,7 @@ function refreshComparison() {
 
 
     /*
-     * Payment
+     * PAYMENT
      */
 
     if (
@@ -1604,15 +1464,10 @@ function refreshComparison() {
 
         filtered =
             filtered.filter(
-                function (product) {
-
-                    return (
-                        Number(
-                            product.cardOffer
-                        ) > 0
-                    );
-
-                }
+                product =>
+                    Number(
+                        product.cardOffer
+                    ) > 0
             );
 
     }
@@ -1624,22 +1479,17 @@ function refreshComparison() {
 
         filtered =
             filtered.filter(
-                function (product) {
-
-                    return (
-                        Number(
-                            product.upiOffer
-                        ) > 0
-                    );
-
-                }
+                product =>
+                    Number(
+                        product.upiOffer
+                    ) > 0
             );
 
     }
 
 
     /*
-     * Premium
+     * PREMIUM
      */
 
     if (
@@ -1652,98 +1502,77 @@ function refreshComparison() {
             );
 
 
-        filtered =
-            filtered.filter(
-                function (product) {
+        if (
+            !Number.isNaN(
+                maxPremium
+            )
+        ) {
 
-                    return (
+            filtered =
+                filtered.filter(
+                    product =>
                         Number(
                             product.premium
                         ) <=
                         maxPremium
-                    );
+                );
 
-                }
-            );
+        }
 
     }
 
 
     /*
-     * Sorting
+     * SORT
      */
 
     if (
-        sortFilter ===
-        "effective"
+        sortFilter === "effective"
     ) {
 
         filtered.sort(
-            function (a, b) {
-
-                return (
-                    a.effectivePrice -
-                    b.effectivePrice
-                );
-
-            }
+            (a, b) =>
+                a.effectivePrice -
+                b.effectivePrice
         );
 
     }
 
 
     if (
-        sortFilter ===
-        "listed"
+        sortFilter === "listed"
     ) {
 
         filtered.sort(
-            function (a, b) {
-
-                return (
-                    a.listedPrice -
-                    b.listedPrice
-                );
-
-            }
+            (a, b) =>
+                a.listedPrice -
+                b.listedPrice
         );
 
     }
 
 
     if (
-        sortFilter ===
-        "premium"
+        sortFilter === "premium"
     ) {
 
         filtered.sort(
-            function (a, b) {
-
-                return (
-                    a.premium -
-                    b.premium
-                );
-
-            }
+            (a, b) =>
+                a.premium -
+                b.premium
         );
 
     }
 
 
     if (
-        sortFilter ===
-        "offer"
+        sortFilter === "offer"
     ) {
 
         filtered.sort(
-            function (a, b) {
-
-                return (
-                    totalOffers(b) -
-                    totalOffers(a)
-                );
-
-            }
+            (a, b) =>
+                totalOffers(b) -
+                totalOffers(a)
         );
 
     }
@@ -1766,28 +1595,21 @@ function totalOffers(
 
     return (
 
-        numberValue(
-            product.coupon
-        )
-
-        +
+        Number(
+            product.coupon || 0
+        ) +
 
         Math.max(
-
-            numberValue(
-                product.cardOffer
+            Number(
+                product.cardOffer || 0
             ),
-
-            numberValue(
-                product.upiOffer
+            Number(
+                product.upiOffer || 0
             )
+        ) +
 
-        )
-
-        +
-
-        numberValue(
-            product.cashback
+        Number(
+            product.cashback || 0
         )
 
     );
@@ -1810,9 +1632,7 @@ function renderComparison(
 
 
     if (!body) {
-
         return;
-
     }
 
 
@@ -1831,7 +1651,7 @@ function renderComparison(
 
 
     products.forEach(
-        function (product) {
+        product => {
 
             const row =
                 document.createElement(
@@ -1849,6 +1669,7 @@ function renderComparison(
                 escapeHTML(
                     product.seller ||
                     product.sellerName ||
+                    product.source ||
                     "Seller"
                 );
 
@@ -1857,7 +1678,7 @@ function renderComparison(
                 escapeHTML(
                     product.productName ||
                     product.name ||
-                    "Gold Coin"
+                    "Gold Product"
                 );
 
 
@@ -1891,10 +1712,43 @@ function renderComparison(
                 );
 
 
-            const action =
-                buildProductAction(
-                    product
-                );
+            let action = "";
+
+
+            if (
+                product.productUrl
+            ) {
+
+                action = `
+
+                    <a
+                        class="deal-btn"
+                        href="${escapeAttribute(
+                            product.productUrl
+                        )}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        View
+                    </a>
+
+                `;
+
+            } else {
+
+                action = `
+
+                    <button
+                        class="deal-btn"
+                        type="button"
+                        onclick="showNoLinkMessage()"
+                    >
+                        Details
+                    </button>
+
+                `;
+
+            }
 
 
             row.innerHTML = `
@@ -1967,57 +1821,6 @@ function renderComparison(
 
 
 /* =========================================================
-   PRODUCT ACTION
-========================================================= */
-
-function buildProductAction(
-    product
-) {
-
-    const url =
-        normalizeProductUrl(
-            product.productUrl
-        );
-
-
-    if (
-        url
-    ) {
-
-        return `
-
-            <a
-                class="deal-btn"
-                href="${escapeAttribute(
-                    url
-                )}"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                View
-            </a>
-
-        `;
-
-    }
-
-
-    return `
-
-        <button
-            class="deal-btn"
-            type="button"
-            onclick="showNoLinkMessage()"
-        >
-            Details
-        </button>
-
-    `;
-
-}
-
-
-/* =========================================================
    OFFER HTML
 ========================================================= */
 
@@ -2028,8 +1831,12 @@ function buildOfferHTML(
     const offers = [];
 
 
+    /*
+     * COUPON
+     */
+
     if (
-        numberValue(
+        Number(
             product.coupon
         ) > 0
     ) {
@@ -2047,8 +1854,12 @@ function buildOfferHTML(
     }
 
 
+    /*
+     * CARD
+     */
+
     if (
-        numberValue(
+        Number(
             product.cardOffer
         ) > 0
     ) {
@@ -2066,8 +1877,12 @@ function buildOfferHTML(
     }
 
 
+    /*
+     * UPI
+     */
+
     if (
-        numberValue(
+        Number(
             product.upiOffer
         ) > 0
     ) {
@@ -2085,8 +1900,12 @@ function buildOfferHTML(
     }
 
 
+    /*
+     * CASHBACK
+     */
+
     if (
-        numberValue(
+        Number(
             product.cashback
         ) > 0
     ) {
@@ -2105,13 +1924,11 @@ function buildOfferHTML(
 
 
     /*
-     * Voucher
+     * VOUCHER
      */
 
     if (
-        cleanText(
-            product.voucher
-        )
+        product.voucher
     ) {
 
         offers.push(
@@ -2128,13 +1945,11 @@ function buildOfferHTML(
 
 
     /*
-     * Promo code
+     * PROMO CODE
      */
 
     if (
-        cleanText(
-            product.promoCode
-        )
+        product.promoCode
     ) {
 
         offers.push(
@@ -2151,13 +1966,11 @@ function buildOfferHTML(
 
 
     /*
-     * Generic offer text
+     * OFFER TEXT
      */
 
     if (
-        cleanText(
-            product.offerText
-        )
+        product.offerText
     ) {
 
         offers.push(
@@ -2178,13 +1991,11 @@ function buildOfferHTML(
     ) {
 
         return `
-
             <span
                 style="color:#999;font-size:12px;"
             >
                 No offer
             </span>
-
         `;
 
     }
@@ -2207,63 +2018,53 @@ function getStatus(
         String(
             product.status ||
             "sample"
-        ).toLowerCase();
+        )
+        .toLowerCase();
 
 
     if (
-        status ===
-        "verified"
+        status === "verified"
     ) {
 
         return `
-
             <span class="badge badge-green">
                 ✓ Verified
             </span>
-
         `;
 
     }
 
 
     if (
-        status ===
-        "expired"
+        status === "expired"
     ) {
 
         return `
-
             <span class="badge badge-blue">
                 Expired
             </span>
-
         `;
 
     }
 
 
     if (
-        status ===
-        "cached"
+        status === "unavailable"
     ) {
 
         return `
-
             <span class="badge badge-orange">
-                Cached
+                Unavailable
             </span>
-
         `;
 
     }
 
 
     return `
-
         <span class="badge badge-orange">
             Sample
         </span>
-
     `;
 
 }
@@ -2340,9 +2141,7 @@ function updateSummary(
 
 
         pureGoldElement.textContent =
-            `${pureGold.toFixed(
-                4
-            )} g`;
+            `${pureGold.toFixed(4)} g`;
 
     }
 
@@ -2394,14 +2193,11 @@ function calculatePureGoldWeight(
 
 
     return (
-
         weight *
-
         (
             factors[purity] ||
             0
         )
-
     );
 
 }
@@ -2420,9 +2216,7 @@ function renderEmptyComparison() {
 
 
     if (!body) {
-
         return;
-
     }
 
 
@@ -2474,9 +2268,7 @@ function normalizePurity(
 ) {
 
     if (!purity) {
-
         return "";
-
     }
 
 
@@ -2524,84 +2316,10 @@ function normalizePurity(
 
 
 /* =========================================================
-   NUMBER VALUE
+   OFFER TEXT NORMALIZER
 ========================================================= */
 
-function numberValue(
-    value
-) {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-
-        return 0;
-
-    }
-
-
-    /*
-     * Handle strings such as:
-     *
-     * ₹16,102
-     * 16102
-     */
-
-    if (
-        typeof value ===
-        "string"
-    ) {
-
-        const cleaned =
-            value
-                .replace(
-                    /₹/g,
-                    ""
-                )
-                .replace(
-                    /,/g,
-                    ""
-                )
-                .trim();
-
-
-        const parsed =
-            Number(
-                cleaned
-            );
-
-
-        return Number.isFinite(
-            parsed
-        )
-            ? parsed
-            : 0;
-
-    }
-
-
-    const parsed =
-        Number(
-            value
-        );
-
-
-    return Number.isFinite(
-        parsed
-    )
-        ? parsed
-        : 0;
-
-}
-
-
-/* =========================================================
-   CLEAN TEXT
-========================================================= */
-
-function cleanText(
+function normalizeOfferText(
     value
 ) {
 
@@ -2616,11 +2334,20 @@ function cleanText(
 
 
     if (
-        typeof value ===
-        "object"
+        typeof value === "object"
     ) {
 
-        return "";
+        try {
+
+            return JSON.stringify(
+                value
+            );
+
+        } catch (error) {
+
+            return "";
+
+        }
 
     }
 
@@ -2628,102 +2355,6 @@ function cleanText(
     return String(
         value
     ).trim();
-
-}
-
-
-/* =========================================================
-   PRODUCT URL NORMALIZER
-========================================================= */
-
-function normalizeProductUrl(
-    value
-) {
-
-    /*
-     * FIX FOR:
-     *
-     * productUrl: {}
-     *
-     */
-
-    if (
-        !value
-    ) {
-
-        return "";
-
-    }
-
-
-    if (
-        typeof value ===
-        "string"
-    ) {
-
-        const url =
-            value.trim();
-
-
-        if (
-            !url
-        ) {
-
-            return "";
-
-        }
-
-
-        if (
-            /^https?:\/\//i.test(
-                url
-            )
-        ) {
-
-            return url;
-
-        }
-
-
-        return "";
-
-    }
-
-
-    /*
-     * Sometimes API may return:
-     *
-     * { href: "https://..." }
-     *
-     * { url: "https://..." }
-     */
-
-    if (
-        typeof value ===
-        "object"
-    ) {
-
-        const possible =
-            value.href ||
-            value.url ||
-            value.link;
-
-
-        if (
-            typeof possible ===
-            "string"
-        ) {
-
-            return normalizeProductUrl(
-                possible
-            );
-
-        }
-
-    }
-
-
-    return "";
 
 }
 
@@ -2737,13 +2368,14 @@ function formatCurrency(
 ) {
 
     const number =
-        numberValue(
-            value
+        Number(
+            value || 0
         );
 
 
     if (
-        number === 0
+        !number ||
+        Number.isNaN(number)
     ) {
 
         return "₹0";
@@ -2755,14 +2387,11 @@ function formatCurrency(
         "en-IN",
         {
 
-            style:
-                "currency",
+            style: "currency",
 
-            currency:
-                "INR",
+            currency: "INR",
 
-            maximumFractionDigits:
-                2
+            maximumFractionDigits: 2
 
         }
     ).format(
@@ -2781,8 +2410,8 @@ function formatNumber(
 ) {
 
     const number =
-        numberValue(
-            value
+        Number(
+            value || 0
         );
 
 
@@ -2790,8 +2419,7 @@ function formatNumber(
         "en-IN",
         {
 
-            maximumFractionDigits:
-                2
+            maximumFractionDigits: 2
 
         }
     ).format(
@@ -2872,7 +2500,7 @@ function escapeAttribute(
 
 
 /* =========================================================
-   AUTO REFRESH GOLD RATE
+   AUTO REFRESH GOLD
 ========================================================= */
 
 setInterval(
@@ -2936,17 +2564,13 @@ setInterval(
 
 /* =========================================================
    AUTO REFRESH PRODUCTS
+   Every 15 minutes
 ========================================================= */
-
-/*
- * Refresh seller data every 10 minutes.
- */
 
 setInterval(
     async function () {
 
         await loadProducts();
-
 
         setupSellerFilter();
 
@@ -2985,7 +2609,7 @@ setInterval(
 
     },
 
-    10 * 60 * 1000
+    15 * 60 * 1000
 
 );
 
@@ -2997,18 +2621,14 @@ setInterval(
 window.compareGold =
     compareGold;
 
-
 window.refreshComparison =
     refreshComparison;
-
 
 window.loadGoldRates =
     loadGoldRates;
 
-
 window.loadProducts =
     loadProducts;
-
 
 window.showNoLinkMessage =
     showNoLinkMessage;
