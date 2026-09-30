@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="GoldManiaSavings - Compare Indian gold coin prices, exact product links and offers.">
-  <meta name="theme-color" content="#111827">
+
+  <meta
+    name="description"
+    content="GoldManiaSavings - Compare Indian gold coin prices, exact product links and offers."
+  >
+
+  <meta
+    name="theme-color"
+    content="#111827"
+  >
+
   <title>GoldManiaSavings — Gold Coin Price Comparison</title>
 
   <style>
@@ -38,7 +47,13 @@
       margin:0;
       background:var(--bg);
       color:var(--text);
-      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
       line-height:1.5;
     }
 
@@ -58,7 +73,12 @@
 
     .site-header{
       background:
-        linear-gradient(135deg,#111827,#1f2937 60%,#3a2b13);
+        linear-gradient(
+          135deg,
+          #111827,
+          #1f2937 60%,
+          #3a2b13
+        );
       color:#fff;
       padding:22px 0;
       box-shadow:0 4px 20px rgba(0,0,0,.12);
@@ -85,7 +105,12 @@
       border-radius:15px;
       display:grid;
       place-items:center;
-      background:linear-gradient(135deg,#f9d56e,#b7791f);
+      background:
+        linear-gradient(
+          135deg,
+          #f9d56e,
+          #b7791f
+        );
       font-size:26px;
     }
 
@@ -199,7 +224,11 @@
       padding:19px;
       border:1px solid #ead7a5;
       background:
-        linear-gradient(145deg,#fffdf5,#fff8df);
+        linear-gradient(
+          145deg,
+          #fffdf5,
+          #fff8df
+        );
     }
 
     .gold-top{
@@ -562,10 +591,6 @@
       text-align:center;
     }
 
-    .hidden{
-      display:none !important;
-    }
-
     .info{
       color:var(--muted);
       font-size:13px;
@@ -579,6 +604,7 @@
     }
 
     @media(max-width:900px){
+
       .filters{
         grid-template-columns:1fr 1fr;
       }
@@ -598,9 +624,11 @@
       .seller-grid{
         grid-template-columns:1fr 1fr;
       }
+
     }
 
     @media(max-width:650px){
+
       .header-inner{
         align-items:flex-start;
       }
@@ -646,6 +674,7 @@
       .seller-grid{
         grid-template-columns:1fr 1fr;
       }
+
     }
   </style>
 </head>
@@ -653,38 +682,72 @@
 <body>
 
 <header class="site-header">
+
   <div class="header-inner">
 
     <div class="brand">
-      <div class="brand-icon">🪙</div>
-      <div>
-        <h1>GoldManiaSavings</h1>
-        <p>Gold Coin Price Comparison</p>
+
+      <div class="brand-icon">
+        🪙
       </div>
+
+      <div>
+
+        <h1>
+          GoldManiaSavings
+        </h1>
+
+        <p>
+          Gold Coin Price Comparison
+        </p>
+
+      </div>
+
     </div>
 
+
     <div class="connection">
-      <span id="connectionDot" class="dot"></span>
-      <span id="connectionText">Connecting...</span>
+
+      <span
+        id="connectionDot"
+        class="dot"
+      ></span>
+
+      <span id="connectionText">
+        Connecting...
+      </span>
+
     </div>
 
   </div>
+
 </header>
 
 
 <main class="container">
 
   <!-- GOLD PRICE -->
+
   <section class="panel">
 
     <div class="heading">
+
       <div>
-        <span class="eyebrow">INDIA GOLD REFERENCE</span>
-        <h2>Today's Gold Price</h2>
+
+        <span class="eyebrow">
+          INDIA GOLD REFERENCE
+        </span>
+
+        <h2>
+          Today's Gold Price
+        </h2>
+
         <div class="sub">
           Reference price per gram
         </div>
+
       </div>
+
 
       <button
         class="btn btn-secondary"
@@ -693,19 +756,30 @@
       >
         ↻ Refresh
       </button>
+
     </div>
+
 
     <div
       id="goldNotice"
       class="notice"
     ></div>
 
+
     <div class="gold-grid">
 
       <article class="gold-card">
+
         <div class="gold-top">
-          <span>24K</span>
-          <span class="badge">999 / 999.9</span>
+
+          <span>
+            24K
+          </span>
+
+          <span class="badge">
+            999 / 999.9
+          </span>
+
         </div>
 
         <div
@@ -715,14 +789,25 @@
           Loading...
         </div>
 
-        <small>per gram</small>
+        <small>
+          per gram
+        </small>
+
       </article>
 
 
       <article class="gold-card">
+
         <div class="gold-top">
-          <span>22K</span>
-          <span class="badge">916</span>
+
+          <span>
+            22K
+          </span>
+
+          <span class="badge">
+            916
+          </span>
+
         </div>
 
         <div
@@ -732,14 +817,25 @@
           Loading...
         </div>
 
-        <small>per gram</small>
+        <small>
+          per gram
+        </small>
+
       </article>
 
 
       <article class="gold-card">
+
         <div class="gold-top">
-          <span>18K</span>
-          <span class="badge">750</span>
+
+          <span>
+            18K
+          </span>
+
+          <span class="badge">
+            750
+          </span>
+
         </div>
 
         <div
@@ -749,74 +845,123 @@
           Loading...
         </div>
 
-        <small>per gram</small>
+        <small>
+          per gram
+        </small>
+
       </article>
 
     </div>
 
+
     <div class="gold-meta">
+
       <span>
         Source:
-        <strong id="goldSource">—</strong>
+        <strong id="goldSource">
+          —
+        </strong>
       </span>
 
       <span>
         Updated:
-        <strong id="goldUpdated">—</strong>
+        <strong id="goldUpdated">
+          —
+        </strong>
       </span>
+
     </div>
 
   </section>
 
 
   <!-- FILTERS -->
+
   <section class="panel">
 
     <div class="heading">
+
       <div>
-        <span class="eyebrow">COMPARE GOLD COINS</span>
-        <h2>Choose Purity & Weight</h2>
+
+        <span class="eyebrow">
+          COMPARE GOLD COINS
+        </span>
+
+        <h2>
+          Choose Purity & Weight
+        </h2>
+
         <div class="sub">
           Compare actual products across sellers.
         </div>
+
       </div>
+
     </div>
+
 
     <div class="filters">
 
       <div>
+
         <label for="purityFilter">
           Purity
         </label>
 
         <select id="purityFilter">
-          <option value="">All Purities</option>
-          <option value="24K">24K</option>
-          <option value="22K">22K</option>
-          <option value="18K">18K</option>
+
+          <option value="">
+            All Purities
+          </option>
+
+          <option value="24K">
+            24K
+          </option>
+
+          <option value="22K">
+            22K
+          </option>
+
+          <option value="18K">
+            18K
+          </option>
+
         </select>
+
       </div>
 
 
       <div>
+
         <label for="weightFilter">
           Weight
         </label>
 
         <select id="weightFilter">
-          <option value="">All Weights</option>
+
+          <option value="">
+            All Weights
+          </option>
+
         </select>
+
       </div>
 
 
       <div>
+
         <label for="sellerFilter">
           Seller
         </label>
 
         <select id="sellerFilter">
-          <option value="">All Sellers</option>
+
+          <option value="">
+            All Sellers
+          </option>
+
         </select>
+
       </div>
 
 
@@ -843,14 +988,23 @@
 
 
   <!-- COMPARISON -->
+
   <section class="panel">
 
     <div class="results-head">
 
       <div>
-        <span class="eyebrow">PRICE COMPARISON</span>
-        <h2>Seller Comparison</h2>
+
+        <span class="eyebrow">
+          PRICE COMPARISON
+        </span>
+
+        <h2>
+          Seller Comparison
+        </h2>
+
       </div>
+
 
       <div
         id="productCount"
@@ -861,35 +1015,49 @@
 
     </div>
 
+
     <div
       id="productNotice"
       class="notice"
     ></div>
 
+
     <div
       id="comparisonList"
       class="comparison-list"
     >
+
       <div class="loading">
         Loading verified gold products...
       </div>
+
     </div>
 
   </section>
 
 
   <!-- OFFERS -->
+
   <section class="panel">
 
     <div class="heading">
 
       <div>
-        <span class="eyebrow">SAVINGS</span>
-        <h2>Offers, Vouchers & Promo Codes</h2>
+
+        <span class="eyebrow">
+          SAVINGS
+        </span>
+
+        <h2>
+          Offers, Vouchers & Promo Codes
+        </h2>
+
         <div class="sub">
           Card offers, UPI offers, cashback and seller promotions.
         </div>
+
       </div>
+
 
       <button
         id="refreshOffers"
@@ -901,68 +1069,98 @@
 
     </div>
 
+
     <div
       id="offersGrid"
       class="offers-grid"
     >
+
       <div class="loading">
         Loading offers...
       </div>
+
     </div>
 
   </section>
 
 
   <!-- SELLERS -->
+
   <section class="panel">
 
     <div class="heading">
+
       <div>
-        <span class="eyebrow">SELLERS</span>
-        <h2>Gold Coin Sellers</h2>
+
+        <span class="eyebrow">
+          SELLERS
+        </span>
+
+        <h2>
+          Gold Coin Sellers
+        </h2>
+
       </div>
+
     </div>
+
 
     <div
       id="sellerGrid"
       class="seller-grid"
     >
+
       <div class="loading">
         Loading sellers...
       </div>
+
     </div>
 
   </section>
 
 
   <!-- INFO -->
+
   <section class="panel">
 
-    <span class="eyebrow">HOW IT WORKS</span>
+    <span class="eyebrow">
+      HOW IT WORKS
+    </span>
 
     <h2>
       GoldManiaSavings
     </h2>
 
-    <p class="info">
-      GoldManiaSavings compares gold-coin products collected
-      from participating seller sources.
-    </p>
 
     <p class="info">
-      The product button opens the seller's exact product URL
-      whenever an exact product URL is available. Generic
-      category pages should not be presented as exact products.
+      GoldManiaSavings compares gold-coin products
+      collected from participating seller sources.
     </p>
 
-    <p class="info">
-      Listed prices and offers can change on the seller website.
-      Always verify the final payable amount before purchasing.
-    </p>
 
     <p class="info">
+      The product button opens the seller's exact
+      product URL whenever an exact product URL is
+      available. Generic category pages should not
+      be presented as exact products.
+    </p>
+
+
+    <p class="info">
+      Listed prices and offers can change on the
+      seller website. Always verify the final payable
+      amount before purchasing.
+    </p>
+
+
+    <p class="info">
+
       Last frontend refresh:
-      <strong id="siteUpdated">—</strong>
+
+      <strong id="siteUpdated">
+        —
+      </strong>
+
     </p>
 
   </section>
@@ -971,1804 +1169,24 @@
 
 
 <footer>
-  © <span id="year"></span> GoldManiaSavings
+
+  ©
+  <span id="year"></span>
+  GoldManiaSavings
   · Price comparison only
+
 </footer>
 
 
-<script>
-(function(){
-
-  "use strict";
-
-  /*
-   * =========================================================
-   * CONFIG
-   * =========================================================
-   */
-
-  const API_BASE =
-    "https://goldmaniasavings-api.onlinetechmine.workers.dev";
-
-  const ENDPOINTS = {
-    gold: API_BASE + "/api/gold",
-    products: API_BASE + "/api/products",
-    sellers: API_BASE + "/api/sellers",
-    offers: API_BASE + "/api/offers"
-  };
-
-
-  const state = {
-    gold: null,
-    products: [],
-    sellers: [],
-    offers: []
-  };
-
-
-  /*
-   * =========================================================
-   * HELPERS
-   * =========================================================
-   */
-
-  const $ = id =>
-    document.getElementById(id);
-
-
-  function escapeHTML(value){
-
-    return String(value ?? "")
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;")
-      .replace(/'/g,"&#039;");
-
-  }
-
-
-  function number(value){
-
-    const n = Number(value);
-
-    return Number.isFinite(n)
-      ? n
-      : 0;
-
-  }
-
-
-  function money(value){
-
-    const n = number(value);
-
-    if(n <= 0){
-      return "—";
-    }
-
-    return new Intl.NumberFormat(
-      "en-IN",
-      {
-        style:"currency",
-        currency:"INR",
-        maximumFractionDigits:0
-      }
-    ).format(n);
-
-  }
-
-
-  function validURL(value){
-
-    try{
-
-      const url =
-        new URL(String(value || ""));
-
-      if(
-        url.protocol !== "https:" &&
-        url.protocol !== "http:"
-      ){
-        return "";
-      }
-
-      return url.href;
-
-    }catch{
-
-      return "";
-
-    }
-
-  }
-
-
-  async function fetchJSON(
-    url,
-    timeout = 20000
-  ){
-
-    const controller =
-      new AbortController();
-
-    const timer =
-      setTimeout(
-        () => controller.abort(),
-        timeout
-      );
-
-    try{
-
-      const response =
-        await fetch(
-          url,
-          {
-            method:"GET",
-            cache:"no-store",
-            headers:{
-              "Accept":
-                "application/json"
-            },
-            signal:
-              controller.signal
-          }
-        );
-
-      if(!response.ok){
-
-        throw new Error(
-          "HTTP " +
-          response.status
-        );
-
-      }
-
-      const text =
-        await response.text();
-
-      if(!text.trim()){
-
-        throw new Error(
-          "Empty response"
-        );
-
-      }
-
-      try{
-
-        return JSON.parse(text);
-
-      }catch{
-
-        throw new Error(
-          "Invalid JSON response"
-        );
-
-      }
-
-    }finally{
-
-      clearTimeout(timer);
-
-    }
-
-  }
-
-
-  function setConnection(
-    ok,
-    text
-  ){
-
-    $("connectionDot")
-      .className =
-        "dot " +
-        (
-          ok
-            ? "ok"
-            : "bad"
-        );
-
-    $("connectionText")
-      .textContent =
-        text;
-
-  }
-
-
-  function showNotice(
-    element,
-    message,
-    type
-  ){
-
-    if(!element){
-      return;
-    }
-
-    element.textContent =
-      message || "";
-
-    element.className =
-      "notice " +
-      (
-        message
-          ? "show " + (type || "info")
-          : ""
-      );
-
-  }
-
-
-  function formatUpdated(
-    value
-  ){
-
-    if(!value){
-      return "—";
-    }
-
-    const date =
-      new Date(value);
-
-    if(
-      Number.isNaN(
-        date.getTime()
-      )
-    ){
-
-      return String(value);
-
-    }
-
-    return date.toLocaleString(
-      "en-IN",
-      {
-        dateStyle:"medium",
-        timeStyle:"short"
-      }
-    );
-
-  }
-
-
-  /*
-   * =========================================================
-   * GOLD
-   * =========================================================
-   */
-
-  async function loadGold(){
-
-    $("gold24").textContent =
-      "Loading...";
-
-    $("gold22").textContent =
-      "Loading...";
-
-    $("gold18").textContent =
-      "Loading...";
-
-    showNotice(
-      $("goldNotice"),
-      "",
-      ""
-    );
-
-    try{
-
-      const data =
-        await fetchJSON(
-          ENDPOINTS.gold,
-          15000
-        );
-
-
-      if(
-        !data ||
-        data.ok === false
-      ){
-
-        throw new Error(
-          data?.message ||
-          "Gold price unavailable"
-        );
-
-      }
-
-
-      const reference =
-        data.indiaReference ||
-        data.india ||
-        null;
-
-
-      const rates =
-        reference?.rates ||
-        {};
-
-
-      const r24 =
-        number(
-          rates["24K"]?.perGram ??
-          rates["24K"]
-        );
-
-
-      const r22 =
-        number(
-          rates["22K"]?.perGram ??
-          rates["22K"]
-        );
-
-
-      const r18 =
-        number(
-          rates["18K"]?.perGram ??
-          rates["18K"]
-        );
-
-
-      if(
-        r24 <= 0 &&
-        r22 <= 0 &&
-        r18 <= 0
-      ){
-
-        throw new Error(
-          "Worker returned no gold rates"
-        );
-
-      }
-
-
-      state.gold = {
-        "24K":r24,
-        "22K":r22,
-        "18K":r18
-      };
-
-
-      $("gold24").textContent =
-        money(r24);
-
-      $("gold22").textContent =
-        money(r22);
-
-      $("gold18").textContent =
-        money(r18);
-
-
-      $("goldSource").textContent =
-        reference?.source ||
-        "India gold reference";
-
-
-      $("goldUpdated").textContent =
-        formatUpdated(
-          data.timestamp ||
-          reference?.timestamp ||
-          reference?.date
-        );
-
-
-      showNotice(
-        $("goldNotice"),
-        "",
-        ""
-      );
-
-
-      setConnection(
-        true,
-        "Worker connected"
-      );
-
-
-    }catch(error){
-
-      console.error(
-        "Gold load failed:",
-        error
-      );
-
-
-      $("gold24").textContent =
-        "Unavailable";
-
-      $("gold22").textContent =
-        "Unavailable";
-
-      $("gold18").textContent =
-        "Unavailable";
-
-      $("goldSource").textContent =
-        "Worker unavailable";
-
-      $("goldUpdated").textContent =
-        "—";
-
-
-      showNotice(
-        $("goldNotice"),
-        "Gold price could not be loaded from the Worker. Please use Refresh after the Worker is available.",
-        "error"
-      );
-
-
-      setConnection(
-        false,
-        "Worker unavailable"
-      );
-
-    }
-
-  }
-
-
-  /*
-   * =========================================================
-   * PRODUCTS
-   * =========================================================
-   */
-
-  async function loadProducts(){
-
-    $("comparisonList").innerHTML =
-      '<div class="loading">Loading verified gold products...</div>';
-
-    $("productCount").textContent =
-      "Loading products...";
-
-
-    try{
-
-      const data =
-        await fetchJSON(
-          ENDPOINTS.products,
-          30000
-        );
-
-
-      if(
-        !data ||
-        data.ok === false
-      ){
-
-        throw new Error(
-          data?.message ||
-          "Products unavailable"
-        );
-
-      }
-
-
-      state.products =
-        Array.isArray(data.products)
-          ? data.products
-          : [];
-
-
-      renderWeightOptions();
-      renderSellerOptions();
-      renderProducts();
-
-
-      $("siteUpdated").textContent =
-        formatUpdated(
-          data.updatedAt
-        );
-
-
-      showNotice(
-        $("productNotice"),
-        state.products.length
-          ? ""
-          : "Worker returned zero products. Check the Worker product sources/cache.",
-        state.products.length
-          ? ""
-          : "info"
-      );
-
-
-    }catch(error){
-
-      console.error(
-        "Products load failed:",
-        error
-      );
-
-
-      state.products = [];
-
-
-      $("productCount").textContent =
-        "0 products";
-
-
-      $("comparisonList").innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">⚠️</div>
-          <strong>Products could not be loaded</strong>
-          <p>
-            The frontend is working, but the Worker product endpoint
-            did not return usable data.
-          </p>
-        </div>
-      `;
-
-
-      showNotice(
-        $("productNotice"),
-        "Product endpoint error: " +
-        error.message,
-        "error"
-      );
-
-    }
-
-  }
-
-
-  function normalizeProduct(
-    product
-  ){
-
-    return {
-
-      ...product,
-
-      sellerId:
-        String(
-          product.sellerId || ""
-        ).toLowerCase(),
-
-      seller:
-        product.seller ||
-        product.sellerId ||
-        "Seller",
-
-      productName:
-        product.productName ||
-        "Gold Coin",
-
-      purity:
-        String(
-          product.purity || ""
-        ).toUpperCase(),
-
-      weight:
-        number(product.weight),
-
-      listedPrice:
-        number(product.listedPrice),
-
-      mrp:
-        number(product.mrp),
-
-      coupon:
-        number(product.coupon),
-
-      cardOffer:
-        number(product.cardOffer),
-
-      upiOffer:
-        number(product.upiOffer),
-
-      cashback:
-        number(product.cashback),
-
-      voucher:
-        String(
-          product.voucher || ""
-        ),
-
-      promoCode:
-        String(
-          product.promoCode || ""
-        ),
-
-      offerText:
-        String(
-          product.offerText || ""
-        ),
-
-      productUrl:
-        validURL(
-          product.productUrl
-        )
-
-    };
-
-  }
-
-
-  function getFilteredProducts(){
-
-    const purity =
-      $("purityFilter").value;
-
-    const weight =
-      $("weightFilter").value;
-
-    const seller =
-      $("sellerFilter").value;
-
-
-    return state.products
-      .map(normalizeProduct)
-      .filter(product => {
-
-        /*
-         * Do not display totally empty/sample records
-         * as real comparison results.
-         */
-
-        if(
-          product.listedPrice <= 0 &&
-          !product.productUrl
-        ){
-
-          return false;
-
-        }
-
-
-        if(
-          purity &&
-          product.purity !== purity
-        ){
-
-          return false;
-
-        }
-
-
-        if(
-          weight &&
-          number(product.weight) !==
-          number(weight)
-        ){
-
-          return false;
-
-        }
-
-
-        if(
-          seller &&
-          product.sellerId !== seller
-        ){
-
-          return false;
-
-        }
-
-
-        return true;
-
-      });
-
-  }
-
-
-  /*
-   * Exact/similar product grouping.
-   *
-   * We use purity + weight + normalized name.
-   * This lets the UI show the lowest seller for
-   * the same coin/variant where seller feeds
-   * describe it similarly.
-   */
-
-  function normalizeName(name){
-
-    return String(name || "")
-      .toLowerCase()
-      .replace(
-        /\b(coin|gold|pure|plain|24k|22k|18k|24kt|22kt|18kt|karat|kt|916|999|999.9|750)\b/g,
-        " "
-      )
-      .replace(
-        /[^a-z0-9]+/g,
-        " "
-      )
-      .replace(
-        /\s+/g,
-        " "
-      )
-      .trim();
-
-  }
-
-
-  function groupKey(product){
-
-    return [
-      product.purity,
-      product.weight,
-      normalizeName(
-        product.productName
-      )
-    ].join("|");
-
-  }
-
-
-  function renderProducts(){
-
-    const products =
-      getFilteredProducts();
-
-
-    $("productCount").textContent =
-      products.length +
-      (
-        products.length === 1
-          ? " product"
-          : " products"
-      );
-
-
-    if(!products.length){
-
-      $("comparisonList").innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🪙</div>
-          <strong>No matching gold coins found</strong>
-          <p>
-            Try another purity, weight or seller.
-          </p>
-        </div>
-      `;
-
-      return;
-
-    }
-
-
-    const groups =
-      new Map();
-
-
-    for(
-      const product of products
-    ){
-
-      const key =
-        groupKey(product);
-
-
-      if(
-        !groups.has(key)
-      ){
-
-        groups.set(
-          key,
-          []
-        );
-
-      }
-
-
-      groups
-        .get(key)
-        .push(product);
-
-    }
-
-
-    const groupArray =
-      [...groups.values()];
-
-
-    groupArray.forEach(
-      group => {
-
-        group.sort(
-          (a,b) =>
-            (a.listedPrice || Infinity) -
-            (b.listedPrice || Infinity)
-        );
-
-      }
-    );
-
-
-    $("comparisonList").innerHTML =
-      groupArray
-        .map(renderGroup)
-        .join("");
-
-  }
-
-
-  function renderGroup(
-    group
-  ){
-
-    const validPrices =
-      group.filter(
-        p =>
-          p.listedPrice > 0
-      );
-
-
-    const cheapest =
-      validPrices.length
-        ? validPrices[0]
-        : null;
-
-
-    const first =
-      group[0];
-
-
-    const title =
-      first.productName ||
-      "Gold Coin";
-
-
-    const rows =
-      group
-        .map(
-          product =>
-            renderSellerRow(
-              product,
-              cheapest
-            )
-        )
-        .join("");
-
-
-    return `
-      <article class="comparison-card">
-
-        <div class="comparison-title">
-
-          <div>
-            <h3>
-              ${escapeHTML(title)}
-            </h3>
-
-            <div class="meta">
-              ${
-                first.purity
-                  ? `<span>${escapeHTML(first.purity)}</span>`
-                  : ""
-              }
-
-              ${
-                first.weight
-                  ? `<span>${escapeHTML(first.weight)} g</span>`
-                  : ""
-              }
-            </div>
-          </div>
-
-          ${
-            cheapest
-              ? `
-                <div class="lowest">
-                  <small>LOWEST LISTED PRICE</small>
-                  <strong>
-                    ${money(
-                      cheapest.listedPrice
-                    )}
-                  </strong>
-                  <span>
-                    ${escapeHTML(
-                      cheapest.seller
-                    )}
-                  </span>
-                </div>
-              `
-              : ""
-          }
-
-        </div>
-
-        ${rows}
-
-      </article>
-    `;
-
-  }
-
-
-  function renderSellerRow(
-    product,
-    cheapest
-  ){
-
-    const isLowest =
-      cheapest &&
-      product === cheapest;
-
-
-    const offers =
-      [];
-
-
-    if(
-      product.coupon > 0
-    ){
-
-      offers.push(`
-        <span class="offer">
-          Coupon ${money(product.coupon)}
-        </span>
-      `);
-
-    }
-
-
-    if(
-      product.cardOffer > 0
-    ){
-
-      offers.push(`
-        <span class="offer blue">
-          Card ${money(product.cardOffer)}
-        </span>
-      `);
-
-    }
-
-
-    if(
-      product.upiOffer > 0
-    ){
-
-      offers.push(`
-        <span class="offer blue">
-          UPI ${money(product.upiOffer)}
-        </span>
-      `);
-
-    }
-
-
-    if(
-      product.cashback > 0
-    ){
-
-      offers.push(`
-        <span class="offer green">
-          Cashback ${money(product.cashback)}
-        </span>
-      `);
-
-    }
-
-
-    if(
-      product.voucher
-    ){
-
-      offers.push(`
-        <span class="offer">
-          Voucher: ${escapeHTML(
-            product.voucher
-          )}
-        </span>
-      `);
-
-    }
-
-
-    if(
-      product.promoCode
-    ){
-
-      offers.push(`
-        <span class="offer">
-          Promo: ${escapeHTML(
-            product.promoCode
-          )}
-        </span>
-      `);
-
-    }
-
-
-    if(
-      product.offerText
-    ){
-
-      offers.push(`
-        <span class="offer green">
-          ${escapeHTML(
-            product.offerText
-          )}
-        </span>
-      `);
-
-    }
-
-
-    const offerHTML =
-      offers.length
-        ? offers.join("")
-        : '<span class="no-offer">No offer listed</span>';
-
-
-    const url =
-      product.productUrl;
-
-
-    return `
-      <div class="seller-row ${
-        isLowest
-          ? "lowest-row"
-          : ""
-      }">
-
-        <div>
-          <div class="seller-name">
-            ${escapeHTML(
-              product.seller
-            )}
-
-            ${
-              isLowest
-                ? `
-                  <span class="lowest-badge">
-                    LOWEST
-                  </span>
-                `
-                : ""
-            }
-          </div>
-        </div>
-
-
-        <div class="seller-price">
-
-          <strong>
-            ${money(
-              product.listedPrice
-            )}
-          </strong>
-
-          ${
-            product.mrp > product.listedPrice
-              ? `
-                <del>
-                  ${money(
-                    product.mrp
-                  )}
-                </del>
-              `
-              : ""
-          }
-
-        </div>
-
-
-        <div class="offer-list">
-          ${offerHTML}
-        </div>
-
-
-        <div class="seller-action">
-
-          ${
-            url
-              ? `
-                <a
-                  class="product-link"
-                  href="${escapeHTML(url)}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View Exact Product
-                </a>
-              `
-              : `
-                <span class="missing-link">
-                  Exact product link unavailable
-                </span>
-              `
-          }
-
-        </div>
-
-      </div>
-    `;
-
-  }
-
-
-  /*
-   * =========================================================
-   * WEIGHT FILTER
-   * =========================================================
-   */
-
-  function renderWeightOptions(){
-
-    const select =
-      $("weightFilter");
-
-
-    const current =
-      select.value;
-
-
-    const weights =
-      [...new Set(
-        state.products
-          .map(normalizeProduct)
-          .map(p => p.weight)
-          .filter(w => w > 0)
-      )]
-      .sort(
-        (a,b) => a-b
-      );
-
-
-    select.innerHTML =
-      '<option value="">All Weights</option>';
-
-
-    weights.forEach(
-      weight => {
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          String(weight);
-
-        option.textContent =
-          weight < 1
-            ? (
-                Math.round(
-                  weight * 1000
-                ) +
-                " mg"
-              )
-            : (
-                weight +
-                " g"
-              );
-
-        select.appendChild(
-          option
-        );
-
-      }
-    );
-
-
-    if(
-      weights.includes(
-        number(current)
-      )
-    ){
-
-      select.value =
-        current;
-
-    }
-
-  }
-
-
-  /*
-   * =========================================================
-   * SELLER FILTER
-   * =========================================================
-   */
-
-  function renderSellerOptions(){
-
-    const select =
-      $("sellerFilter");
-
-
-    const current =
-      select.value;
-
-
-    const sellers =
-      new Map();
-
-
-    state.products
-      .map(normalizeProduct)
-      .forEach(
-        product => {
-
-          if(
-            product.sellerId &&
-            product.seller
-          ){
-
-            sellers.set(
-              product.sellerId,
-              product.seller
-            );
-
-          }
-
-        }
-      );
-
-
-    select.innerHTML =
-      '<option value="">All Sellers</option>';
-
-
-    [...sellers.entries()]
-      .sort(
-        (a,b) =>
-          a[1].localeCompare(
-            b[1]
-          )
-      )
-      .forEach(
-        ([id,name]) => {
-
-          const option =
-            document.createElement(
-              "option"
-            );
-
-          option.value =
-            id;
-
-          option.textContent =
-            name;
-
-          select.appendChild(
-            option
-          );
-
-        }
-      );
-
-
-    if(
-      sellers.has(current)
-    ){
-
-      select.value =
-        current;
-
-    }
-
-  }
-
-
-  /*
-   * =========================================================
-   * OFFERS
-   * =========================================================
-   */
-
-  async function loadOffers(){
-
-    $("offersGrid").innerHTML =
-      '<div class="loading">Loading offers...</div>';
-
-
-    try{
-
-      const data =
-        await fetchJSON(
-          ENDPOINTS.offers,
-          30000
-        );
-
-
-      state.offers =
-        Array.isArray(data?.offers)
-          ? data.offers
-          : [];
-
-
-      renderOffers();
-
-
-    }catch(error){
-
-      console.error(
-        "Offers load failed:",
-        error
-      );
-
-
-      /*
-       * If /api/offers fails, build offers
-       * directly from product data instead.
-       */
-
-      const products =
-        state.products
-          .map(normalizeProduct);
-
-
-      state.offers =
-        products.filter(
-          p =>
-            p.coupon > 0 ||
-            p.cardOffer > 0 ||
-            p.upiOffer > 0 ||
-            p.cashback > 0 ||
-            p.voucher ||
-            p.promoCode ||
-            p.offerText
-        );
-
-
-      renderOffers();
-
-    }
-
-  }
-
-
-  function renderOffers(){
-
-    if(
-      !state.offers.length
-    ){
-
-      $("offersGrid").innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🎁</div>
-          <strong>No separate offers found</strong>
-          <p>
-            Product-level offers will appear inside comparison
-            results when the seller source provides them.
-          </p>
-        </div>
-      `;
-
-      return;
-
-    }
-
-
-    $("offersGrid").innerHTML =
-      state.offers
-        .map(
-          offer => {
-
-            const url =
-              validURL(
-                offer.productUrl
-              );
-
-
-            const parts = [];
-
-
-            if(
-              number(
-                offer.coupon
-              ) > 0
-            ){
-
-              parts.push(
-                "Coupon " +
-                money(offer.coupon)
-              );
-
-            }
-
-
-            if(
-              number(
-                offer.cardOffer
-              ) > 0
-            ){
-
-              parts.push(
-                "Card " +
-                money(offer.cardOffer)
-              );
-
-            }
-
-
-            if(
-              number(
-                offer.upiOffer
-              ) > 0
-            ){
-
-              parts.push(
-                "UPI " +
-                money(offer.upiOffer)
-              );
-
-            }
-
-
-            if(
-              number(
-                offer.cashback
-              ) > 0
-            ){
-
-              parts.push(
-                "Cashback " +
-                money(offer.cashback)
-              );
-
-            }
-
-
-            return `
-              <article class="offer-card">
-
-                <div class="seller">
-                  ${escapeHTML(
-                    offer.seller ||
-                    "Seller"
-                  )}
-                </div>
-
-                <span class="product">
-                  ${escapeHTML(
-                    offer.productName ||
-                    "Gold Product"
-                  )}
-                </span>
-
-                ${
-                  parts.length
-                    ? `
-                      <div class="offer-list">
-                        ${
-                          parts
-                            .map(
-                              p =>
-                                `<span class="offer">${escapeHTML(p)}</span>`
-                            )
-                            .join("")
-                        }
-                      </div>
-                    `
-                    : ""
-                }
-
-                ${
-                  offer.voucher
-                    ? `
-                      <p>
-                        <strong>Voucher:</strong>
-                        ${escapeHTML(
-                          offer.voucher
-                        )}
-                      </p>
-                    `
-                    : ""
-                }
-
-                ${
-                  offer.promoCode
-                    ? `
-                      <p>
-                        <strong>Promo code:</strong>
-                        <span class="code">
-                          ${escapeHTML(
-                            offer.promoCode
-                          )}
-                        </span>
-                      </p>
-                    `
-                    : ""
-                }
-
-                ${
-                  offer.offerText
-                    ? `
-                      <p>
-                        ${escapeHTML(
-                          offer.offerText
-                        )}
-                      </p>
-                    `
-                    : ""
-                }
-
-                ${
-                  url
-                    ? `
-                      <a
-                        class="offer-link"
-                        href="${escapeHTML(url)}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View Exact Product →
-                      </a>
-                    `
-                    : ""
-                }
-
-              </article>
-            `;
-
-          }
-        )
-        .join("");
-
-  }
-
-
-  /*
-   * =========================================================
-   * SELLERS
-   * =========================================================
-   */
-
-  async function loadSellers(){
-
-    try{
-
-      const data =
-        await fetchJSON(
-          ENDPOINTS.sellers,
-          15000
-        );
-
-
-      state.sellers =
-        Array.isArray(
-          data?.sellers
-        )
-          ? data.sellers
-          : [];
-
-
-      renderSellers();
-
-
-    }catch(error){
-
-      console.error(
-        "Sellers load failed:",
-        error
-      );
-
-
-      /*
-       * Fallback to sellers present in products.
-       */
-
-      const map =
-        new Map();
-
-
-      state.products
-        .map(normalizeProduct)
-        .forEach(
-          p => {
-
-            if(
-              p.sellerId &&
-              p.seller
-            ){
-
-              map.set(
-                p.sellerId,
-                p.seller
-              );
-
-            }
-
-          }
-        );
-
-
-      state.sellers =
-        [...map.entries()]
-          .map(
-            ([id,name]) => ({
-              id,
-              name
-            })
-          );
-
-
-      renderSellers();
-
-    }
-
-  }
-
-
-  function renderSellers(){
-
-    if(
-      !state.sellers.length
-    ){
-
-      $("sellerGrid").innerHTML =
-        '<div class="loading">No seller data available.</div>';
-
-      return;
-
-    }
-
-
-    $("sellerGrid").innerHTML =
-      state.sellers
-        .map(
-          seller => `
-            <div class="seller-box">
-
-              <strong>
-                ${escapeHTML(
-                  seller.name ||
-                  seller.id
-                )}
-              </strong>
-
-              <span>
-                Gold coin seller
-              </span>
-
-            </div>
-          `
-        )
-        .join("");
-
-  }
-
-
-  /*
-   * =========================================================
-   * EVENTS
-   * =========================================================
-   */
-
-  $("refreshGold")
-    .addEventListener(
-      "click",
-      loadGold
-    );
-
-
-  $("refreshOffers")
-    .addEventListener(
-      "click",
-      loadOffers
-    );
-
-
-  $("compareBtn")
-    .addEventListener(
-      "click",
-      renderProducts
-    );
-
-
-  $("clearBtn")
-    .addEventListener(
-      "click",
-      function(){
-
-        $("purityFilter").value =
-          "";
-
-        $("weightFilter").value =
-          "";
-
-        $("sellerFilter").value =
-          "";
-
-        renderProducts();
-
-      }
-    );
-
-
-  $("purityFilter")
-    .addEventListener(
-      "change",
-      renderProducts
-    );
-
-
-  $("weightFilter")
-    .addEventListener(
-      "change",
-      renderProducts
-    );
-
-
-  $("sellerFilter")
-    .addEventListener(
-      "change",
-      renderProducts
-    );
-
-
-  /*
-   * =========================================================
-   * STARTUP
-   * =========================================================
-   */
-
-  async function init(){
-
-    $("year").textContent =
-      new Date().getFullYear();
-
-
-    $("siteUpdated").textContent =
-      "Loading...";
-
-
-    /*
-     * Do NOT let one endpoint failure
-     * stop the rest of the page.
-     */
-
-    const results =
-      await Promise.allSettled([
-        loadGold(),
-        loadProducts(),
-        loadSellers(),
-        loadOffers()
-      ]);
-
-
-    /*
-     * Offers may have loaded before products.
-     * Refresh offer display once products are ready.
-     */
-
-    if(
-      state.products.length &&
-      !state.offers.length
-    ){
-
-      renderOffers();
-
-    }
-
-
-    if(
-      state.products.length
-    ){
-
-      renderWeightOptions();
-      renderSellerOptions();
-      renderProducts();
-
-    }
-
-  }
-
-
-  if(
-    document.readyState ===
-    "loading"
-  ){
-
-    document.addEventListener(
-      "DOMContentLoaded",
-      init
-    );
-
-  }else{
-
-    init();
-
-  }
-
-})();
-</script>
+<!-- IMPORTANT:
+     JavaScript is now loaded from app.js.
+     Cache-busting version is intentionally included.
+-->
+
+<script
+  src="app.js?v=20260930"
+  defer
+></script>
 
 </body>
 </html>
