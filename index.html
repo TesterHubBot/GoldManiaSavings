@@ -2,59 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <title>GoldManiaSavings — Gold Coin Comparison</title>
 
   <meta
     name="description"
-    content="GoldManiaSavings - Compare gold coin prices, offers and exact products from leading Indian gold coin sellers."
+    content="Compare gold coin prices, offers and exact product pages from leading gold coin sellers."
   >
 
-  <title>GoldManiaSavings — Gold Coin Price Comparison</title>
-
-  <link
-    rel="stylesheet"
-    href="./style.css?v=8"
-  >
+  <link rel="stylesheet" href="./style.css?v=10">
 </head>
 
 <body>
 
-  <!-- =====================================================
-       HEADER
-  ====================================================== -->
-
   <header class="site-header">
-
     <div class="container header-inner">
 
-      <div class="brand">
-
-        <div class="brand-mark">
-          ₹
-        </div>
+      <a class="brand" href="./">
+        <div class="brand-logo">₹</div>
 
         <div>
-
-          <h1>
-            GoldManiaSavings
-          </h1>
-
-          <p>
-            Gold Coin Price Comparison
-          </p>
-
+          <h1>GoldManiaSavings</h1>
+          <p>Gold Coin Price Comparison</p>
         </div>
+      </a>
 
-      </div>
+      <div class="header-live">
 
-      <div class="header-status">
-
-        <span id="liveRateStatus">
-          🟡 Loading...
+        <span id="liveRateStatus" class="live-status">
+          🟡 Connecting...
         </span>
 
         <small id="liveRateUpdated">
@@ -64,63 +41,39 @@
       </div>
 
     </div>
-
   </header>
 
-
-  <!-- =====================================================
-       MAIN
-  ====================================================== -->
 
   <main>
 
     <div class="container">
 
 
-      <!-- =================================================
-           GOLD PRICE
-      ================================================== -->
+      <!-- GOLD PRICE -->
 
-      <section class="gold-price-section">
+      <section class="section gold-section">
 
-        <div class="section-heading">
-
+        <div class="section-title">
           <div>
-
-            <h2>
-              Today's Gold Price
-            </h2>
-
-            <p>
-              India reference gold rate per gram
-            </p>
-
+            <h2>Today's Gold Price</h2>
+            <p>India reference rate per gram</p>
           </div>
-
         </div>
 
 
-        <div class="gold-rate-grid">
+        <div class="gold-grid">
 
+          <article class="gold-card">
 
-          <!-- 24K -->
+            <span>24K Gold</span>
 
-          <article class="gold-rate-card">
-
-            <div class="rate-label">
-              24K Gold
-            </div>
-
-            <div
-              id="live24Rate"
-              class="rate-value"
-            >
+            <strong id="live24Rate">
               Loading...
-            </div>
+            </strong>
 
-            <div class="rate-unit">
+            <small>
               per gram
-            </div>
+            </small>
 
             <input
               id="rate24"
@@ -131,24 +84,17 @@
           </article>
 
 
-          <!-- 22K -->
+          <article class="gold-card">
 
-          <article class="gold-rate-card">
+            <span>22K Gold</span>
 
-            <div class="rate-label">
-              22K Gold
-            </div>
-
-            <div
-              id="live22Rate"
-              class="rate-value"
-            >
+            <strong id="live22Rate">
               Loading...
-            </div>
+            </strong>
 
-            <div class="rate-unit">
+            <small>
               per gram
-            </div>
+            </small>
 
             <input
               id="rate22"
@@ -159,24 +105,17 @@
           </article>
 
 
-          <!-- 18K -->
+          <article class="gold-card">
 
-          <article class="gold-rate-card">
+            <span>18K Gold</span>
 
-            <div class="rate-label">
-              18K Gold
-            </div>
-
-            <div
-              id="live18Rate"
-              class="rate-value"
-            >
+            <strong id="live18Rate">
               Loading...
-            </div>
+            </strong>
 
-            <div class="rate-unit">
+            <small>
               per gram
-            </div>
+            </small>
 
           </article>
 
@@ -186,35 +125,27 @@
 
 
 
-      <!-- =================================================
-           COMPARISON CONTROLS
-      ================================================== -->
+      <!-- COMPARISON -->
 
-      <section class="comparison-controls">
+      <section class="section">
 
-        <div class="section-heading">
+        <div class="section-title">
 
           <div>
-
-            <h2>
-              Compare Gold Coins
-            </h2>
+            <h2>Compare Gold Coins</h2>
 
             <p>
-              Compare the same purity and weight across sellers.
+              Compare exact products by purity and weight.
             </p>
-
           </div>
 
         </div>
 
 
-        <div class="controls-grid">
+        <div class="filter-grid">
 
 
-          <!-- Purity -->
-
-          <div class="control">
+          <div class="field">
 
             <label for="purity">
               Purity
@@ -239,15 +170,17 @@
           </div>
 
 
-          <!-- Weight -->
-
-          <div class="control">
+          <div class="field">
 
             <label for="weight">
               Weight
             </label>
 
             <select id="weight">
+
+              <option value="">
+                All Weights
+              </option>
 
               <option value="0.05">
                 50 mg
@@ -297,18 +230,12 @@
                 20 grams
               </option>
 
-              <option value="31.1035">
-                1 oz
-              </option>
-
             </select>
 
           </div>
 
 
-          <!-- Seller -->
-
-          <div class="control">
+          <div class="field">
 
             <label for="sellerFilter">
               Seller
@@ -325,9 +252,7 @@
           </div>
 
 
-          <!-- Payment -->
-
-          <div class="control">
+          <div class="field">
 
             <label for="paymentFilter">
               Payment Offer
@@ -347,39 +272,12 @@
                 UPI Offers
               </option>
 
-            </select>
-
-          </div>
-
-
-          <!-- Premium -->
-
-          <div class="control">
-
-            <label for="premiumFilter">
-              Premium
-            </label>
-
-            <select id="premiumFilter">
-
-              <option value="all">
-                Any Premium
+              <option value="cashback">
+                Cashback
               </option>
 
-              <option value="10">
-                Up to 10%
-              </option>
-
-              <option value="20">
-                Up to 20%
-              </option>
-
-              <option value="30">
-                Up to 30%
-              </option>
-
-              <option value="50">
-                Up to 50%
+              <option value="voucher">
+                Voucher / Promo
               </option>
 
             </select>
@@ -387,26 +285,20 @@
           </div>
 
 
-          <!-- Sort -->
-
-          <div class="control">
+          <div class="field">
 
             <label for="sortFilter">
-              Sort By
+              Sort
             </label>
 
             <select id="sortFilter">
 
               <option value="effective">
-                Effective Price
+                Lowest Effective Price
               </option>
 
               <option value="listed">
-                Listed Price
-              </option>
-
-              <option value="offer">
-                Best Offer
+                Lowest Listed Price
               </option>
 
               <option value="premium">
@@ -417,48 +309,42 @@
 
           </div>
 
+
+          <div class="field button-field">
+
+            <button
+              id="compareButton"
+              type="button"
+              class="primary-button"
+            >
+              Compare
+            </button>
+
+          </div>
+
         </div>
 
 
-        <div class="compare-action">
-
-          <button
-            id="compareButton"
-            type="button"
-            class="primary-button"
-          >
-            Compare Gold Coins
-          </button>
-
-          <span
-            id="productStatus"
-            class="status-text"
-          >
-            Loading seller products...
-          </span>
-
+        <div
+          id="productStatus"
+          class="status-message"
+        >
+          Loading seller products...
         </div>
 
       </section>
 
 
 
-      <!-- =================================================
-           SELECTED GOLD SUMMARY
-      ================================================== -->
+      <!-- SUMMARY -->
 
-      <section
-        id="results"
-        class="results-section"
-      >
+      <section class="section">
 
-        <div class="summary-card">
+        <div class="summary-grid">
 
-          <div>
+          <div class="summary-card">
 
-            <span class="summary-label">
-              Purity
-            </span>
+            <span>Purity</span>
 
             <strong id="summaryPurity">
               24K
@@ -467,53 +353,49 @@
           </div>
 
 
-          <div>
+          <div class="summary-card">
 
-            <span class="summary-label">
-              Weight
-            </span>
+            <span>Weight</span>
 
             <strong id="summaryWeight">
-              1 g
+              All
             </strong>
 
           </div>
 
 
-          <div>
+          <div class="summary-card">
 
-            <span class="summary-label">
-              Pure Gold
-            </span>
+            <span>Pure Gold</span>
 
             <strong id="summaryPureGold">
-              1.0000 g
+              —
             </strong>
 
           </div>
 
 
-          <div>
+          <div class="summary-card">
 
-            <span class="summary-label">
-              Gold Value
-            </span>
+            <span>Gold Value</span>
 
             <strong id="summaryGoldValue">
-              Calculating...
+              —
             </strong>
 
           </div>
 
         </div>
 
+      </section>
 
 
-        <!-- ===============================================
-             COMPARISON TITLE
-        ================================================ -->
 
-        <div class="comparison-heading">
+      <!-- RESULTS -->
+
+      <section class="section">
+
+        <div class="section-title">
 
           <div>
 
@@ -522,7 +404,7 @@
             </h2>
 
             <p>
-              Exact seller products, listed prices and available offers.
+              Exact product pages and available offers.
             </p>
 
           </div>
@@ -530,12 +412,7 @@
         </div>
 
 
-
-        <!-- ===============================================
-             COMPARISON TABLE
-        ================================================ -->
-
-        <div class="comparison-wrapper">
+        <div class="table-container">
 
           <table class="comparison-table">
 
@@ -548,7 +425,7 @@
                 </th>
 
                 <th>
-                  Listed Price
+                  Price
                 </th>
 
                 <th>
@@ -560,21 +437,20 @@
                 </th>
 
                 <th>
-                  Offers / Vouchers
+                  Offers
                 </th>
 
                 <th>
-                  Effective Price
+                  Effective
                 </th>
 
                 <th>
-                  Exact Product
+                  Product
                 </th>
 
               </tr>
 
             </thead>
-
 
             <tbody id="comparisonBody">
 
@@ -584,7 +460,7 @@
                   colspan="7"
                   class="empty-state"
                 >
-                  Loading comparison...
+                  Loading...
                 </td>
 
               </tr>
@@ -595,111 +471,42 @@
 
         </div>
 
-
-        <!-- ===============================================
-             LEGEND
-        ================================================ -->
-
-        <div class="comparison-legend">
-
-          <span>
-            🟢 Verified product
-          </span>
-
-          <span>
-            🏷️ Offer / voucher
-          </span>
-
-          <span>
-            💳 Card / UPI offer
-          </span>
-
-          <span>
-            🔗 Exact product page
-          </span>
-
-        </div>
-
       </section>
 
 
 
-      <!-- =================================================
-           SELLER INFORMATION
-      ================================================== -->
+      <!-- SELLERS -->
 
-      <section class="seller-info">
+      <section class="section">
 
-        <div class="section-heading">
+        <div class="section-title">
 
           <div>
-
-            <h2>
-              Sellers
-            </h2>
+            <h2>Supported Sellers</h2>
 
             <p>
-              Gold coin data is collected from configured official/authorised sources.
+              Configured gold coin sellers.
             </p>
-
           </div>
 
         </div>
 
 
-        <div class="seller-list">
+        <div id="sellerList" class="seller-list">
 
-          <span>
-            CaratLane
-          </span>
-
-          <span>
-            MMTC-PAMP
-          </span>
-
-          <span>
-            Tanishq
-          </span>
-
-          <span>
-            Kalyan Jewellers
-          </span>
-
-          <span>
-            Senco Gold &amp; Diamonds
-          </span>
-
-          <span>
-            Malabar Gold &amp; Diamonds
-          </span>
-
-          <span>
-            PNG Jewellers
-          </span>
-
-          <span>
-            Joyalukkas
-          </span>
-
-          <span>
-            BlueStone
-          </span>
-
-          <span>
-            Candere
-          </span>
-
-          <span>
-            Mia by Tanishq
-          </span>
-
-          <span>
-            Reliance Jewels
-          </span>
-
-          <span>
-            PC Jeweller
-          </span>
+          <span>CaratLane</span>
+          <span>MMTC-PAMP</span>
+          <span>Tanishq</span>
+          <span>Kalyan Jewellers</span>
+          <span>Senco Gold &amp; Diamonds</span>
+          <span>Malabar Gold &amp; Diamonds</span>
+          <span>PNG Jewellers</span>
+          <span>Joyalukkas</span>
+          <span>BlueStone</span>
+          <span>Candere</span>
+          <span>Mia by Tanishq</span>
+          <span>Reliance Jewels</span>
+          <span>PC Jeweller</span>
 
         </div>
 
@@ -707,37 +514,20 @@
 
 
 
-      <!-- =================================================
-           INFORMATION
-      ================================================== -->
+      <!-- INFO -->
 
-      <section class="info-section">
+      <section class="section info-section">
 
         <div class="info-card">
 
           <h3>
-            How comparison works
+            Exact Product Pages
           </h3>
 
           <p>
-            Products are matched using purity and weight. Each seller's
-            available listed price is shown separately so different gold
-            coin designs are not incorrectly merged.
-          </p>
-
-        </div>
-
-
-        <div class="info-card">
-
-          <h3>
-            Exact product links
-          </h3>
-
-          <p>
-            When an exact product URL is available from the configured
-            seller source, the View link opens that specific product page
-            rather than a generic category or browse page.
+            The View Product button uses the product URL returned by
+            the seller source. It does not intentionally redirect to
+            a generic gold-coin category page.
           </p>
 
         </div>
@@ -750,9 +540,24 @@
           </h3>
 
           <p>
-            Available coupon, voucher, promotional code, card, UPI,
-            cashback and other offer fields are displayed when supplied
-            by the product source.
+            Coupon, voucher, promo code, card offer, UPI offer,
+            cashback and other available offer fields are shown
+            when supplied by the source.
+          </p>
+
+        </div>
+
+
+        <div class="info-card">
+
+          <h3>
+            Comparison
+          </h3>
+
+          <p>
+            Products are compared using purity and weight. The
+            effective-price calculation considers supported numeric
+            offers where the source provides them.
           </p>
 
         </div>
@@ -765,40 +570,33 @@
 
 
 
-  <!-- =====================================================
-       FOOTER
-  ====================================================== -->
-
   <footer class="site-footer">
 
     <div class="container">
 
-      <p>
+      <strong>
         GoldManiaSavings
-      </p>
+      </strong>
 
-      <small>
-        Gold rates and seller prices may change. Always verify the
-        final price, applicable offers, taxes and availability on the
-        seller's exact product page before purchasing.
-      </small>
+      <p>
+        Prices, offers, taxes and availability can change.
+        Always verify the final amount on the seller's exact
+        product page before purchase.
+      </p>
 
     </div>
 
   </footer>
 
 
-
-  <!-- =====================================================
-       APP JS
-       
-       IMPORTANT:
-       No inline JavaScript here.
-       app.js is the only application script.
-  ====================================================== -->
+  <!--
+    IMPORTANT:
+    There is NO inline application JavaScript.
+    app.js is the only JS file.
+  -->
 
   <script
-    src="./app.js?v=8"
+    src="./app.js?v=10"
     defer
   ></script>
 
