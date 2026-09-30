@@ -135,105 +135,113 @@ function setupWeightOptions() {
 
 async function loadGoldRates() {
 
-    setLiveStatus(
-        "🟡 Loading..."
-    );
-
+    setLiveStatus("🟡 Loading...");
 
     try {
 
-        const response =
-            await fetch(
-                `${LIVE_API_URL}/api/gold`,
-                {
-                    cache: "no-store"
+        const response = await fetch(
+            `${LIVE_API_URL}/api/gold?t=${Date.now()}`,
+            {
+                method: "GET",
+                cache: "no-store",
+                headers: {
+                    "Accept": "application/json"
                 }
-            );
-
+            }
+        );
 
         if (!response.ok) {
-
             throw new Error(
-                "Gold API request failed"
+                `Gold API HTTP ${response.status}`
             );
-
         }
 
+        const data = await response.json();
 
-        const data =
-            await response.json();
+        console.log(
+            "Gold API response:",
+            data
+        );
 
+        if (!data || data.ok !== true) {
+            throw new Error(
+                data?.message ||
+                "Gold API returned invalid response"
+            );
+        }
+
+        const rates = data.rates || {};
+
+        const rate24 =
+            Number(
+                rates["24K"]?.perGram ??
+                rates["24K"] ??
+                0
+            );
+
+        const rate22 =
+            Number(
+                rates["22K"]?.perGram ??
+                rates["22K"] ??
+                0
+            );
+
+        const rate18 =
+            Number(
+                rates["18K"]?.perGram ??
+                rates["18K"] ??
+                0
+            );
 
         if (
-            !data.ok ||
-            !data.rates
+            rate24 <= 0 ||
+            rate22 <= 0 ||
+            rate18 <= 0
         ) {
-
             throw new Error(
-                "Invalid gold API response"
+                "Gold API returned zero/invalid rates"
             );
-
         }
 
-
         currentGoldRates["24K"] =
-            Number(
-                data.rates["24K"]?.perGram || 0
-            );
-
+            rate24;
 
         currentGoldRates["22K"] =
-            Number(
-                data.rates["22K"]?.perGram || 0
-            );
-
+            rate22;
 
         currentGoldRates["18K"] =
-            Number(
-                data.rates["18K"]?.perGram || 0
-            );
-
+            rate18;
 
         updateGoldRateUI();
 
         updateCalculatorRates();
 
-
         setLiveStatus(
             "🟢 LIVE"
         );
-
 
         updateLastUpdated(
             data.timestamp
         );
 
-
         console.log(
-            "Live gold rates:",
+            "GoldManiaSavings live rates:",
             currentGoldRates
         );
-
 
     } catch (error) {
 
         console.error(
-            "Gold rate error:",
+            "Gold rate loading failed:",
             error
         );
-
 
         setLiveStatus(
             "🔴 Offline"
         );
 
-
-        updateLastUpdated(
-            null
-        );
-
+        updateLastUpdated(null);
     }
-
 }
 
 
